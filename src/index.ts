@@ -1,13 +1,14 @@
-import * as http from 'node:http'
+import {pingHealth} from './api'
 import {logger} from './logger'
 
 async function main() {
   logger.info('cloud-agent started')
-  http
-    .createServer((_, res) => {
-      res.setHeader('Content-Type', 'application/json').end(JSON.stringify({ok: true}))
-    })
-    .listen(3333)
+
+  // Report health to Depot every 10 seconds
+  await pingHealth()
+  setInterval(() => {
+    pingHealth().catch((err) => logger.error(err.message, err))
+  }, 10 * 1000)
 }
 
 main().catch((err) => {
