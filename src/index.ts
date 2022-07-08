@@ -1,5 +1,15 @@
-import {pingHealth} from './api'
+import {pingHealth, reportCurrentState} from './api'
+import {getASGState} from './aws'
 import {logger} from './logger'
+import {promises} from './utils'
+
+async function currentState() {
+  await reportCurrentState(
+    await promises({
+      autoscalingGroups: getASGState(),
+    }),
+  )
+}
 
 async function main() {
   logger.info('cloud-agent started')
@@ -8,6 +18,12 @@ async function main() {
   await pingHealth()
   setInterval(() => {
     pingHealth().catch((err) => logger.error(err.message, err))
+  }, 10 * 1000)
+
+  // Report autoscaling groups to Depot every 10 seconds
+  await currentState()
+  setInterval(() => {
+    currentState().catch((err) => logger.error(err.message, err))
   }, 10 * 1000)
 }
 
