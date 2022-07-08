@@ -9,10 +9,6 @@ const headers = {
 
 const id = CLOUD_AGENT_CONNECTION_ID
 
-export async function pingHealth() {
-  await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/health`, {method: 'POST', headers})
-}
-
 export async function getDesiredState() {
   const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/desired-state`, {method: 'POST', headers})
   const data = await res.body.json()
