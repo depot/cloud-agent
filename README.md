@@ -4,6 +4,5 @@ Agent process that manages cloud infrastructure for self-hosted Depot connection
 
 ## Endpoints
 
-- `POST /api/agents/cloud/:id/health`
-- `GET /api/agents/cloud/:id/get-desired-state`
+- `GET /api/agents/cloud/:id/desired-state`
 - `POST /api/agents/cloud/:id/current-state`
