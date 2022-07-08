@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "esnext",
+    "target": "esnext",
+    "lib": ["esnext"],
+    "alwaysStrict": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "preserveConstEnums": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "sourceMap": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
