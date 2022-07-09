@@ -5,3 +5,5 @@ export async function promises<T extends Record<string, any>>(promises: T): Prom
   )
   return Object.fromEntries(values) as {[K in keyof T]: Awaited<T[K]>}
 }
+
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

@@ -1,5 +1,6 @@
 import {request} from 'undici'
 import {CLOUD_AGENT_API_ENDPOINT, CLOUD_AGENT_API_TOKEN, CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from './env'
+import {StateResponse} from './types'
 
 const headers = {
   Authorization: `Bearer ${CLOUD_AGENT_API_TOKEN}`,
@@ -15,7 +16,7 @@ export async function getDesiredState() {
   return data
 }
 
-export async function reportCurrentState(state: any) {
+export async function reportCurrentState(state: any): Promise<StateResponse> {
   const body = JSON.stringify(state)
   const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/current-state`, {method: 'POST', headers, body})
   const data = await res.body.json()

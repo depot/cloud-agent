@@ -1,24 +1,22 @@
-import {reportCurrentState} from './api'
-import {getASGState} from './aws'
+import {reconcile} from './aws'
 import {logger} from './logger'
-import {promises} from './utils'
+import {sleep} from './utils'
 
-async function currentState() {
-  await reportCurrentState(
-    await promises({
-      autoscalingGroups: getASGState(),
-    }),
-  )
-}
-
+let errorsToReport: string[] = []
 async function main() {
   logger.info('cloud-agent started')
 
-  // Report autoscaling groups to Depot every 10 seconds
-  await currentState()
-  setInterval(() => {
-    currentState().catch((err) => logger.error(err.message, err))
-  }, 10 * 1000)
+  while (true) {
+    try {
+      const errors = [...errorsToReport]
+      errorsToReport = []
+      await reconcile(errors)
+    } catch (e: any) {
+      logger.error(e.toString())
+      errorsToReport.push(e.message || `${e}`)
+    }
+    await sleep(1000)
+  }
 }
 
 main().catch((err) => {
