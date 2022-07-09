@@ -4,7 +4,7 @@ import {
   TerminateInstanceInAutoScalingGroupCommand,
   UpdateAutoScalingGroupCommand,
 } from '@aws-sdk/client-auto-scaling'
-import {reportCurrentState} from './api'
+import {getDesiredState} from './api'
 import {CLOUD_AGENT_CONNECTION_ID} from './env'
 import {logger} from './logger'
 import {promises} from './utils'
@@ -28,7 +28,7 @@ export async function reconcile(errors: string[]) {
     errors,
   })
 
-  const nextState = await reportCurrentState(currentState)
+  const nextState = await getDesiredState(currentState)
 
   for (const id of nextState.terminate) {
     logger.info(`Terminating autoscaling group instance ${id}`)
