@@ -1,6 +1,6 @@
-import {reconcile} from './aws'
-import {logger} from './logger'
+import {reconcile} from './providers/aws'
 import {sleep} from './utils'
+import {logger} from './utils/logger'
 
 let errorsToReport: string[] = []
 async function main() {

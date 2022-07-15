@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-auto-scaling": "^3.121.0",
+    "@aws-sdk/client-ec2": "^3.130.0",
     "dotenv": "^16.0.1",
     "undici": "^5.6.1"
   },

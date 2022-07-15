@@ -1,6 +1,11 @@
 import {request} from 'undici'
-import {CLOUD_AGENT_API_ENDPOINT, CLOUD_AGENT_API_TOKEN, CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from './env'
-import {StateResponse} from './types'
+import {StateResponse} from '../types'
+import {
+  CLOUD_AGENT_API_ENDPOINT,
+  CLOUD_AGENT_API_TOKEN,
+  CLOUD_AGENT_CONNECTION_ID,
+  CLOUD_AGENT_VERSION,
+} from '../utils/env'
 
 const headers = {
   Authorization: `Bearer ${CLOUD_AGENT_API_TOKEN}`,
