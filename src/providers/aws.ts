@@ -116,6 +116,7 @@ export async function reconcile(errors: string[]) {
           {
             ResourceType: 'instance',
             Tags: [
+              {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${instance.id}`},
               {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
               {Key: 'depot-machine-id', Value: instance.id},
             ],
