@@ -6,12 +6,20 @@ import {
   DescribeVolumesCommand,
   DetachVolumeCommand,
   EC2Client,
+  Instance,
   RunInstancesCommand,
   StartInstancesCommand,
   StopInstancesCommand,
   TerminateInstancesCommand,
+  Volume,
 } from '@aws-sdk/client-ec2'
-import {VolumeStatus} from '../types'
+import {
+  InstanceDesiredState,
+  NewInstanceDesiredState,
+  NewVolumeDesiredState,
+  VolumeDesiredState,
+  VolumeStatus,
+} from '../types'
 import {promises} from '../utils'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {getDesiredState} from './depot'
@@ -33,7 +41,7 @@ export async function getVolumesState() {
   return res.Volumes || []
 }
 
-export async function reconcile(errors: string[]) {
+export async function reconcile(errors: string[]): Promise<string[]> {
   const state = await promises({
     cloud: 'aws',
     availabilityZone: process.env.AWS_AVAILABILITY_ZONE,
@@ -44,114 +52,121 @@ export async function reconcile(errors: string[]) {
 
   const nextState = await getDesiredState(state)
 
-  for (const volume of nextState.newVolumes) {
-    const existing = state.volumes.find((v) =>
-      v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
-    )
-    if (existing) continue
+  const results = await Promise.allSettled([
+    ...nextState.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
+    ...nextState.volumes.map((volume) => reconcileVolume(state.volumes, volume)),
+    ...nextState.newInstances.map((instance) => reconcileNewInstance(state.instances, instance)),
+    ...nextState.instances.map((instance) => reconcileInstance(state.instances, instance)),
+  ])
 
-    await client.send(
-      new CreateVolumeCommand({
-        AvailabilityZone: process.env.AWS_AVAILABILITY_ZONE,
-        Encrypted: true,
-        Size: volume.size,
-        TagSpecifications: [
-          {
-            ResourceType: 'volume',
-            Tags: [
-              {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${volume.id}`},
-              {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
-              {Key: 'depot-volume-id', Value: volume.id},
-            ],
-          },
-        ],
-        VolumeType: 'gp3',
-      }),
-    )
-  }
+  return results
+    .map((r) => (r.status === 'rejected' ? `${r.reason}` : undefined))
+    .filter((r): r is string => r !== undefined)
+}
 
-  for (const volume of nextState.volumes) {
-    const current = state.volumes.find((x) => x.VolumeId === volume.volumeID)
-    const currentState = (current?.State ?? 'unknown') as VolumeStatus | 'unknown'
+async function reconcileNewVolume(state: Volume[], volume: NewVolumeDesiredState) {
+  const existing = state.find((v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
+  if (existing) return
 
-    // Skip if already at the desired state
-    if (currentState === volume.desiredState) continue
-
-    if (currentState === 'error') continue
-
-    if (volume.desiredState === 'in-use') {
-      if (currentState === 'creating') continue
-      if (currentState === 'deleting' || currentState === 'deleted') continue
-      await client.send(
-        new AttachVolumeCommand({Device: volume.device, InstanceId: volume.attachedTo, VolumeId: volume.volumeID}),
-      )
-    }
-
-    if (volume.desiredState === 'available') {
-      if (currentState === 'creating') continue
-      if (currentState === 'deleting' || currentState === 'deleted') continue
-      await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID}))
-    }
-
-    if (volume.desiredState === 'deleted') {
-      if (currentState === 'deleting') continue
-      if (currentState === 'creating' || currentState === 'in-use') continue
-      await client.send(new DeleteVolumeCommand({VolumeId: volume.volumeID}))
-    }
-  }
-
-  for (const instance of nextState.newInstances) {
-    const existing = state.instances.find((i) =>
-      i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === instance.id),
-    )
-    if (existing) continue
-
-    await client.send(
-      new RunInstancesCommand({
-        LaunchTemplate: {
-          LaunchTemplateId:
-            instance.architecture === 'x86' ? process.env.LAUNCH_TEMPLATE_X86 : process.env.LAUNCH_TEMPLATE_ARM,
+  await client.send(
+    new CreateVolumeCommand({
+      AvailabilityZone: process.env.AWS_AVAILABILITY_ZONE,
+      Encrypted: true,
+      Size: volume.size,
+      TagSpecifications: [
+        {
+          ResourceType: 'volume',
+          Tags: [
+            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${volume.id}`},
+            {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
+            {Key: 'depot-volume-id', Value: volume.id},
+          ],
         },
-        ImageId: instance.ami,
-        TagSpecifications: [
-          {
-            ResourceType: 'instance',
-            Tags: [
-              {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${instance.id}`},
-              {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
-              {Key: 'depot-machine-id', Value: instance.id},
-            ],
-          },
-        ],
-        MaxCount: 1,
-        MinCount: 1,
-      }),
+      ],
+      VolumeType: 'gp3',
+    }),
+  )
+}
+
+async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
+  const current = state.find((x) => x.VolumeId === volume.volumeID)
+  const currentState = (current?.State ?? 'unknown') as VolumeStatus | 'unknown'
+
+  // Skip if already at the desired state
+  if (currentState === volume.desiredState) return
+
+  if (currentState === 'error') return
+
+  if (volume.desiredState === 'in-use') {
+    if (currentState === 'creating') return
+    if (currentState === 'deleting' || currentState === 'deleted') return
+    await client.send(
+      new AttachVolumeCommand({Device: volume.device, InstanceId: volume.attachedTo, VolumeId: volume.volumeID}),
     )
   }
 
-  for (const instance of nextState.instances) {
-    const current = state.instances.find((x) => x.InstanceId === instance.instanceID)
-    const currentState = current?.State?.Name ?? 'unknown'
+  if (volume.desiredState === 'available') {
+    if (currentState === 'creating') return
+    if (currentState === 'deleting' || currentState === 'deleted') return
+    await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID}))
+  }
 
-    // Skip if already at the desired state
-    if (currentState === instance.desiredState) continue
+  if (volume.desiredState === 'deleted') {
+    if (currentState === 'deleting') return
+    if (currentState === 'creating' || currentState === 'in-use') return
+    await client.send(new DeleteVolumeCommand({VolumeId: volume.volumeID}))
+  }
+}
 
-    if (instance.desiredState === 'running') {
-      if (currentState === 'pending') continue
-      if (currentState === 'shutting-down' || currentState === 'terminated' || currentState === 'stopping') continue
-      await client.send(new StartInstancesCommand({InstanceIds: [instance.instanceID]}))
-    }
+async function reconcileNewInstance(state: Instance[], instance: NewInstanceDesiredState) {
+  const existing = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === instance.id))
+  if (existing) return
 
-    if (instance.desiredState === 'stopped') {
-      if (currentState === 'stopping') continue
-      if (currentState === 'shutting-down' || currentState === 'terminated') continue
-      await client.send(new StopInstancesCommand({InstanceIds: [instance.instanceID]}))
-    }
+  await client.send(
+    new RunInstancesCommand({
+      LaunchTemplate: {
+        LaunchTemplateId:
+          instance.architecture === 'x86' ? process.env.LAUNCH_TEMPLATE_X86 : process.env.LAUNCH_TEMPLATE_ARM,
+      },
+      ImageId: instance.ami,
+      TagSpecifications: [
+        {
+          ResourceType: 'instance',
+          Tags: [
+            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${instance.id}`},
+            {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
+            {Key: 'depot-machine-id', Value: instance.id},
+          ],
+        },
+      ],
+      MaxCount: 1,
+      MinCount: 1,
+    }),
+  )
+}
 
-    if (instance.desiredState === 'terminated') {
-      if (currentState === 'shutting-down') continue
-      if (currentState === 'pending' || currentState === 'stopping') continue
-      await client.send(new TerminateInstancesCommand({InstanceIds: [instance.instanceID]}))
-    }
+async function reconcileInstance(state: Instance[], instance: InstanceDesiredState) {
+  const current = state.find((x) => x.InstanceId === instance.instanceID)
+  const currentState = current?.State?.Name ?? 'unknown'
+
+  // Skip if already at the desired state
+  if (currentState === instance.desiredState) return
+
+  if (instance.desiredState === 'running') {
+    if (currentState === 'pending') return
+    if (currentState === 'shutting-down' || currentState === 'terminated' || currentState === 'stopping') return
+    await client.send(new StartInstancesCommand({InstanceIds: [instance.instanceID]}))
+  }
+
+  if (instance.desiredState === 'stopped') {
+    if (currentState === 'stopping') return
+    if (currentState === 'shutting-down' || currentState === 'terminated') return
+    await client.send(new StopInstancesCommand({InstanceIds: [instance.instanceID]}))
+  }
+
+  if (instance.desiredState === 'terminated') {
+    if (currentState === 'shutting-down') return
+    if (currentState === 'pending' || currentState === 'stopping') return
+    await client.send(new TerminateInstancesCommand({InstanceIds: [instance.instanceID]}))
   }
 }
