@@ -50,7 +50,6 @@ export interface VolumeDesiredState {
 
 export interface NewVolumeDesiredState {
   id: string
-  volumeID: string
   size: number
 }
 

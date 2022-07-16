@@ -112,6 +112,15 @@ export async function reconcile(errors: string[]) {
             instance.architecture === 'x86' ? process.env.LAUNCH_TEMPLATE_X86 : process.env.LAUNCH_TEMPLATE_ARM,
         },
         ImageId: instance.ami,
+        TagSpecifications: [
+          {
+            ResourceType: 'instance',
+            Tags: [
+              {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
+              {Key: 'depot-machine-id', Value: instance.id},
+            ],
+          },
+        ],
         MaxCount: 1,
         MinCount: 1,
       }),
