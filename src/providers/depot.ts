@@ -49,7 +49,7 @@ interface StateCache {
 let stateCache: StateCache | null = null
 
 export async function reportState(state: StateRequest): Promise<void> {
-  const current: StateCache['state'] = {
+  const current: StateCache['state'] = toPlainObject({
     cloud: state.cloud,
     availabilityZone: state.availabilityZone,
     instances: state.instances.reduce((acc, instance) => {
@@ -62,7 +62,7 @@ export async function reportState(state: StateRequest): Promise<void> {
       acc[volume.VolumeId] = volume
       return acc
     }, {} as Record<string, Volume>),
-  }
+  })
 
   if (stateCache) {
     const diff = compare(stateCache.state, current)
@@ -95,4 +95,8 @@ function getETag(res: Dispatcher.ResponseData): string {
   const etag = res.headers.etag
   if (!etag) throw new Error('No ETag')
   return etag
+}
+
+function toPlainObject<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
 }
