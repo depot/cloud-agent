@@ -22,7 +22,7 @@ import {
 } from '../types'
 import {promises} from '../utils'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
-import {getDesiredState} from './depot'
+import {getDesiredState, reportState} from './depot'
 
 const client = new EC2Client({})
 
@@ -50,7 +50,8 @@ export async function reconcile(): Promise<string[]> {
     errors: [],
   })
 
-  const nextState = await getDesiredState(state)
+  await reportState(state)
+  const nextState = await getDesiredState()
 
   const results = await Promise.allSettled([
     ...nextState.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),

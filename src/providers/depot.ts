@@ -1,7 +1,5 @@
 import {Instance, Volume} from '@aws-sdk/client-ec2'
 import {compare} from 'fast-json-patch'
-import {Readable} from 'node:stream'
-import * as zlib from 'node:zlib'
 import {Dispatcher, request} from 'undici'
 import {StateRequest, StateResponse} from '../types'
 import {CLOUD_AGENT_API_TOKEN, CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from '../utils/env'
@@ -14,20 +12,9 @@ const headers = {
 
 const id = CLOUD_AGENT_CONNECTION_ID
 
-export async function getDesiredState(currentState: StateRequest): Promise<StateResponse> {
-  const report = reportState(currentState)
-
-  const body = Readable.from(JSON.stringify(currentState))
-  const compressed = body.pipe(zlib.createBrotliCompress())
-  const res = await request(`${CLOUD_AGENT_API_URL}/api/agents/cloud/${id}/state`, {
-    method: 'POST',
-    headers: {...headers, 'Content-Encoding': 'br'},
-    body: compressed,
-  })
+export async function getDesiredState(): Promise<StateResponse> {
+  const res = await request(`${CLOUD_AGENT_API_URL}/api/agents/cloud/${id}/state`, {headers})
   const data = await res.body.json()
-
-  await report
-
   return data
 }
 
