@@ -10,7 +10,8 @@ async function main() {
     try {
       const errors = [...errorsToReport]
       errorsToReport = []
-      await reconcile(errors)
+      const nextErrors = await reconcile(errors)
+      errorsToReport.push(...nextErrors)
     } catch (e: any) {
       logger.error(e.toString())
       errorsToReport.push(e.message || `${e}`)
