@@ -1,3 +1,4 @@
+import {Instance, Volume} from '@aws-sdk/client-ec2'
 import {compare} from 'fast-json-patch'
 import {Readable} from 'node:stream'
 import * as zlib from 'node:zlib'
@@ -40,8 +41,8 @@ interface StateCache {
   state: {
     cloud: StateRequest['cloud']
     availabilityZone: StateRequest['availabilityZone']
-    instances: StateRequest['instances']
-    volumes: StateRequest['volumes']
+    instances: Record<string, Instance>
+    volumes: Record<string, Volume>
   }
 }
 
@@ -51,8 +52,16 @@ export async function reportState(state: StateRequest): Promise<void> {
   const current: StateCache['state'] = {
     cloud: state.cloud,
     availabilityZone: state.availabilityZone,
-    instances: state.instances,
-    volumes: state.volumes,
+    instances: state.instances.reduce((acc, instance) => {
+      if (!instance.InstanceId) return acc
+      acc[instance.InstanceId] = instance
+      return acc
+    }, {} as Record<string, Instance>),
+    volumes: state.volumes.reduce((acc, volume) => {
+      if (!volume.VolumeId) return acc
+      acc[volume.VolumeId] = volume
+      return acc
+    }, {} as Record<string, Volume>),
   }
 
   if (stateCache) {
