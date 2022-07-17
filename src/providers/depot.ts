@@ -1,7 +1,8 @@
+import {compare} from 'fast-json-patch'
 import {Readable} from 'node:stream'
 import * as zlib from 'node:zlib'
-import {request} from 'undici'
-import {StateResponse} from '../types'
+import {Dispatcher, request} from 'undici'
+import {StateRequest, StateResponse} from '../types'
 import {
   CLOUD_AGENT_API_ENDPOINT,
   CLOUD_AGENT_API_TOKEN,
@@ -13,15 +14,76 @@ const headers = {
   Authorization: `Bearer ${CLOUD_AGENT_API_TOKEN}`,
   'User-Agent': `cloud-agent/${CLOUD_AGENT_VERSION}`,
   'Content-Type': 'application/json',
-  'Content-Encoding': 'br',
 }
 
 const id = CLOUD_AGENT_CONNECTION_ID
 
-export async function getDesiredState(currentState: any): Promise<StateResponse> {
+export async function getDesiredState(currentState: StateRequest): Promise<StateResponse> {
+  const report = reportState(currentState)
+
   const body = Readable.from(JSON.stringify(currentState))
   const compressed = body.pipe(zlib.createBrotliCompress())
-  const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/state`, {method: 'POST', headers, body: compressed})
+  const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/state`, {
+    method: 'POST',
+    headers: {...headers, 'Content-Encoding': 'br'},
+    body: compressed,
+  })
   const data = await res.body.json()
+
+  await report
+
   return data
+}
+
+interface StateCache {
+  etag: string
+  state: {
+    cloud: StateRequest['cloud']
+    availabilityZone: StateRequest['availabilityZone']
+    instances: StateRequest['instances']
+    volumes: StateRequest['volumes']
+  }
+}
+
+let stateCache: StateCache | null = null
+
+export async function reportState(state: StateRequest): Promise<void> {
+  const current: StateCache['state'] = {
+    cloud: state.cloud,
+    availabilityZone: state.availabilityZone,
+    instances: state.instances,
+    volumes: state.volumes,
+  }
+
+  if (stateCache) {
+    const diff = compare(stateCache.state, current)
+    const res = await request(`https://cloud.depot.dev/connection/${id}`, {
+      method: 'PATCH',
+      headers: {...headers, 'If-Match': stateCache.etag},
+      body: JSON.stringify(diff),
+    })
+    if (res.statusCode < 400) {
+      stateCache.state = current
+      stateCache.etag = getETag(res)
+      return
+    }
+  }
+
+  const res = await request(`https://cloud.depot.dev/connection/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(current),
+  })
+  if (res.statusCode < 400) {
+    stateCache = {state: current, etag: getETag(res)}
+    return
+  }
+
+  throw new Error(`Failed to report state: ${res.statusCode} ${await res.body.text()}`)
+}
+
+function getETag(res: Dispatcher.ResponseData): string {
+  const etag = res.headers.etag
+  if (!etag) throw new Error('No ETag')
+  return etag
 }

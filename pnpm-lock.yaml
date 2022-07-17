@@ -7,6 +7,7 @@ specifiers:
   esbuild: ^0.14.48
   esbuild-node-externals: ^1.4.1
   esbuild-register: ^3.3.3
+  fast-json-patch: ^3.1.1
   node-dev: ^7.4.3
   prettier: ^2.7.1
   prettier-plugin-organize-imports: ^3.0.0
@@ -17,6 +18,7 @@ specifiers:
 dependencies:
   '@aws-sdk/client-ec2': 3.130.0
   dotenv: 16.0.1
+  fast-json-patch: 3.1.1
   undici: 5.6.1
 
 devDependencies:
@@ -948,6 +950,10 @@ packages:
       esbuild-windows-64: 0.14.48
       esbuild-windows-arm64: 0.14.48
     dev: true
+
+  /fast-json-patch/3.1.1:
+    resolution: {integrity: sha512-vf6IHUX2SBcA+5/+4883dsIjpBTqmfBjmYiWK1savxQmFk4JfBMLa7ynTYOs1Rolp/T1betJxHiGD3g1Mn8lUQ==}
+    dev: false
 
   /fast-xml-parser/3.19.0:
     resolution: {integrity: sha512-4pXwmBplsCPv8FOY1WRakF970TjNGnGnfbOnLqjlYvMiF1SR3yOHyxMR/YCXpPTOspNF5gwudqktIP4VsWkvBg==}

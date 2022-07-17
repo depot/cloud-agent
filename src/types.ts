@@ -1,23 +1,13 @@
 // Current State
 
+import {Instance, Volume} from '@aws-sdk/client-ec2'
+
 export interface StateRequest {
   cloud: string
-  instances: InstanceState[]
-  volumes: VolumeState[]
-}
-
-export interface InstanceState {
-  id: string
-  ip?: string
-  state: string
-  tags: Record<string, string>
-}
-
-export interface VolumeState {
-  id: string
-  state: string
-  attachments: any[]
-  tags: Record<string, string>
+  availabilityZone: string
+  instances: Instance[]
+  volumes: Volume[]
+  errors: string[]
 }
 
 // Desired State
