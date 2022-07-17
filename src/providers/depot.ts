@@ -4,12 +4,7 @@ import {Readable} from 'node:stream'
 import * as zlib from 'node:zlib'
 import {Dispatcher, request} from 'undici'
 import {StateRequest, StateResponse} from '../types'
-import {
-  CLOUD_AGENT_API_ENDPOINT,
-  CLOUD_AGENT_API_TOKEN,
-  CLOUD_AGENT_CONNECTION_ID,
-  CLOUD_AGENT_VERSION,
-} from '../utils/env'
+import {CLOUD_AGENT_API_TOKEN, CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from '../utils/env'
 
 const headers = {
   Authorization: `Bearer ${CLOUD_AGENT_API_TOKEN}`,
@@ -24,7 +19,7 @@ export async function getDesiredState(currentState: StateRequest): Promise<State
 
   const body = Readable.from(JSON.stringify(currentState))
   const compressed = body.pipe(zlib.createBrotliCompress())
-  const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/state`, {
+  const res = await request(`${CLOUD_AGENT_API_URL}/api/agents/cloud/${id}/state`, {
     method: 'POST',
     headers: {...headers, 'Content-Encoding': 'br'},
     body: compressed,
@@ -34,6 +29,12 @@ export async function getDesiredState(currentState: StateRequest): Promise<State
   await report
 
   return data
+}
+
+export async function reportErrors(errors: string[]): Promise<void> {
+  if (errors.length === 0) return
+  const body = JSON.stringify({errors})
+  await request(`${CLOUD_AGENT_API_URL}/api/agents/cloud/${id}/errors`, {method: 'POST', headers, body})
 }
 
 interface StateCache {

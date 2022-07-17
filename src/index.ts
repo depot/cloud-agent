@@ -1,4 +1,5 @@
 import {reconcile} from './providers/aws'
+import {reportErrors} from './providers/depot'
 import {sleep} from './utils'
 import {logger} from './utils/logger'
 
@@ -10,7 +11,8 @@ async function main() {
     try {
       const errors = [...errorsToReport]
       errorsToReport = []
-      const nextErrors = await reconcile(errors)
+      await reportErrors(errors)
+      const nextErrors = await reconcile()
       errorsToReport.push(...nextErrors)
     } catch (e: any) {
       logger.error(e.toString())

@@ -41,13 +41,13 @@ export async function getVolumesState() {
   return res.Volumes || []
 }
 
-export async function reconcile(errors: string[]): Promise<string[]> {
+export async function reconcile(): Promise<string[]> {
   const state = await promises({
     cloud: 'aws',
     availabilityZone: process.env.AWS_AVAILABILITY_ZONE ?? 'unknown',
     instances: getInstancesState(),
     volumes: getVolumesState(),
-    errors,
+    errors: [],
   })
 
   const nextState = await getDesiredState(state)
