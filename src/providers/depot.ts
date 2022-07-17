@@ -1,3 +1,5 @@
+import {pipeline} from 'node:stream'
+import * as zlib from 'node:zlib'
 import {request} from 'undici'
 import {StateResponse} from '../types'
 import {
@@ -11,13 +13,15 @@ const headers = {
   Authorization: `Bearer ${CLOUD_AGENT_API_TOKEN}`,
   'User-Agent': `cloud-agent/${CLOUD_AGENT_VERSION}`,
   'Content-Type': 'application/json',
+  'Content-Encoding': 'br',
 }
 
 const id = CLOUD_AGENT_CONNECTION_ID
 
 export async function getDesiredState(currentState: any): Promise<StateResponse> {
   const body = JSON.stringify(currentState)
-  const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/state`, {method: 'POST', headers, body})
+  const compressed = pipeline(body, zlib.createBrotliCompress())
+  const res = await request(`${CLOUD_AGENT_API_ENDPOINT}/${id}/state`, {method: 'POST', headers, body: compressed})
   const data = await res.body.json()
   return data
 }
