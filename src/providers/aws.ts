@@ -92,18 +92,25 @@ async function reconcileNewVolume(state: Volume[], volume: NewVolumeDesiredState
 async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
   const current = state.find((x) => x.VolumeId === volume.volumeID)
   const currentState = (current?.State ?? 'unknown') as VolumeStatus | 'unknown'
+  const currentAttachment = current?.Attachments?.[0]?.InstanceId
 
-  // Skip if already at the desired state
-  if (currentState === volume.desiredState) return
+  // Skip if already at the desired state and attached to the correct machine
+  if (currentState === volume.desiredState && volume.desiredState !== 'in-use') return
+  if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
 
   if (currentState === 'error') return
 
   if (volume.desiredState === 'in-use') {
     if (currentState === 'creating') return
     if (currentState === 'deleting' || currentState === 'deleted') return
-    await client.send(
-      new AttachVolumeCommand({Device: volume.device, InstanceId: volume.attachedTo, VolumeId: volume.volumeID}),
-    )
+
+    if (currentState === 'in-use') {
+      await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID, InstanceId: currentAttachment}))
+    } else {
+      await client.send(
+        new AttachVolumeCommand({Device: volume.device, InstanceId: volume.attachedTo, VolumeId: volume.volumeID}),
+      )
+    }
   }
 
   if (volume.desiredState === 'available') {
