@@ -12,6 +12,8 @@ export const CLOUD_AGENT_API_TOKEN = requiredEnv('CLOUD_AGENT_API_TOKEN')
 export const CLOUD_AGENT_SG_OPEN = requiredEnv('CLOUD_AGENT_SG_OPEN')
 export const CLOUD_AGENT_SG_CLOSED = requiredEnv('CLOUD_AGENT_SG_CLOSED')
 
+export const CLOUD_AGENT_SUBNET_ID = requiredEnv('CLOUD_AGENT_SUBNET_ID')
+
 function requiredEnv(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`Missing required environment variable ${name}`)

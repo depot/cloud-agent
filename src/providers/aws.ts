@@ -21,7 +21,12 @@ import {
   VolumeStatus,
 } from '../types'
 import {promises} from '../utils'
-import {CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_SG_CLOSED, CLOUD_AGENT_SG_OPEN} from '../utils/env'
+import {
+  CLOUD_AGENT_CONNECTION_ID,
+  CLOUD_AGENT_SG_CLOSED,
+  CLOUD_AGENT_SG_OPEN,
+  CLOUD_AGENT_SUBNET_ID,
+} from '../utils/env'
 import {getDesiredState, reportState} from './depot'
 
 const client = new EC2Client({})
@@ -150,7 +155,9 @@ async function reconcileNewInstance(state: Instance[], instance: NewInstanceDesi
       NetworkInterfaces: [
         {
           DeviceIndex: 0,
+          AssociatePublicIpAddress: true,
           Groups: [instance.securityGroup === 'open' ? CLOUD_AGENT_SG_OPEN : CLOUD_AGENT_SG_CLOSED],
+          SubnetId: CLOUD_AGENT_SUBNET_ID,
         },
       ],
       MaxCount: 1,
