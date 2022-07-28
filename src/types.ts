@@ -29,6 +29,7 @@ export interface NewInstanceDesiredState {
   id: string
   ami: string
   architecture: string
+  securityGroup: 'open' | 'closed'
 }
 
 export interface VolumeDesiredState {
