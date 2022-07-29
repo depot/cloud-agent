@@ -13,7 +13,7 @@ const headers = {
 const id = CLOUD_AGENT_CONNECTION_ID
 
 export async function getDesiredState(): Promise<StateResponse> {
-  const res = await request(`${CLOUD_AGENT_API_URL}/api/agents/cloud/${id}/state`, {headers})
+  const res = await request(`${CLOUD_AGENT_API_URL}/connection/${id}/state`, {headers})
   const data = await res.body.json()
   return data
 }
@@ -21,7 +21,7 @@ export async function getDesiredState(): Promise<StateResponse> {
 export async function reportErrors(errors: string[]): Promise<void> {
   if (errors.length === 0) return
   const body = JSON.stringify({errors})
-  await request(`${CLOUD_AGENT_API_URL}/api/agents/cloud/${id}/errors`, {method: 'POST', headers, body})
+  await request(`${CLOUD_AGENT_API_URL}/connection/${id}/errors`, {method: 'POST', headers, body})
 }
 
 interface StateCache {
@@ -54,7 +54,7 @@ export async function reportState(state: StateRequest): Promise<void> {
 
   if (stateCache) {
     const diff = compare(stateCache.state, current)
-    const res = await request(`https://cloud.depot.dev/connection/${id}`, {
+    const res = await request(`${CLOUD_AGENT_API_URL}/connection/${id}`, {
       method: 'PATCH',
       headers: {...headers, 'If-Match': stateCache.etag},
       body: JSON.stringify(diff),
@@ -66,7 +66,7 @@ export async function reportState(state: StateRequest): Promise<void> {
     }
   }
 
-  const res = await request(`https://cloud.depot.dev/connection/${id}`, {
+  const res = await request(`${CLOUD_AGENT_API_URL}/connection/${id}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(current),
