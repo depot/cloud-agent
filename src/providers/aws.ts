@@ -111,7 +111,7 @@ function currentVolumeState(volume: Volume): VolumeState {
 }
 
 async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
-  const current = state.find((x) => x.VolumeId === volume.volumeID)
+  const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.volumeID))
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
 
