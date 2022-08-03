@@ -3,38 +3,42 @@
 import {Instance, Volume} from '@aws-sdk/client-ec2'
 
 export interface StateRequest {
-  cloud: string
+  cloud: 'aws'
   availabilityZone: string
   instances: Instance[]
   volumes: Volume[]
-  errors: string[]
 }
 
 // Desired State
 
 export interface StateResponse {
-  instances: InstanceDesiredState[]
-  newInstances: NewInstanceDesiredState[]
-
-  volumes: VolumeDesiredState[]
+  newMachines: NewMachineDesiredState[]
   newVolumes: NewVolumeDesiredState[]
+  machineChanges: MachineDesiredState[]
+  volumeChanges: VolumeDesiredState[]
 }
 
-export interface InstanceDesiredState {
-  instanceID: string
-  desiredState: string
+export type MachineState = 'pending' | 'running' | 'stopped' | 'deleted'
+
+export interface MachineDesiredState {
+  machineID: string
+  desiredState: MachineState
 }
 
-export interface NewInstanceDesiredState {
+export interface NewMachineDesiredState {
   id: string
-  ami: string
+  image: string
+  realm: string
+  kind: string
   architecture: string
-  securityGroup: 'open' | 'closed'
+  securityGroup: 'buildkit' | 'closed'
 }
+
+export type VolumeState = 'pending' | 'available' | 'attached' | 'deleted'
 
 export interface VolumeDesiredState {
   volumeID: string
-  desiredState: string
+  desiredState: VolumeState
   attachedTo?: string
   device?: string
 }
@@ -42,6 +46,9 @@ export interface VolumeDesiredState {
 export interface NewVolumeDesiredState {
   id: string
   size: number
+  kind: string
+  realm: string
+  architecture: string
 }
 
-export type VolumeStatus = 'creating' | 'available' | 'in-use' | 'deleting' | 'deleted' | 'error'
+export type AWSVolumeStatus = 'creating' | 'available' | 'in-use' | 'deleting' | 'deleted' | 'error'

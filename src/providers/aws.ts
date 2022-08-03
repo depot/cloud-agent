@@ -7,18 +7,22 @@ import {
   DetachVolumeCommand,
   EC2Client,
   Instance,
+  InstanceStateName,
   RunInstancesCommand,
   StartInstancesCommand,
   StopInstancesCommand,
   TerminateInstancesCommand,
   Volume,
+  VolumeState as AwsVolumeState,
 } from '@aws-sdk/client-ec2'
 import {
-  InstanceDesiredState,
-  NewInstanceDesiredState,
+  MachineDesiredState,
+  MachineState,
+  NewMachineDesiredState,
   NewVolumeDesiredState,
+  StateRequest,
   VolumeDesiredState,
-  VolumeStatus,
+  VolumeState,
 } from '../types'
 import {promises} from '../utils'
 import {
@@ -47,7 +51,7 @@ export async function getVolumesState() {
 }
 
 export async function reconcile(): Promise<string[]> {
-  const state = await promises({
+  const state: StateRequest = await promises({
     cloud: 'aws',
     availabilityZone: process.env.AWS_AVAILABILITY_ZONE ?? 'unknown',
     instances: getInstancesState(),
@@ -60,9 +64,9 @@ export async function reconcile(): Promise<string[]> {
 
   const results = await Promise.allSettled([
     ...nextState.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
-    ...nextState.volumes.map((volume) => reconcileVolume(state.volumes, volume)),
-    ...nextState.newInstances.map((instance) => reconcileNewInstance(state.instances, instance)),
-    ...nextState.instances.map((instance) => reconcileInstance(state.instances, instance)),
+    ...nextState.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume)),
+    ...nextState.newMachines.map((instance) => reconcileNewMachine(state.instances, instance)),
+    ...nextState.machineChanges.map((instance) => reconcileMachine(state.instances, instance)),
   ])
 
   return results
@@ -86,6 +90,9 @@ async function reconcileNewVolume(state: Volume[], volume: NewVolumeDesiredState
             {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${volume.id}`},
             {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
             {Key: 'depot-volume-id', Value: volume.id},
+            {Key: 'depot-volume-realm', Value: volume.realm},
+            {Key: 'depot-volume-kind', Value: volume.kind},
+            {Key: 'depot-volume-architecture', Value: volume.architecture},
           ],
         },
       ],
@@ -94,22 +101,29 @@ async function reconcileNewVolume(state: Volume[], volume: NewVolumeDesiredState
   )
 }
 
+function currentVolumeState(volume: Volume): VolumeState {
+  const state = volume.State as AwsVolumeState
+  if (!state) return 'pending'
+  if (state === 'available') return 'available'
+  if (state === 'in-use') return 'attached'
+  if (state === 'deleting' || state === 'deleted') return 'deleted'
+  return 'pending'
+}
+
 async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
   const current = state.find((x) => x.VolumeId === volume.volumeID)
-  const currentState = (current?.State ?? 'unknown') as VolumeStatus | 'unknown'
+  const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
 
   // Skip if already at the desired state and attached to the correct machine
-  if (currentState === volume.desiredState && volume.desiredState !== 'in-use') return
+  if (currentState === volume.desiredState && volume.desiredState !== 'attached') return
   if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
 
-  if (currentState === 'error') return
+  if (volume.desiredState === 'attached') {
+    if (currentState === 'pending') return
+    if (currentState === 'deleted') return
 
-  if (volume.desiredState === 'in-use') {
-    if (currentState === 'creating') return
-    if (currentState === 'deleting' || currentState === 'deleted') return
-
-    if (currentState === 'in-use') {
+    if (currentState === 'attached') {
       await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID, InstanceId: currentAttachment}))
     } else {
       await client.send(
@@ -119,36 +133,38 @@ async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
   }
 
   if (volume.desiredState === 'available') {
-    if (currentState === 'creating') return
-    if (currentState === 'deleting' || currentState === 'deleted') return
+    if (currentState === 'pending') return
+    if (currentState === 'deleted') return
     await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID}))
   }
 
   if (volume.desiredState === 'deleted') {
-    if (currentState === 'deleting') return
-    if (currentState === 'creating' || currentState === 'in-use') return
+    if (currentState === 'pending') return
     await client.send(new DeleteVolumeCommand({VolumeId: volume.volumeID}))
   }
 }
 
-async function reconcileNewInstance(state: Instance[], instance: NewInstanceDesiredState) {
-  const existing = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === instance.id))
+async function reconcileNewMachine(state: Instance[], machine: NewMachineDesiredState) {
+  const existing = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
   if (existing) return
 
   await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
-          instance.architecture === 'x86' ? process.env.LAUNCH_TEMPLATE_X86 : process.env.LAUNCH_TEMPLATE_ARM,
+          machine.architecture === 'x86' ? process.env.LAUNCH_TEMPLATE_X86 : process.env.LAUNCH_TEMPLATE_ARM,
       },
-      ImageId: instance.ami,
+      ImageId: machine.image,
       TagSpecifications: [
         {
           ResourceType: 'instance',
           Tags: [
-            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${instance.id}`},
+            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${machine.id}`},
             {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
-            {Key: 'depot-machine-id', Value: instance.id},
+            {Key: 'depot-machine-id', Value: machine.id},
+            {Key: 'depot-machine-realm', Value: machine.realm},
+            {Key: 'depot-machine-kind', Value: machine.kind},
+            {Key: 'depot-machine-architecture', Value: machine.architecture},
           ],
         },
       ],
@@ -156,7 +172,7 @@ async function reconcileNewInstance(state: Instance[], instance: NewInstanceDesi
         {
           DeviceIndex: 0,
           AssociatePublicIpAddress: true,
-          Groups: [instance.securityGroup === 'open' ? CLOUD_AGENT_SG_OPEN : CLOUD_AGENT_SG_CLOSED],
+          Groups: [machine.securityGroup === 'buildkit' ? CLOUD_AGENT_SG_OPEN : CLOUD_AGENT_SG_CLOSED],
           SubnetId: CLOUD_AGENT_SUBNET_ID,
         },
       ],
@@ -166,28 +182,37 @@ async function reconcileNewInstance(state: Instance[], instance: NewInstanceDesi
   )
 }
 
-async function reconcileInstance(state: Instance[], instance: InstanceDesiredState) {
-  const current = state.find((x) => x.InstanceId === instance.instanceID)
-  const currentState = current?.State?.Name ?? 'unknown'
+function currentMachineState(instance: Instance): MachineState {
+  const instanceState = (instance.State?.Name ?? 'unknown') as InstanceStateName | 'unknown'
+  if (instanceState === 'running' || instanceState === 'shutting-down' || instanceState === 'stopping') return 'running'
+  if (instanceState === 'stopped') return 'stopped'
+  if (instanceState === 'terminated') return 'deleted'
+  return 'pending'
+}
+
+async function reconcileMachine(state: Instance[], machine: MachineDesiredState) {
+  const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.machineID))
+  const currentState = current ? currentMachineState(current) : 'unknown'
 
   // Skip if already at the desired state
-  if (currentState === instance.desiredState) return
+  if (currentState === machine.desiredState) return
 
-  if (instance.desiredState === 'running') {
+  if (!current || !current.InstanceId) return
+
+  if (machine.desiredState === 'running') {
     if (currentState === 'pending') return
-    if (currentState === 'shutting-down' || currentState === 'terminated' || currentState === 'stopping') return
-    await client.send(new StartInstancesCommand({InstanceIds: [instance.instanceID]}))
+    if (currentState === 'deleted') return
+    await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
 
-  if (instance.desiredState === 'stopped') {
-    if (currentState === 'stopping') return
-    if (currentState === 'shutting-down' || currentState === 'terminated') return
-    await client.send(new StopInstancesCommand({InstanceIds: [instance.instanceID]}))
+  if (machine.desiredState === 'stopped') {
+    if (currentState === 'pending') return
+    if (currentState === 'deleted') return
+    await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
 
-  if (instance.desiredState === 'terminated') {
-    if (currentState === 'shutting-down') return
-    if (currentState === 'pending' || currentState === 'stopping') return
-    await client.send(new TerminateInstancesCommand({InstanceIds: [instance.instanceID]}))
+  if (machine.desiredState === 'deleted') {
+    if (currentState === 'pending') return
+    await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
 }
