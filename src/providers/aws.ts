@@ -119,15 +119,17 @@ async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
   if (currentState === volume.desiredState && volume.desiredState !== 'attached') return
   if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
 
+  if (!current || !current.VolumeId) return
+
   if (volume.desiredState === 'attached') {
     if (currentState === 'pending') return
     if (currentState === 'deleted') return
 
     if (currentState === 'attached') {
-      await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID, InstanceId: currentAttachment}))
+      await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
     } else {
       await client.send(
-        new AttachVolumeCommand({Device: volume.device, InstanceId: volume.attachedTo, VolumeId: volume.volumeID}),
+        new AttachVolumeCommand({Device: volume.device, InstanceId: volume.attachedTo, VolumeId: current.VolumeId}),
       )
     }
   }
@@ -135,12 +137,12 @@ async function reconcileVolume(state: Volume[], volume: VolumeDesiredState) {
   if (volume.desiredState === 'available') {
     if (currentState === 'pending') return
     if (currentState === 'deleted') return
-    await client.send(new DetachVolumeCommand({VolumeId: volume.volumeID}))
+    await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId}))
   }
 
   if (volume.desiredState === 'deleted') {
     if (currentState === 'pending') return
-    await client.send(new DeleteVolumeCommand({VolumeId: volume.volumeID}))
+    await client.send(new DeleteVolumeCommand({VolumeId: current.VolumeId}))
   }
 }
 
