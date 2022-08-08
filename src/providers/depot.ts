@@ -2,11 +2,16 @@ import {Instance, Volume} from '@aws-sdk/client-ec2'
 import {compare} from 'fast-json-patch'
 import {Dispatcher, request} from 'undici'
 import {StateRequest, StateResponse} from '../types'
-import {CLOUD_AGENT_API_TOKEN, CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from '../utils/env'
+import {
+  CLOUD_AGENT_API_URL,
+  CLOUD_AGENT_CONNECTION_ID,
+  CLOUD_AGENT_CONNECTION_TOKEN,
+  CLOUD_AGENT_TF_MODULE_VERSION,
+} from '../utils/env'
 
 const headers = {
-  Authorization: `Bearer ${CLOUD_AGENT_API_TOKEN}`,
-  'User-Agent': `cloud-agent/${CLOUD_AGENT_VERSION}`,
+  Authorization: `Bearer ${CLOUD_AGENT_CONNECTION_TOKEN}`,
+  'User-Agent': `cloud-agent/${CLOUD_AGENT_TF_MODULE_VERSION}`,
   'Content-Type': 'application/json',
 }
 

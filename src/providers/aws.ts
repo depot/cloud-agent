@@ -26,10 +26,10 @@ import {
 } from '../types'
 import {promises} from '../utils'
 import {
+  CLOUD_AGENT_AWS_SG_BUILDKIT,
+  CLOUD_AGENT_AWS_SG_DEFAULT,
+  CLOUD_AGENT_AWS_SUBNET_ID,
   CLOUD_AGENT_CONNECTION_ID,
-  CLOUD_AGENT_SG_CLOSED,
-  CLOUD_AGENT_SG_OPEN,
-  CLOUD_AGENT_SUBNET_ID,
 } from '../utils/env'
 import {getDesiredState, reportState} from './depot'
 
@@ -53,7 +53,7 @@ export async function getVolumesState() {
 export async function reconcile(): Promise<string[]> {
   const state: StateRequest = await promises({
     cloud: 'aws',
-    availabilityZone: process.env.AWS_AVAILABILITY_ZONE ?? 'unknown',
+    availabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE ?? 'unknown',
     instances: getInstancesState(),
     volumes: getVolumesState(),
     errors: [],
@@ -80,7 +80,7 @@ async function reconcileNewVolume(state: Volume[], volume: NewVolumeDesiredState
 
   await client.send(
     new CreateVolumeCommand({
-      AvailabilityZone: process.env.AWS_AVAILABILITY_ZONE,
+      AvailabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE,
       Encrypted: true,
       Size: volume.size,
       TagSpecifications: [
@@ -154,7 +154,9 @@ async function reconcileNewMachine(state: Instance[], machine: NewMachineDesired
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
-          machine.architecture === 'x86' ? process.env.LAUNCH_TEMPLATE_X86 : process.env.LAUNCH_TEMPLATE_ARM,
+          machine.architecture === 'x86'
+            ? process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_X86
+            : process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_ARM,
       },
       ImageId: machine.image,
       TagSpecifications: [
@@ -174,8 +176,8 @@ async function reconcileNewMachine(state: Instance[], machine: NewMachineDesired
         {
           DeviceIndex: 0,
           AssociatePublicIpAddress: true,
-          Groups: [machine.securityGroup === 'buildkit' ? CLOUD_AGENT_SG_OPEN : CLOUD_AGENT_SG_CLOSED],
-          SubnetId: CLOUD_AGENT_SUBNET_ID,
+          Groups: [machine.securityGroup === 'buildkit' ? CLOUD_AGENT_AWS_SG_BUILDKIT : CLOUD_AGENT_AWS_SG_DEFAULT],
+          SubnetId: CLOUD_AGENT_AWS_SUBNET_ID,
         },
       ],
       MaxCount: 1,
