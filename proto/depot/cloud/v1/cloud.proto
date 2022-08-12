@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package depot.cloud.v1;
+
+import "google/protobuf/timestamp.proto";
+
+service CloudService {
+  rpc ReplaceCloudState(ReplaceCloudStateRequest) returns (ReplaceCloudStateResponse);
+  rpc PatchCloudState(PatchCloudStateRequest) returns (PatchCloudStateResponse);
+  rpc SetLastErrors(SetLastErrorsRequest) returns (SetLastErrorsResponse);
+  rpc GetDesiredState(GetDesiredStateRequest) returns (GetDesiredStateResponse);
+}
+
+// Objects
+
+message CloudState {
+  message Aws {
+    string availability_zone = 1;
+    string state = 2;
+  }
+
+  oneof state {
+    Aws aws = 1;
+  }
+}
+
+message CloudStatePatch {
+  message Aws {
+    string patch = 1;
+  }
+
+  oneof patch {
+    Aws aws = 1;
+  }
+  int32 generation = 10;
+}
+
+message ReplaceCloudStateRequest {
+  string connection_id = 1;
+  CloudState state = 2;
+}
+
+message ReplaceCloudStateResponse {
+  int32 generation = 1;
+}
+
+message PatchCloudStateRequest {
+  string connection_id = 1;
+  CloudStatePatch patch = 2;
+}
+
+message PatchCloudStateResponse {
+  int32 generation = 1;
+}
+
+message SetLastErrorsRequest {
+  string connection_id = 1;
+  repeated string errors = 2;
+}
+
+message SetLastErrorsResponse {}
+
+message GetDesiredStateRequest {
+  string connection_id = 1;
+}
+
+message GetDesiredStateResponse {
+  repeated NewMachine new_machines = 1;
+  repeated NewVolume new_volumes = 2;
+  repeated MachineChange machine_changes = 3;
+  repeated VolumeChange volume_changes = 4;
+
+  message NewMachine {
+    string id = 1;
+    string realm = 2;
+    Kind kind = 3;
+    Architecture architecture = 4;
+    string image = 5;
+    SecurityGroup security_group = 6;
+  }
+
+  message NewVolume {
+    string id = 1;
+    string realm = 2;
+    Kind kind = 3;
+    Architecture architecture = 4;
+    int32 size = 5;
+  }
+
+  message MachineChange {
+    string id = 1;
+    MachineState desired_state = 2;
+  }
+
+  message VolumeChange {
+    string id = 1;
+    VolumeState desired_state = 2;
+    optional string attached_to = 3;
+    optional string device = 4;
+  }
+
+  enum Architecture {
+    ARCHITECTURE_UNSPECIFIED = 0;
+    ARCHITECTURE_X86 = 1;
+    ARCHITECTURE_ARM = 2;
+  }
+
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_BUILDKIT = 1;
+  }
+
+  enum MachineState {
+    MACHINE_STATE_UNSPECIFIED = 0;
+    MACHINE_STATE_PENDING = 1;
+    MACHINE_STATE_RUNNING = 2;
+    MACHINE_STATE_STOPPING = 3;
+    MACHINE_STATE_STOPPED = 4;
+    MACHINE_STATE_DELETING = 5;
+    MACHINE_STATE_DELETED = 6;
+    MACHINE_STATE_ERROR = 7;
+  }
+
+  enum SecurityGroup {
+    SECURITY_GROUP_UNSPECIFIED = 0;
+    SECURITY_GROUP_DEFAULT = 1;
+    SECURITY_GROUP_BUILDKIT = 2;
+  }
+
+  enum VolumeState {
+    VOLUME_STATE_UNSPECIFIED = 0;
+    VOLUME_STATE_PENDING = 1;
+    VOLUME_STATE_AVAILABLE = 2;
+    VOLUME_STATE_ATTACHED = 3;
+    VOLUME_STATE_DELETED = 4;
+    VOLUME_STATE_ERROR = 5;
+  }
+}

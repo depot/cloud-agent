@@ -6,6 +6,7 @@
     "build": "node ./build.cjs",
     "dev": "node-dev --no-notify src/index.ts",
     "format": "prettier --write .",
+    "generate": "buf generate && prettier --write src/proto",
     "lint": "prettier --check .",
     "type-check": "tsc --noEmit"
   },
@@ -13,6 +14,8 @@
     "@aws-sdk/client-ec2": "^3.130.0",
     "dotenv": "^16.0.1",
     "fast-json-patch": "^3.1.1",
+    "protoscript": "^0.0.8",
+    "twirpscript": "file:vendor/twirpscript-0.0.61.tgz",
     "undici": "^5.6.1"
   },
   "devDependencies": {
