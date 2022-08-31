@@ -8,5 +8,5 @@ esbuild.build({
   target: 'node16',
   outfile: 'dist/index.js',
   sourcemap: true,
-  plugins: [nodeExternalsPlugin({allowList: ['node-fetch']})],
+  plugins: [nodeExternalsPlugin()],
 })

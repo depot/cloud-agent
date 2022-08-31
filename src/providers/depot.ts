@@ -1,26 +1,20 @@
 import {Instance, Volume} from '@aws-sdk/client-ec2'
 import {compare} from 'fast-json-patch'
-import * as cloud from '../proto/depot/cloud/v1/cloud.pb'
+import {GetDesiredStateResponse} from '../proto/depot/cloud/v1/cloud'
 import {StateRequest} from '../types'
-import {CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_CONNECTION_TOKEN, CLOUD_AGENT_TF_MODULE_VERSION} from '../utils/env'
-import {rpcTransport} from '../utils/rpc'
-
-const headers = {
-  Authorization: `Bearer ${CLOUD_AGENT_CONNECTION_TOKEN}`,
-  'User-Agent': `cloud-agent/${CLOUD_AGENT_TF_MODULE_VERSION}`,
-  'Content-Type': 'application/json',
-}
+import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
+import {client} from '../utils/grpc'
 
 const connectionId = CLOUD_AGENT_CONNECTION_ID
 
-export async function getDesiredState(): Promise<cloud.GetDesiredStateResponse> {
-  return await cloud.GetDesiredState({connectionId}, rpcTransport)
+export async function getDesiredState(): Promise<GetDesiredStateResponse> {
+  return await client.getDesiredState({connectionId})
 }
 
 export async function reportErrors(errors: string[]): Promise<void> {
   if (errors.length === 0) return
   try {
-    await cloud.SetLastErrors({connectionId, errors}, rpcTransport)
+    await client.setLastErrors({connectionId, errors})
   } catch (err) {
     console.error('Error reporting errors:', err)
   }
@@ -57,20 +51,31 @@ export async function reportState(state: StateRequest): Promise<void> {
   if (stateCache) {
     const diff = compare(stateCache.state, current)
     try {
-      const res = await cloud.PatchCloudState(
-        {connectionId, patch: {generation: stateCache.generation, aws: {patch: JSON.stringify(diff)}}},
-        rpcTransport,
-      )
+      const res = await client.patchCloudState({
+        connectionId,
+        patch: {
+          generation: stateCache.generation,
+          patch: {
+            $case: 'aws',
+            aws: {patch: JSON.stringify(diff)},
+          },
+        },
+      })
       stateCache.state = current
       stateCache.generation = res.generation
       return
     } catch {}
   }
 
-  const res = await cloud.ReplaceCloudState(
-    {connectionId, state: {aws: {availabilityZone: current.availabilityZone, state: JSON.stringify(current)}}},
-    rpcTransport,
-  )
+  const res = await client.replaceCloudState({
+    connectionId,
+    state: {
+      state: {
+        $case: 'aws',
+        aws: {availabilityZone: current.availabilityZone, state: JSON.stringify(current)},
+      },
+    },
+  })
   stateCache = {state: current, generation: res.generation}
 }
 
