@@ -15,7 +15,16 @@ import {
   Volume,
   VolumeState as AwsVolumeState,
 } from '@aws-sdk/client-ec2'
-import * as cloud from '../proto/depot/cloud/v1/cloud.pb'
+import {
+  GetDesiredStateResponse_Architecture,
+  GetDesiredStateResponse_MachineChange,
+  GetDesiredStateResponse_MachineState,
+  GetDesiredStateResponse_NewMachine,
+  GetDesiredStateResponse_NewVolume,
+  GetDesiredStateResponse_SecurityGroup,
+  GetDesiredStateResponse_VolumeChange,
+  GetDesiredStateResponse_VolumeState,
+} from '../proto/depot/cloud/v1/cloud'
 import {StateRequest} from '../types'
 import {promises} from '../utils'
 import {
@@ -67,7 +76,7 @@ export async function reconcile(): Promise<string[]> {
     .filter((r): r is string => r !== undefined)
 }
 
-async function reconcileNewVolume(state: Volume[], volume: cloud.GetDesiredStateResponse.NewVolume) {
+async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
   const existing = state.find((v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
   if (existing) return
 
@@ -84,8 +93,6 @@ async function reconcileNewVolume(state: Volume[], volume: cloud.GetDesiredState
             {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
             {Key: 'depot-volume-id', Value: volume.id},
             {Key: 'depot-volume-realm', Value: volume.realm},
-            {Key: 'depot-volume-kind', Value: volume.kind},
-            {Key: 'depot-volume-architecture', Value: volume.architecture},
           ],
         },
       ],
@@ -94,31 +101,35 @@ async function reconcileNewVolume(state: Volume[], volume: cloud.GetDesiredState
   )
 }
 
-function currentVolumeState(volume: Volume): cloud.GetDesiredStateResponse.VolumeState {
+function currentVolumeState(volume: Volume): GetDesiredStateResponse_VolumeState {
   const state = volume.State as AwsVolumeState
-  if (!state) return 'VOLUME_STATE_PENDING'
-  if (state === 'available') return 'VOLUME_STATE_AVAILABLE'
-  if (state === 'in-use') return 'VOLUME_STATE_ATTACHED'
-  if (state === 'deleting' || state === 'deleted') return 'VOLUME_STATE_DELETED'
-  return 'VOLUME_STATE_PENDING'
+  if (!state) return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
+  if (state === 'available') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE
+  if (state === 'in-use') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED
+  if (state === 'deleting' || state === 'deleted') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED
+  return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
 }
 
-async function reconcileVolume(state: Volume[], volume: cloud.GetDesiredStateResponse.VolumeChange) {
+async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_VolumeChange) {
   const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
 
   // Skip if already at the desired state and attached to the correct machine
-  if (currentState === volume.desiredState && volume.desiredState !== 'VOLUME_STATE_ATTACHED') return
+  if (
+    currentState === volume.desiredState &&
+    volume.desiredState !== GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED
+  )
+    return
   if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
 
   if (!current || !current.VolumeId) return
 
-  if (volume.desiredState === 'VOLUME_STATE_ATTACHED') {
-    if (currentState === 'VOLUME_STATE_PENDING') return
-    if (currentState === 'VOLUME_STATE_DELETED') return
+  if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
+    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
+    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) return
 
-    if (currentState === 'VOLUME_STATE_ATTACHED') {
+    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
       await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
     } else {
       await client.send(
@@ -127,19 +138,19 @@ async function reconcileVolume(state: Volume[], volume: cloud.GetDesiredStateRes
     }
   }
 
-  if (volume.desiredState === 'VOLUME_STATE_AVAILABLE') {
-    if (currentState === 'VOLUME_STATE_PENDING') return
-    if (currentState === 'VOLUME_STATE_DELETED') return
+  if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE) {
+    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
+    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) return
     await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId}))
   }
 
-  if (volume.desiredState === 'VOLUME_STATE_DELETED') {
-    if (currentState === 'VOLUME_STATE_PENDING') return
+  if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) {
+    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
     await client.send(new DeleteVolumeCommand({VolumeId: current.VolumeId}))
   }
 }
 
-async function reconcileNewMachine(state: Instance[], machine: cloud.GetDesiredStateResponse.NewMachine) {
+async function reconcileNewMachine(state: Instance[], machine: GetDesiredStateResponse_NewMachine) {
   const existing = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
   if (existing) return
 
@@ -147,7 +158,7 @@ async function reconcileNewMachine(state: Instance[], machine: cloud.GetDesiredS
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
-          machine.architecture === 'ARCHITECTURE_X86'
+          machine.architecture === GetDesiredStateResponse_Architecture.ARCHITECTURE_X86
             ? process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_X86
             : process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_ARM,
       },
@@ -160,8 +171,6 @@ async function reconcileNewMachine(state: Instance[], machine: cloud.GetDesiredS
             {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
             {Key: 'depot-machine-id', Value: machine.id},
             {Key: 'depot-machine-realm', Value: machine.realm},
-            {Key: 'depot-machine-kind', Value: machine.kind},
-            {Key: 'depot-machine-architecture', Value: machine.architecture},
           ],
         },
       ],
@@ -170,7 +179,7 @@ async function reconcileNewMachine(state: Instance[], machine: cloud.GetDesiredS
           DeviceIndex: 0,
           AssociatePublicIpAddress: true,
           Groups: [
-            machine.securityGroup === 'SECURITY_GROUP_BUILDKIT'
+            machine.securityGroup === GetDesiredStateResponse_SecurityGroup.SECURITY_GROUP_BUILDKIT
               ? CLOUD_AGENT_AWS_SG_BUILDKIT
               : CLOUD_AGENT_AWS_SG_DEFAULT,
           ],
@@ -183,17 +192,17 @@ async function reconcileNewMachine(state: Instance[], machine: cloud.GetDesiredS
   )
 }
 
-function currentMachineState(instance: Instance): cloud.GetDesiredStateResponse.MachineState {
+function currentMachineState(instance: Instance): GetDesiredStateResponse_MachineState {
   const instanceState = (instance.State?.Name ?? 'unknown') as InstanceStateName | 'unknown'
-  if (instanceState === 'running') return 'MACHINE_STATE_RUNNING'
-  if (instanceState === 'stopping') return 'MACHINE_STATE_STOPPING'
-  if (instanceState === 'stopped') return 'MACHINE_STATE_STOPPED'
-  if (instanceState === 'shutting-down') return 'MACHINE_STATE_DELETING'
-  if (instanceState === 'terminated') return 'MACHINE_STATE_DELETED'
-  return 'MACHINE_STATE_PENDING'
+  if (instanceState === 'running') return GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING
+  if (instanceState === 'stopping') return GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPING
+  if (instanceState === 'stopped') return GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED
+  if (instanceState === 'shutting-down') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETING
+  if (instanceState === 'terminated') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED
+  return GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING
 }
 
-async function reconcileMachine(state: Instance[], machine: cloud.GetDesiredStateResponse.MachineChange) {
+async function reconcileMachine(state: Instance[], machine: GetDesiredStateResponse_MachineChange) {
   const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
   const currentState = current ? currentMachineState(current) : 'unknown'
 
@@ -202,20 +211,20 @@ async function reconcileMachine(state: Instance[], machine: cloud.GetDesiredStat
 
   if (!current || !current.InstanceId) return
 
-  if (machine.desiredState === 'MACHINE_STATE_RUNNING') {
-    if (currentState === 'MACHINE_STATE_PENDING') return
-    if (currentState === 'MACHINE_STATE_DELETED') return
+  if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) {
+    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
     await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
 
-  if (machine.desiredState === 'MACHINE_STATE_STOPPED') {
-    if (currentState === 'MACHINE_STATE_PENDING') return
-    if (currentState === 'MACHINE_STATE_DELETED') return
+  if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED) {
+    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
     await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
 
-  if (machine.desiredState === 'MACHINE_STATE_DELETED') {
-    if (currentState === 'MACHINE_STATE_PENDING') return
+  if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) {
+    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
     await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
 }
