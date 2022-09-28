@@ -19,3 +19,6 @@ function requiredEnv(name: string): string {
   if (!value) throw new Error(`Missing required environment variable ${name}`)
   return value
 }
+
+export const FLY_API_TOKEN = process.env.FLY_API_TOKEN
+export const FLY_APP_ID = process.env.FLY_APP_ID
