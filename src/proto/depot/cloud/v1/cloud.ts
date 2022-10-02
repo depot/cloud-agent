@@ -302,6 +302,7 @@ export interface GetDesiredStateResponse_NewMachine {
   architecture: GetDesiredStateResponse_Architecture
   image: string
   securityGroup: GetDesiredStateResponse_SecurityGroup
+  volumeId?: string | undefined
 }
 
 export interface GetDesiredStateResponse_NewVolume {
@@ -1006,7 +1007,7 @@ export const GetDesiredStateResponse = {
 }
 
 function createBaseGetDesiredStateResponse_NewMachine(): GetDesiredStateResponse_NewMachine {
-  return {id: '', realm: '', kind: 0, architecture: 0, image: '', securityGroup: 0}
+  return {id: '', realm: '', kind: 0, architecture: 0, image: '', securityGroup: 0, volumeId: undefined}
 }
 
 export const GetDesiredStateResponse_NewMachine = {
@@ -1028,6 +1029,9 @@ export const GetDesiredStateResponse_NewMachine = {
     }
     if (message.securityGroup !== 0) {
       writer.uint32(48).int32(message.securityGroup)
+    }
+    if (message.volumeId !== undefined) {
+      writer.uint32(58).string(message.volumeId)
     }
     return writer
   },
@@ -1057,6 +1061,9 @@ export const GetDesiredStateResponse_NewMachine = {
         case 6:
           message.securityGroup = reader.int32() as any
           break
+        case 7:
+          message.volumeId = reader.string()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -1075,6 +1082,7 @@ export const GetDesiredStateResponse_NewMachine = {
       securityGroup: isSet(object.securityGroup)
         ? getDesiredStateResponse_SecurityGroupFromJSON(object.securityGroup)
         : 0,
+      volumeId: isSet(object.volumeId) ? String(object.volumeId) : undefined,
     }
   },
 
@@ -1088,6 +1096,7 @@ export const GetDesiredStateResponse_NewMachine = {
     message.image !== undefined && (obj.image = message.image)
     message.securityGroup !== undefined &&
       (obj.securityGroup = getDesiredStateResponse_SecurityGroupToJSON(message.securityGroup))
+    message.volumeId !== undefined && (obj.volumeId = message.volumeId)
     return obj
   },
 
@@ -1099,6 +1108,7 @@ export const GetDesiredStateResponse_NewMachine = {
     message.architecture = object.architecture ?? 0
     message.image = object.image ?? ''
     message.securityGroup = object.securityGroup ?? 0
+    message.volumeId = object.volumeId ?? undefined
     return message
   },
 }

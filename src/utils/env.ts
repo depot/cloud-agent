@@ -21,4 +21,6 @@ function requiredEnv(name: string): string {
 }
 
 export const FLY_API_TOKEN = process.env.FLY_API_TOKEN
-export const FLY_APP_ID = process.env.FLY_APP_ID
+export const FLY_APP_ID = process.env.FLY_APP_ID ?? 'unknown'
+export const FLY_ORG_ID = process.env.FLY_ORG_ID ?? 'unknown'
+export const FLY_REGION = process.env.FLY_REGION ?? 'unknown'

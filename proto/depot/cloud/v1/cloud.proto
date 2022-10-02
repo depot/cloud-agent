@@ -77,6 +77,7 @@ message GetDesiredStateResponse {
     Architecture architecture = 4;
     string image = 5;
     SecurityGroup security_group = 6;
+    optional string volume_id = 7;
   }
 
   message NewVolume {

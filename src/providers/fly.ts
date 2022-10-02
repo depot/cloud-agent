@@ -1,63 +1,23 @@
 import {
-  AttachVolumeCommand,
-  CreateVolumeCommand,
-  DeleteVolumeCommand,
-  DescribeInstancesCommand,
-  DescribeVolumesCommand,
-  DetachVolumeCommand,
-  EC2Client,
-  Instance,
-  InstanceStateName,
-  RunInstancesCommand,
-  StartInstancesCommand,
-  StopInstancesCommand,
-  TerminateInstancesCommand,
-  Volume,
-  VolumeState as AwsVolumeState,
-} from '@aws-sdk/client-ec2'
-import {
-  GetDesiredStateResponse_Architecture,
   GetDesiredStateResponse_MachineChange,
   GetDesiredStateResponse_MachineState,
   GetDesiredStateResponse_NewMachine,
   GetDesiredStateResponse_NewVolume,
-  GetDesiredStateResponse_SecurityGroup,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
 } from '../proto/depot/cloud/v1/cloud'
 import {StateRequest} from '../types'
 import {promises} from '../utils'
-import {
-  CLOUD_AGENT_AWS_SG_BUILDKIT,
-  CLOUD_AGENT_AWS_SG_DEFAULT,
-  CLOUD_AGENT_AWS_SUBNET_ID,
-  CLOUD_AGENT_CONNECTION_ID,
-} from '../utils/env'
+import {FLY_APP_ID, FLY_ORG_ID, FLY_REGION} from '../utils/env'
+import * as fly from '../utils/flyClient'
 import {getDesiredState, reportState} from './depot'
-
-const client = new EC2Client({})
-
-/** Filter to select only Depot-managed resources */
-const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION_ID]}
-
-/** Queries for all managed instances */
-export async function getInstancesState() {
-  const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter]}))
-  return res.Reservations?.flatMap((r) => r.Instances || []) || []
-}
-
-/** Queries for all managed volumes */
-export async function getVolumesState() {
-  const res = await client.send(new DescribeVolumesCommand({Filters: [tagFilter]}))
-  return res.Volumes || []
-}
 
 export async function reconcile(): Promise<string[]> {
   const state: StateRequest = await promises({
-    cloud: 'aws',
-    availabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE ?? 'unknown',
-    instances: getInstancesState(),
-    volumes: getVolumesState(),
+    cloud: 'fly',
+    region: FLY_REGION,
+    machines: fly.listMachines(),
+    volumes: fly.listVolumes(),
     errors: [],
   })
 
@@ -67,8 +27,8 @@ export async function reconcile(): Promise<string[]> {
   const results = await Promise.allSettled([
     ...nextState.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
     ...nextState.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume)),
-    ...nextState.newMachines.map((instance) => reconcileNewMachine(state.instances, instance)),
-    ...nextState.machineChanges.map((instance) => reconcileMachine(state.instances, instance)),
+    ...nextState.newMachines.map((machine) => reconcileNewMachine(state.machines, machine, state.volumes)),
+    ...nextState.machineChanges.map((machine) => reconcileMachine(state.machines, machine)),
   ])
 
   return results
@@ -76,44 +36,26 @@ export async function reconcile(): Promise<string[]> {
     .filter((r): r is string => r !== undefined)
 }
 
-async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
-  const existing = state.find((v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
+async function reconcileNewVolume(state: fly.Volume[], volume: GetDesiredStateResponse_NewVolume) {
+  const existing = state.find((v) => v.name === volume.id)
   if (existing) return
-
-  await client.send(
-    new CreateVolumeCommand({
-      AvailabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE,
-      Encrypted: true,
-      Size: volume.size,
-      TagSpecifications: [
-        {
-          ResourceType: 'volume',
-          Tags: [
-            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${volume.id}`},
-            {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
-            {Key: 'depot-volume-id', Value: volume.id},
-            {Key: 'depot-volume-realm', Value: volume.realm},
-          ],
-        },
-      ],
-      VolumeType: 'gp3',
-    }),
-  )
+  await fly.createVolume({region: FLY_REGION, name: volume.id, sizeGb: volume.size, encrypted: true})
 }
 
-function currentVolumeState(volume: Volume): GetDesiredStateResponse_VolumeState {
-  const state = volume.State as AwsVolumeState
+function currentVolumeState(volume: fly.Volume): GetDesiredStateResponse_VolumeState {
+  const state = volume.state
   if (!state) return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
-  if (state === 'available') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE
-  if (state === 'in-use') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED
-  if (state === 'deleting' || state === 'deleted') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED
+  if (state === 'created' && !volume.attachedMachine) return GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE
+  if (state === 'created' && volume.attachedMachine) return GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED
+  if (state === 'deleted') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED
+  console.log(`Unknown volume state: ${state}`)
   return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
 }
 
-async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_VolumeChange) {
-  const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
+async function reconcileVolume(state: fly.Volume[], volume: GetDesiredStateResponse_VolumeChange) {
+  const current = state.find((v) => v.name === volume.id)
   const currentState = current ? currentVolumeState(current) : 'unknown'
-  const currentAttachment = current?.Attachments?.[0]?.InstanceId
+  const currentAttachment = current?.attachedMachine?.name
 
   // Skip if already at the desired state and attached to the correct machine
   if (
@@ -123,108 +65,85 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
     return
   if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
 
-  if (!current || !current.VolumeId) return
+  if (!current) return
 
   if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
     if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
     if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) return
-
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
-      await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
-    } else {
-      await client.send(
-        new AttachVolumeCommand({Device: volume.device!, InstanceId: volume.attachedTo!, VolumeId: current.VolumeId}),
-      )
-    }
+    // Volumes in Fly are attached to a machine via the machine's metadata, nothing to do here
   }
 
   if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE) {
     if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
     if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) return
-    await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId}))
+    // Volumes in Fly are attached to a machine via the machine's metadata, nothing to do here
   }
 
   if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) {
     if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
-    await client.send(new DeleteVolumeCommand({VolumeId: current.VolumeId}))
+    await fly.deleteVolume(volume.id)
   }
 }
 
-async function reconcileNewMachine(state: Instance[], machine: GetDesiredStateResponse_NewMachine) {
-  const existing = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
+async function reconcileNewMachine(
+  state: fly.V1Machine[],
+  machine: GetDesiredStateResponse_NewMachine,
+  volumes: fly.Volume[],
+) {
+  const existing = state.find((m) => m.name === machine.id)
   if (existing) return
 
-  await client.send(
-    new RunInstancesCommand({
-      LaunchTemplate: {
-        LaunchTemplateId:
-          machine.architecture === GetDesiredStateResponse_Architecture.ARCHITECTURE_X86
-            ? process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_X86
-            : process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_ARM,
-      },
-      ImageId: machine.image,
-      TagSpecifications: [
-        {
-          ResourceType: 'instance',
-          Tags: [
-            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${machine.id}`},
-            {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
-            {Key: 'depot-machine-id', Value: machine.id},
-            {Key: 'depot-machine-realm', Value: machine.realm},
-          ],
-        },
-      ],
-      NetworkInterfaces: [
-        {
-          DeviceIndex: 0,
-          AssociatePublicIpAddress: true,
-          Groups: [
-            machine.securityGroup === GetDesiredStateResponse_SecurityGroup.SECURITY_GROUP_BUILDKIT
-              ? CLOUD_AGENT_AWS_SG_BUILDKIT
-              : CLOUD_AGENT_AWS_SG_DEFAULT,
-          ],
-          SubnetId: CLOUD_AGENT_AWS_SUBNET_ID,
-        },
-      ],
-      MaxCount: 1,
-      MinCount: 1,
-    }),
-  )
+  const attachedVolume = volumes.find((v) => v.name === machine.volumeId)
+  if (!attachedVolume) return
+
+  const flyMachine = await fly.launchMachine({
+    appId: FLY_APP_ID,
+    organizationId: FLY_ORG_ID,
+    region: FLY_REGION,
+    config: {
+      image: machine.image,
+      guest: {cpu_kind: 'shared', cpus: 4, memory_mb: 8 * 1024},
+      mounts: [{encrypted: false, path: '/var/lib/buildkit', size_gb: 50, volume: attachedVolume.id}],
+    },
+  })
+  if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
 }
 
-function currentMachineState(instance: Instance): GetDesiredStateResponse_MachineState {
-  const instanceState = (instance.State?.Name ?? 'unknown') as InstanceStateName | 'unknown'
-  if (instanceState === 'running') return GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING
+function currentMachineState(machine: fly.V1Machine): GetDesiredStateResponse_MachineState {
+  const instanceState = machine.state
+  if (instanceState === 'started') return GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING
   if (instanceState === 'stopping') return GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPING
   if (instanceState === 'stopped') return GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED
-  if (instanceState === 'shutting-down') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETING
-  if (instanceState === 'terminated') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED
+  if (instanceState === 'destroying') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETING
+  if (instanceState === 'destroyed') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED
   return GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING
 }
 
-async function reconcileMachine(state: Instance[], machine: GetDesiredStateResponse_MachineChange) {
-  const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
+const timeoutSeconds = 30
+
+async function reconcileMachine(state: fly.V1Machine[], machine: GetDesiredStateResponse_MachineChange) {
+  const current = state.find((m) => m.name === machine.id)
   const currentState = current ? currentMachineState(current) : 'unknown'
 
   // Skip if already at the desired state
   if (currentState === machine.desiredState) return
 
-  if (!current || !current.InstanceId) return
+  if (!current) return
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) {
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
-    await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
+    await fly.startMachine(current.id)
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED) {
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
-    await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
+    await fly.stopMachine({id: current.id, timeout: timeoutSeconds * 1000000000})
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) {
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
-    await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
+    await fly.destroyMachine(current.id)
   }
 }

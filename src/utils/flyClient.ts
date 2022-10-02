@@ -4,7 +4,7 @@ import {FLY_API_TOKEN, FLY_APP_ID} from './env'
 
 export async function listMachines() {
   console.log('listMachines Called')
-  const res = await rest<V1Machine>('GET', '')
+  const res = await rest<V1Machine[]>('GET', '')
   return res
 }
 
@@ -152,22 +152,39 @@ export type MachineState =
 
 // Volumes
 
-export interface GetVolumeResponse {
+export interface Volume {
+  id: string
+  name: string
+  sizeGb: number
+  region: string
+  encrypted: boolean
+  state: 'created' | 'deleted'
+  createdAt: string
+  attachedMachine?: {id: string; name: string}
+}
+
+export interface ListVolumeResponse {
   app?: {
-    volume?: {
-      id: string
-      name: string
-      sizeGb: number
-      region: string
-      encrypted: boolean
-      state: string
-      createdAt: string
+    volumes?: {
+      nodes?: Volume[]
     } | null
   } | null
 }
 
+export async function listVolumes() {
+  const res = await graphql<ListVolumeResponse>('listVolumes', listVolumesQuery, {appName: FLY_APP_ID})
+  return res.app?.volumes?.nodes ?? []
+}
+
+export interface GetVolumeResponse {
+  app?: {
+    volume?: Volume | null
+  } | null
+}
+
 export async function getVolume(id: string) {
-  return await graphql<GetVolumeResponse>('getVolume', getVolumeQuery, {appName: FLY_APP_ID, id})
+  const res = await graphql<GetVolumeResponse>('getVolume', getVolumeQuery, {appName: FLY_APP_ID, id})
+  return res.app?.volume ?? null
 }
 
 export interface CreateVolumeOptions {
@@ -180,15 +197,7 @@ export interface CreateVolumeOptions {
 export interface CreateVolumeResponse {
   createVolume?: {
     app: {name: string}
-    volume: {
-      id: string
-      name: string
-      sizeGb: number
-      region: string
-      encrypted: boolean
-      state: string
-      createdAt: string
-    }
+    volume: Volume
   } | null
 }
 
@@ -220,6 +229,28 @@ async function graphql<T>(operationName: string, query: string, variables: objec
   return payload.data
 }
 
+const listVolumesQuery = `
+query listVolumes($appName: String!) {
+  app(name: $appName) {
+    volumes {
+      nodes {
+        id
+        name
+        sizeGb
+        region
+        encrypted
+        state
+        createdAt
+        attachedMachine {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+`
+
 const getVolumeQuery = `
 query getVolume($appName: String!, $id: String!) {
   app(name: $appName) {
@@ -231,6 +262,10 @@ query getVolume($appName: String!, $id: String!) {
       encrypted
       state
       createdAt
+      attachedMachine {
+        id
+        name
+      }
     }
   }
 }
@@ -247,6 +282,10 @@ mutation createVolume($input: CreateVolumeInput!) {
       encrypted
       state
       createdAt
+      attachedMachine {
+        id
+        name
+      }
     }
   }
 }
