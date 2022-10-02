@@ -34,6 +34,7 @@ message CloudStatePatch {
   message Aws {
     string patch = 1;
   }
+
   message Fly {
     string patch = 1;
   }
