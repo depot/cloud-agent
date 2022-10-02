@@ -12,7 +12,7 @@ function requiredEnv(name: string): string {
 
 export const CLOUD_PROVIDER = requiredEnv('CLOUD_AGENT_CLOUD_PROVIDER') as 'aws' | 'fly'
 if (CLOUD_PROVIDER !== 'aws' && CLOUD_PROVIDER !== 'fly') {
-  throw new Error(`Invalid CLOUD_AGENT_CLOUD_PROVIDER: ${CLOUD_PROVIDER}`)
+  throw new Error(`Invalid CLOUD_AGENT_CLOUD_PROVIDER: ${CLOUD_PROVIDER}. Should be 'aws' or 'fly'.`)
 }
 
 export const TF_MODULE_VERSION = process.env.CLOUD_AGENT_TF_MODULE_VERSION ?? 'unknown'
