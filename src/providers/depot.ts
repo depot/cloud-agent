@@ -1,8 +1,9 @@
 import {Instance, Volume} from '@aws-sdk/client-ec2'
 import {compare} from 'fast-json-patch'
 import {GetDesiredStateResponse} from '../proto/depot/cloud/v1/cloud'
-import {StateRequest} from '../types'
+import {AWSStateRequest, FlyStateRequest, StateRequest} from '../types'
 import {CONNECTION_ID} from '../utils/env'
+import * as fly from '../utils/flyClient'
 import {client} from '../utils/grpc'
 
 const connectionId = CONNECTION_ID
@@ -24,29 +25,51 @@ interface StateCache {
   generation: number
   state: {
     cloud: StateRequest['cloud']
-    availabilityZone: StateRequest['availabilityZone']
-    instances: Record<string, Instance>
-    volumes: Record<string, Volume>
+    availabilityZone: AWSStateRequest['availabilityZone']
+    region: FlyStateRequest['region']
+    instances: Record<string, object>
+    machines: Record<string, object>
+    volumes: Record<string, object>
   }
 }
 
 let stateCache: StateCache | null = null
 
 export async function reportState(state: StateRequest): Promise<void> {
-  const current: StateCache['state'] = toPlainObject({
-    cloud: state.cloud,
-    availabilityZone: state.availabilityZone,
-    instances: state.instances.reduce((acc, instance) => {
-      if (!instance.InstanceId) return acc
-      acc[instance.InstanceId] = instance
-      return acc
-    }, {} as Record<string, Instance>),
-    volumes: state.volumes.reduce((acc, volume) => {
-      if (!volume.VolumeId) return acc
-      acc[volume.VolumeId] = volume
-      return acc
-    }, {} as Record<string, Volume>),
-  })
+  const current: StateCache['state'] =
+    state.cloud === 'aws'
+      ? toPlainObject({
+          cloud: state.cloud,
+          availabilityZone: state.availabilityZone,
+          region: '',
+          instances: state.instances.reduce((acc, instance) => {
+            if (!instance.InstanceId) return acc
+            acc[instance.InstanceId] = instance
+            return acc
+          }, {} as Record<string, Instance>),
+          machines: {},
+          volumes: state.volumes.reduce((acc, volume) => {
+            if (!volume.VolumeId) return acc
+            acc[volume.VolumeId] = volume
+            return acc
+          }, {} as Record<string, Volume>),
+        })
+      : toPlainObject({
+          cloud: state.cloud,
+          availabilityZone: '',
+          region: state.region,
+          instances: {},
+          machines: state.machines.reduce((acc, machine) => {
+            if (!machine.id) return acc
+            acc[machine.id] = machine
+            return acc
+          }, {} as Record<string, fly.V1Machine>),
+          volumes: state.volumes.reduce((acc, volume) => {
+            if (!volume.id) return acc
+            acc[volume.id] = volume
+            return acc
+          }, {} as Record<string, fly.Volume>),
+        })
 
   if (stateCache) {
     const diff = compare(stateCache.state, current)
@@ -55,10 +78,16 @@ export async function reportState(state: StateRequest): Promise<void> {
         connectionId,
         patch: {
           generation: stateCache.generation,
-          patch: {
-            $case: 'aws',
-            aws: {patch: JSON.stringify(diff)},
-          },
+          patch:
+            state.cloud === 'aws'
+              ? {
+                  $case: state.cloud,
+                  aws: {patch: JSON.stringify(diff)},
+                }
+              : {
+                  $case: state.cloud,
+                  fly: {patch: JSON.stringify(diff)},
+                },
         },
       })
       stateCache.state = current
@@ -70,10 +99,16 @@ export async function reportState(state: StateRequest): Promise<void> {
   const res = await client.replaceCloudState({
     connectionId,
     state: {
-      state: {
-        $case: 'aws',
-        aws: {availabilityZone: current.availabilityZone, state: JSON.stringify(current)},
-      },
+      state:
+        state.cloud === 'aws'
+          ? {
+              $case: state.cloud,
+              aws: {availabilityZone: current.availabilityZone, state: JSON.stringify(current)},
+            }
+          : {
+              $case: state.cloud,
+              fly: {region: current.region, state: JSON.stringify(current)},
+            },
     },
   })
   stateCache = {state: current, generation: res.generation}

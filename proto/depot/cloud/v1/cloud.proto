@@ -19,8 +19,14 @@ message CloudState {
     string state = 2;
   }
 
+  message Fly {
+    string region = 1;
+    string state = 2;
+  }
+
   oneof state {
     Aws aws = 1;
+    Fly fly = 2;
   }
 }
 
@@ -28,9 +34,13 @@ message CloudStatePatch {
   message Aws {
     string patch = 1;
   }
+  message Fly {
+    string patch = 1;
+  }
 
   oneof patch {
     Aws aws = 1;
+    Fly fly = 2;
   }
   int32 generation = 10;
 }

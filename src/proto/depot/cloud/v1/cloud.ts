@@ -5,7 +5,7 @@ import _m0 from 'protobufjs/minimal'
 export const protobufPackage = 'depot.cloud.v1'
 
 export interface CloudState {
-  state?: {$case: 'aws'; aws: CloudState_Aws}
+  state?: {$case: 'aws'; aws: CloudState_Aws} | {$case: 'fly'; fly: CloudState_Fly}
 }
 
 export interface CloudState_Aws {
@@ -13,12 +13,21 @@ export interface CloudState_Aws {
   state: string
 }
 
+export interface CloudState_Fly {
+  region: string
+  state: string
+}
+
 export interface CloudStatePatch {
-  patch?: {$case: 'aws'; aws: CloudStatePatch_Aws}
+  patch?: {$case: 'aws'; aws: CloudStatePatch_Aws} | {$case: 'fly'; fly: CloudStatePatch_Fly}
   generation: number
 }
 
 export interface CloudStatePatch_Aws {
+  patch: string
+}
+
+export interface CloudStatePatch_Fly {
   patch: string
 }
 
@@ -334,6 +343,9 @@ export const CloudState = {
     if (message.state?.$case === 'aws') {
       CloudState_Aws.encode(message.state.aws, writer.uint32(10).fork()).ldelim()
     }
+    if (message.state?.$case === 'fly') {
+      CloudState_Fly.encode(message.state.fly, writer.uint32(18).fork()).ldelim()
+    }
     return writer
   },
 
@@ -347,6 +359,9 @@ export const CloudState = {
         case 1:
           message.state = {$case: 'aws', aws: CloudState_Aws.decode(reader, reader.uint32())}
           break
+        case 2:
+          message.state = {$case: 'fly', fly: CloudState_Fly.decode(reader, reader.uint32())}
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -356,13 +371,21 @@ export const CloudState = {
   },
 
   fromJSON(object: any): CloudState {
-    return {state: isSet(object.aws) ? {$case: 'aws', aws: CloudState_Aws.fromJSON(object.aws)} : undefined}
+    return {
+      state: isSet(object.aws)
+        ? {$case: 'aws', aws: CloudState_Aws.fromJSON(object.aws)}
+        : isSet(object.fly)
+        ? {$case: 'fly', fly: CloudState_Fly.fromJSON(object.fly)}
+        : undefined,
+    }
   },
 
   toJSON(message: CloudState): unknown {
     const obj: any = {}
     message.state?.$case === 'aws' &&
       (obj.aws = message.state?.aws ? CloudState_Aws.toJSON(message.state?.aws) : undefined)
+    message.state?.$case === 'fly' &&
+      (obj.fly = message.state?.fly ? CloudState_Fly.toJSON(message.state?.fly) : undefined)
     return obj
   },
 
@@ -370,6 +393,9 @@ export const CloudState = {
     const message = createBaseCloudState()
     if (object.state?.$case === 'aws' && object.state?.aws !== undefined && object.state?.aws !== null) {
       message.state = {$case: 'aws', aws: CloudState_Aws.fromPartial(object.state.aws)}
+    }
+    if (object.state?.$case === 'fly' && object.state?.fly !== undefined && object.state?.fly !== null) {
+      message.state = {$case: 'fly', fly: CloudState_Fly.fromPartial(object.state.fly)}
     }
     return message
   },
@@ -433,6 +459,64 @@ export const CloudState_Aws = {
   },
 }
 
+function createBaseCloudState_Fly(): CloudState_Fly {
+  return {region: '', state: ''}
+}
+
+export const CloudState_Fly = {
+  encode(message: CloudState_Fly, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.region !== '') {
+      writer.uint32(10).string(message.region)
+    }
+    if (message.state !== '') {
+      writer.uint32(18).string(message.state)
+    }
+    return writer
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CloudState_Fly {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = createBaseCloudState_Fly()
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.region = reader.string()
+          break
+        case 2:
+          message.state = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): CloudState_Fly {
+    return {
+      region: isSet(object.region) ? String(object.region) : '',
+      state: isSet(object.state) ? String(object.state) : '',
+    }
+  },
+
+  toJSON(message: CloudState_Fly): unknown {
+    const obj: any = {}
+    message.region !== undefined && (obj.region = message.region)
+    message.state !== undefined && (obj.state = message.state)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<CloudState_Fly>): CloudState_Fly {
+    const message = createBaseCloudState_Fly()
+    message.region = object.region ?? ''
+    message.state = object.state ?? ''
+    return message
+  },
+}
+
 function createBaseCloudStatePatch(): CloudStatePatch {
   return {patch: undefined, generation: 0}
 }
@@ -441,6 +525,9 @@ export const CloudStatePatch = {
   encode(message: CloudStatePatch, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.patch?.$case === 'aws') {
       CloudStatePatch_Aws.encode(message.patch.aws, writer.uint32(10).fork()).ldelim()
+    }
+    if (message.patch?.$case === 'fly') {
+      CloudStatePatch_Fly.encode(message.patch.fly, writer.uint32(18).fork()).ldelim()
     }
     if (message.generation !== 0) {
       writer.uint32(80).int32(message.generation)
@@ -458,6 +545,9 @@ export const CloudStatePatch = {
         case 1:
           message.patch = {$case: 'aws', aws: CloudStatePatch_Aws.decode(reader, reader.uint32())}
           break
+        case 2:
+          message.patch = {$case: 'fly', fly: CloudStatePatch_Fly.decode(reader, reader.uint32())}
+          break
         case 10:
           message.generation = reader.int32()
           break
@@ -471,7 +561,11 @@ export const CloudStatePatch = {
 
   fromJSON(object: any): CloudStatePatch {
     return {
-      patch: isSet(object.aws) ? {$case: 'aws', aws: CloudStatePatch_Aws.fromJSON(object.aws)} : undefined,
+      patch: isSet(object.aws)
+        ? {$case: 'aws', aws: CloudStatePatch_Aws.fromJSON(object.aws)}
+        : isSet(object.fly)
+        ? {$case: 'fly', fly: CloudStatePatch_Fly.fromJSON(object.fly)}
+        : undefined,
       generation: isSet(object.generation) ? Number(object.generation) : 0,
     }
   },
@@ -480,6 +574,8 @@ export const CloudStatePatch = {
     const obj: any = {}
     message.patch?.$case === 'aws' &&
       (obj.aws = message.patch?.aws ? CloudStatePatch_Aws.toJSON(message.patch?.aws) : undefined)
+    message.patch?.$case === 'fly' &&
+      (obj.fly = message.patch?.fly ? CloudStatePatch_Fly.toJSON(message.patch?.fly) : undefined)
     message.generation !== undefined && (obj.generation = Math.round(message.generation))
     return obj
   },
@@ -488,6 +584,9 @@ export const CloudStatePatch = {
     const message = createBaseCloudStatePatch()
     if (object.patch?.$case === 'aws' && object.patch?.aws !== undefined && object.patch?.aws !== null) {
       message.patch = {$case: 'aws', aws: CloudStatePatch_Aws.fromPartial(object.patch.aws)}
+    }
+    if (object.patch?.$case === 'fly' && object.patch?.fly !== undefined && object.patch?.fly !== null) {
+      message.patch = {$case: 'fly', fly: CloudStatePatch_Fly.fromPartial(object.patch.fly)}
     }
     message.generation = object.generation ?? 0
     return message
@@ -536,6 +635,53 @@ export const CloudStatePatch_Aws = {
 
   fromPartial(object: DeepPartial<CloudStatePatch_Aws>): CloudStatePatch_Aws {
     const message = createBaseCloudStatePatch_Aws()
+    message.patch = object.patch ?? ''
+    return message
+  },
+}
+
+function createBaseCloudStatePatch_Fly(): CloudStatePatch_Fly {
+  return {patch: ''}
+}
+
+export const CloudStatePatch_Fly = {
+  encode(message: CloudStatePatch_Fly, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.patch !== '') {
+      writer.uint32(10).string(message.patch)
+    }
+    return writer
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): CloudStatePatch_Fly {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = createBaseCloudStatePatch_Fly()
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.patch = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): CloudStatePatch_Fly {
+    return {patch: isSet(object.patch) ? String(object.patch) : ''}
+  },
+
+  toJSON(message: CloudStatePatch_Fly): unknown {
+    const obj: any = {}
+    message.patch !== undefined && (obj.patch = message.patch)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<CloudStatePatch_Fly>): CloudStatePatch_Fly {
+    const message = createBaseCloudStatePatch_Fly()
     message.patch = object.patch ?? ''
     return message
   },
