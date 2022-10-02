@@ -28,17 +28,20 @@ import {
 import {StateRequest} from '../types'
 import {promises} from '../utils'
 import {
-  CLOUD_AGENT_AWS_SG_BUILDKIT,
-  CLOUD_AGENT_AWS_SG_DEFAULT,
-  CLOUD_AGENT_AWS_SUBNET_ID,
-  CLOUD_AGENT_CONNECTION_ID,
+  AWS_AVAILABILITY_ZONE,
+  AWS_LAUNCH_TEMPLATE_ARM,
+  AWS_LAUNCH_TEMPLATE_X86,
+  AWS_SG_BUILDKIT,
+  AWS_SG_DEFAULT,
+  AWS_SUBNET_ID,
+  CONNECTION_ID,
 } from '../utils/env'
 import {getDesiredState, reportState} from './depot'
 
 const client = new EC2Client({})
 
 /** Filter to select only Depot-managed resources */
-const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION_ID]}
+const tagFilter = {Name: 'tag:depot-connection', Values: [CONNECTION_ID]}
 
 /** Queries for all managed instances */
 export async function getInstancesState() {
@@ -55,7 +58,7 @@ export async function getVolumesState() {
 export async function reconcile(): Promise<string[]> {
   const state: StateRequest = await promises({
     cloud: 'aws',
-    availabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE ?? 'unknown',
+    availabilityZone: AWS_AVAILABILITY_ZONE,
     instances: getInstancesState(),
     volumes: getVolumesState(),
     errors: [],
@@ -82,15 +85,15 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
 
   await client.send(
     new CreateVolumeCommand({
-      AvailabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE,
+      AvailabilityZone: AWS_AVAILABILITY_ZONE,
       Encrypted: true,
       Size: volume.size,
       TagSpecifications: [
         {
           ResourceType: 'volume',
           Tags: [
-            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${volume.id}`},
-            {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
+            {Key: 'Name', Value: `depot-connection-${CONNECTION_ID}-${volume.id}`},
+            {Key: 'depot-connection', Value: CONNECTION_ID},
             {Key: 'depot-volume-id', Value: volume.id},
             {Key: 'depot-volume-realm', Value: volume.realm},
           ],
@@ -159,16 +162,16 @@ async function reconcileNewMachine(state: Instance[], machine: GetDesiredStateRe
       LaunchTemplate: {
         LaunchTemplateId:
           machine.architecture === GetDesiredStateResponse_Architecture.ARCHITECTURE_X86
-            ? process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_X86
-            : process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_ARM,
+            ? AWS_LAUNCH_TEMPLATE_X86
+            : AWS_LAUNCH_TEMPLATE_ARM,
       },
       ImageId: machine.image,
       TagSpecifications: [
         {
           ResourceType: 'instance',
           Tags: [
-            {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${machine.id}`},
-            {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
+            {Key: 'Name', Value: `depot-connection-${CONNECTION_ID}-${machine.id}`},
+            {Key: 'depot-connection', Value: CONNECTION_ID},
             {Key: 'depot-machine-id', Value: machine.id},
             {Key: 'depot-machine-realm', Value: machine.realm},
           ],
@@ -180,10 +183,10 @@ async function reconcileNewMachine(state: Instance[], machine: GetDesiredStateRe
           AssociatePublicIpAddress: true,
           Groups: [
             machine.securityGroup === GetDesiredStateResponse_SecurityGroup.SECURITY_GROUP_BUILDKIT
-              ? CLOUD_AGENT_AWS_SG_BUILDKIT
-              : CLOUD_AGENT_AWS_SG_DEFAULT,
+              ? AWS_SG_BUILDKIT
+              : AWS_SG_DEFAULT,
           ],
-          SubnetId: CLOUD_AGENT_AWS_SUBNET_ID,
+          SubnetId: AWS_SUBNET_ID,
         },
       ],
       MaxCount: 1,

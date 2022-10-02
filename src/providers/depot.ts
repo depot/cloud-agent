@@ -2,10 +2,10 @@ import {Instance, Volume} from '@aws-sdk/client-ec2'
 import {compare} from 'fast-json-patch'
 import {GetDesiredStateResponse} from '../proto/depot/cloud/v1/cloud'
 import {StateRequest} from '../types'
-import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
+import {CONNECTION_ID} from '../utils/env'
 import {client} from '../utils/grpc'
 
-const connectionId = CLOUD_AGENT_CONNECTION_ID
+const connectionId = CONNECTION_ID
 
 export async function getDesiredState(): Promise<GetDesiredStateResponse> {
   return await client.getDesiredState({connectionId})

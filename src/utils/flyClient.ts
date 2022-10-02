@@ -1,6 +1,6 @@
 import type {BodyInit} from 'undici'
 import {fetch} from 'undici'
-import {FLY_API_TOKEN, FLY_APP_ID} from './env'
+import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from './env'
 
 export async function listMachines() {
   console.log('listMachines Called')
@@ -49,7 +49,6 @@ export async function killMachine(machineID: string) {
   return res
 }
 
-const FLY_API_HOST = process.env.FLY_API_HOST ?? 'http://_api.internal:4280'
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 async function rest<T>(method: string, endpoint: string, body?: BodyInit): Promise<T> {
   const res = await fetch(`${FLY_API_HOST}/v1/apps/${FLY_APP_ID}/machines${endpoint}`, {

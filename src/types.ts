@@ -60,5 +60,3 @@ export interface NewVolumeDesiredState {
   realm: string
   architecture: string
 }
-
-export type AWSVolumeStatus = 'creating' | 'available' | 'in-use' | 'deleting' | 'deleted' | 'error'
