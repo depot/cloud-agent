@@ -1,4 +1,5 @@
 import {
+  GetDesiredStateResponse_Architecture,
   GetDesiredStateResponse_MachineChange,
   GetDesiredStateResponse_MachineState,
   GetDesiredStateResponse_NewMachine,
@@ -95,6 +96,10 @@ async function reconcileNewMachine(
 
   const attachedVolume = volumes.find((v) => v.name === machine.volumeId)
   if (!attachedVolume) return
+
+  if (machine.architecture !== GetDesiredStateResponse_Architecture.ARCHITECTURE_X86) {
+    throw new Error('Unsupported architecture, Fly only supports x86 (amd64) machines')
+  }
 
   const flyMachine = await fly.launchMachine({
     appId: FLY_APP_ID,

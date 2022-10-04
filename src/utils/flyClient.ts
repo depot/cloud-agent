@@ -3,7 +3,6 @@ import {fetch} from 'undici'
 import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from './env'
 
 export async function listMachines() {
-  console.log('listMachines Called')
   const res = await rest<V1Machine[]>('GET', '')
   return res
 }
