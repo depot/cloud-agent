@@ -112,7 +112,7 @@ async function reconcileNewMachine(
       mounts: [{encrypted: false, path: '/var/lib/buildkit', size_gb: 50, volume: attachedVolume.id}],
       env: {
         DEPOT_CLOUD_PROVIDER: 'fly',
-        DEPOT_CLOUD_MACHINE_TOKEN: machine.token ?? '',
+        DEPOT_CLOUD_REGISTRATION_TOKEN: machine.token ?? '',
         DEPOT_CLOUD_MACHINE_ID: machine.id,
       },
     },
