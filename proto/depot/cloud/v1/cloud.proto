@@ -89,6 +89,7 @@ message GetDesiredStateResponse {
     string image = 5;
     SecurityGroup security_group = 6;
     optional string volume_id = 7;
+    optional string token = 8;
   }
 
   message NewVolume {

@@ -312,6 +312,7 @@ export interface GetDesiredStateResponse_NewMachine {
   image: string
   securityGroup: GetDesiredStateResponse_SecurityGroup
   volumeId?: string | undefined
+  token?: string | undefined
 }
 
 export interface GetDesiredStateResponse_NewVolume {
@@ -1153,7 +1154,16 @@ export const GetDesiredStateResponse = {
 }
 
 function createBaseGetDesiredStateResponse_NewMachine(): GetDesiredStateResponse_NewMachine {
-  return {id: '', realm: '', kind: 0, architecture: 0, image: '', securityGroup: 0, volumeId: undefined}
+  return {
+    id: '',
+    realm: '',
+    kind: 0,
+    architecture: 0,
+    image: '',
+    securityGroup: 0,
+    volumeId: undefined,
+    token: undefined,
+  }
 }
 
 export const GetDesiredStateResponse_NewMachine = {
@@ -1178,6 +1188,9 @@ export const GetDesiredStateResponse_NewMachine = {
     }
     if (message.volumeId !== undefined) {
       writer.uint32(58).string(message.volumeId)
+    }
+    if (message.token !== undefined) {
+      writer.uint32(66).string(message.token)
     }
     return writer
   },
@@ -1210,6 +1223,9 @@ export const GetDesiredStateResponse_NewMachine = {
         case 7:
           message.volumeId = reader.string()
           break
+        case 8:
+          message.token = reader.string()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -1229,6 +1245,7 @@ export const GetDesiredStateResponse_NewMachine = {
         ? getDesiredStateResponse_SecurityGroupFromJSON(object.securityGroup)
         : 0,
       volumeId: isSet(object.volumeId) ? String(object.volumeId) : undefined,
+      token: isSet(object.token) ? String(object.token) : undefined,
     }
   },
 
@@ -1243,6 +1260,7 @@ export const GetDesiredStateResponse_NewMachine = {
     message.securityGroup !== undefined &&
       (obj.securityGroup = getDesiredStateResponse_SecurityGroupToJSON(message.securityGroup))
     message.volumeId !== undefined && (obj.volumeId = message.volumeId)
+    message.token !== undefined && (obj.token = message.token)
     return obj
   },
 
@@ -1255,6 +1273,7 @@ export const GetDesiredStateResponse_NewMachine = {
     message.image = object.image ?? ''
     message.securityGroup = object.securityGroup ?? 0
     message.volumeId = object.volumeId ?? undefined
+    message.token = object.token ?? undefined
     return message
   },
 }

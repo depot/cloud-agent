@@ -110,6 +110,11 @@ async function reconcileNewMachine(
       image: machine.image,
       guest: {cpu_kind: 'shared', cpus: 4, memory_mb: 8 * 1024},
       mounts: [{encrypted: false, path: '/var/lib/buildkit', size_gb: 50, volume: attachedVolume.id}],
+      env: {
+        DEPOT_CLOUD_PROVIDER: 'fly',
+        DEPOT_CLOUD_MACHINE_TOKEN: machine.token ?? '',
+        DEPOT_CLOUD_MACHINE_ID: machine.id,
+      },
     },
   })
   if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
