@@ -102,6 +102,7 @@ async function reconcileNewMachine(
   }
 
   const flyMachine = await fly.launchMachine({
+    name: machine.id,
     appId: FLY_APP_ID,
     organizationId: FLY_ORG_ID,
     region: FLY_REGION,
