@@ -107,7 +107,7 @@ async function reconcileNewMachine(
     organizationId: FLY_ORG_ID,
     region: FLY_REGION,
     config: {
-      image: machine.image,
+      image: 'registry.fly.io/depot-builder:fly-1', // machine.image,
       guest: {cpu_kind: 'shared', cpus: 4, memory_mb: 8 * 1024},
       mounts: [{encrypted: false, path: '/var/lib/buildkit', size_gb: 50, volume: attachedVolume.id}],
       env: {
@@ -155,6 +155,9 @@ async function reconcileMachine(state: fly.V1Machine[], machine: GetDesiredState
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) {
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) {
+      await fly.stopMachine({id: current.id, timeout: timeoutSeconds * 1000000000})
+    }
     await fly.destroyMachine(current.id)
   }
 }
