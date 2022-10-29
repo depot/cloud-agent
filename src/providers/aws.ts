@@ -170,7 +170,6 @@ async function reconcileNewMachine(state: Instance[], machine: GetDesiredStateRe
             {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${machine.id}`},
             {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
             {Key: 'depot-machine-id', Value: machine.id},
-            {Key: 'depot-machine-realm', Value: machine.realm},
           ],
         },
       ],
