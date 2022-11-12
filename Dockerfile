@@ -1,4 +1,4 @@
-FROM node:16-alpine AS build
+FROM node:18-alpine AS build
 
 RUN corepack enable
 WORKDIR /app
@@ -7,14 +7,14 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-FROM node:16-alpine AS dependencies
+FROM node:18-alpine AS dependencies
 
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --production
 
-FROM node:16-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 COPY --from=dependencies /app/node_modules /app/node_modules
