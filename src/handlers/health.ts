@@ -6,7 +6,7 @@ export async function startHealthStream() {
   async function* sendingStream() {
     while (true) {
       yield {connectionId: CLOUD_AGENT_CONNECTION_ID}
-      await sleep(1000)
+      await sleep(5000)
     }
   }
 
