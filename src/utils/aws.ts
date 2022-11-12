@@ -45,7 +45,7 @@ export async function getCurrentState() {
     volumes: getVolumesState(),
     errors: [],
   })
-  return state
+  return toPlainObject(state)
 }
 
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<string[]> {
@@ -244,4 +244,8 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
     if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
     await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
   }
+}
+
+function toPlainObject<T>(obj: T): T {
+  return JSON.parse(JSON.stringify(obj))
 }
