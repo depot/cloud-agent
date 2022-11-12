@@ -1,22 +1,21 @@
-import {reconcile} from './providers/aws'
-import {reportErrors} from './providers/depot'
-import {sleep} from './utils'
+import {startCurrentStateStream} from './handlers/currentState'
+import {startDesiredStateStream} from './handlers/desiredState'
+import {startHealthStream} from './handlers/health'
+import {sleep} from './utils/common'
+import {CLOUD_AGENT_CONNECTION_ID} from './utils/env'
+import {client} from './utils/grpc'
 import {logger} from './utils/logger'
 
-let errorsToReport: string[] = []
 async function main() {
   logger.info('cloud-agent started')
 
   while (true) {
     try {
-      const errors = [...errorsToReport]
-      errorsToReport = []
-      await reportErrors(errors)
-      const nextErrors = await reconcile()
-      errorsToReport.push(...nextErrors)
-    } catch (e: any) {
-      logger.error(e.toString())
-      errorsToReport.push(e.message || `${e}`)
+      await Promise.all([startHealthStream(), startCurrentStateStream(), startDesiredStateStream()])
+    } catch (err: any) {
+      const message: string = err.message || `${err}`
+      logger.error(message)
+      await client.reportErrors({connectionId: CLOUD_AGENT_CONNECTION_ID, errors: [message]})
     }
     await sleep(1000)
   }

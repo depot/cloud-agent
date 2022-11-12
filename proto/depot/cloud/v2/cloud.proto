@@ -1,64 +1,17 @@
 syntax = "proto3";
 
-package depot.cloud.v1;
+package depot.cloud.v2;
 
 import "google/protobuf/timestamp.proto";
 
 service CloudService {
-  rpc ReplaceCloudState(ReplaceCloudStateRequest) returns (ReplaceCloudStateResponse);
-  rpc PatchCloudState(PatchCloudStateRequest) returns (PatchCloudStateResponse);
-  rpc SetLastErrors(SetLastErrorsRequest) returns (SetLastErrorsResponse);
-  rpc GetDesiredState(GetDesiredStateRequest) returns (GetDesiredStateResponse);
+  rpc GetDesiredState(GetDesiredStateRequest) returns (stream GetDesiredStateResponse) {}
+  rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
+  rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
+  rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
 }
 
-// Objects
-
-message CloudState {
-  message Aws {
-    string availability_zone = 1;
-    string state = 2;
-  }
-
-  oneof state {
-    Aws aws = 1;
-  }
-}
-
-message CloudStatePatch {
-  message Aws {
-    string patch = 1;
-  }
-
-  oneof patch {
-    Aws aws = 1;
-  }
-  int32 generation = 10;
-}
-
-message ReplaceCloudStateRequest {
-  string connection_id = 1;
-  CloudState state = 2;
-}
-
-message ReplaceCloudStateResponse {
-  int32 generation = 1;
-}
-
-message PatchCloudStateRequest {
-  string connection_id = 1;
-  CloudStatePatch patch = 2;
-}
-
-message PatchCloudStateResponse {
-  int32 generation = 1;
-}
-
-message SetLastErrorsRequest {
-  string connection_id = 1;
-  repeated string errors = 2;
-}
-
-message SetLastErrorsResponse {}
+// Messages
 
 message GetDesiredStateRequest {
   string connection_id = 1;
@@ -134,5 +87,54 @@ message GetDesiredStateResponse {
     VOLUME_STATE_ATTACHED = 3;
     VOLUME_STATE_DELETED = 4;
     VOLUME_STATE_ERROR = 5;
+  }
+}
+
+message ReportCurrentStateRequest {
+  string connection_id = 1;
+  oneof state {
+    CloudState replace = 2;
+    CloudStatePatch patch = 3;
+  }
+}
+
+message ReportCurrentStateResponse {
+  int32 generation = 1;
+}
+
+message ReportErrorsRequest {
+  string connection_id = 1;
+  repeated string errors = 2;
+}
+
+message ReportErrorsResponse {}
+
+message ReportHealthRequest {
+  string connection_id = 1;
+}
+
+message ReportHealthResponse {}
+
+// Objects
+
+message CloudState {
+  oneof state {
+    Aws aws = 1;
+  }
+
+  message Aws {
+    string availability_zone = 1;
+    string state = 2;
+  }
+}
+
+message CloudStatePatch {
+  int32 generation = 1;
+  oneof patch {
+    Aws aws = 2;
+  }
+
+  message Aws {
+    string patch = 1;
   }
 }
