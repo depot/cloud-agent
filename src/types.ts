@@ -2,11 +2,11 @@
 
 import {Instance, Volume} from '@aws-sdk/client-ec2'
 
-export interface StateRequest {
+export interface CurrentState {
   cloud: 'aws'
   availabilityZone: string
-  instances: Instance[]
-  volumes: Volume[]
+  instances: Record<string, Instance>
+  volumes: Record<string, Volume>
 }
 
 // Desired State

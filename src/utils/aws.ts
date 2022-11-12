@@ -16,6 +16,7 @@ import {
   VolumeState as AwsVolumeState,
 } from '@aws-sdk/client-ec2'
 import {
+  GetDesiredStateResponse,
   GetDesiredStateResponse_Architecture,
   GetDesiredStateResponse_MachineChange,
   GetDesiredStateResponse_MachineState,
@@ -24,51 +25,35 @@ import {
   GetDesiredStateResponse_SecurityGroup,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
-} from '../proto/depot/cloud/v1/cloud'
-import {StateRequest} from '../types'
-import {promises} from '../utils'
+} from '../proto/depot/cloud/v2/cloud'
+import {CurrentState} from '../types'
+import {promises} from './common'
 import {
   CLOUD_AGENT_AWS_SG_BUILDKIT,
   CLOUD_AGENT_AWS_SG_DEFAULT,
   CLOUD_AGENT_AWS_SUBNET_ID,
   CLOUD_AGENT_CONNECTION_ID,
-} from '../utils/env'
-import {getDesiredState, reportState} from './depot'
+} from './env'
 
 const client = new EC2Client({})
 
-/** Filter to select only Depot-managed resources */
-const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION_ID]}
-
-/** Queries for all managed instances */
-export async function getInstancesState() {
-  const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter]}))
-  return res.Reservations?.flatMap((r) => r.Instances || []) || []
-}
-
-/** Queries for all managed volumes */
-export async function getVolumesState() {
-  const res = await client.send(new DescribeVolumesCommand({Filters: [tagFilter]}))
-  return res.Volumes || []
-}
-
-export async function reconcile(): Promise<string[]> {
-  const state: StateRequest = await promises({
+export async function getCurrentState() {
+  const state: CurrentState = await promises({
     cloud: 'aws',
     availabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE ?? 'unknown',
     instances: getInstancesState(),
     volumes: getVolumesState(),
     errors: [],
   })
+  return state
+}
 
-  await reportState(state)
-  const nextState = await getDesiredState()
-
+export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<string[]> {
   const results = await Promise.allSettled([
-    ...nextState.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
-    ...nextState.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume)),
-    ...nextState.newMachines.map((instance) => reconcileNewMachine(state.instances, instance)),
-    ...nextState.machineChanges.map((instance) => reconcileMachine(state.instances, instance)),
+    ...response.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
+    ...response.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume)),
+    ...response.newMachines.map((instance) => reconcileNewMachine(state.instances, instance)),
+    ...response.machineChanges.map((instance) => reconcileMachine(state.instances, instance)),
   ])
 
   return results
@@ -76,8 +61,35 @@ export async function reconcile(): Promise<string[]> {
     .filter((r): r is string => r !== undefined)
 }
 
-async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
-  const existing = state.find((v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
+/** Filter to select only Depot-managed resources */
+const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION_ID]}
+
+/** Queries for all managed instances */
+async function getInstancesState() {
+  const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter]}))
+  const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
+  return instances.reduce((acc, instance) => {
+    if (!instance.InstanceId) return acc
+    acc[instance.InstanceId] = instance
+    return acc
+  }, {} as Record<string, Instance>)
+}
+
+/** Queries for all managed volumes */
+async function getVolumesState() {
+  const res = await client.send(new DescribeVolumesCommand({Filters: [tagFilter]}))
+  const volumes = res.Volumes || []
+  return volumes.reduce((acc, volume) => {
+    if (!volume.VolumeId) return acc
+    acc[volume.VolumeId] = volume
+    return acc
+  }, {} as Record<string, Volume>)
+}
+
+async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_NewVolume) {
+  const existing = Object.values(state).find((v) =>
+    v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+  )
   if (existing) return
 
   await client.send(
@@ -110,8 +122,10 @@ function currentVolumeState(volume: Volume): GetDesiredStateResponse_VolumeState
   return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
 }
 
-async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_VolumeChange) {
-  const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id))
+async function reconcileVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_VolumeChange) {
+  const current = Object.values(state).find((i) =>
+    i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+  )
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
 
@@ -150,8 +164,10 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
   }
 }
 
-async function reconcileNewMachine(state: Instance[], machine: GetDesiredStateResponse_NewMachine) {
-  const existing = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
+async function reconcileNewMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_NewMachine) {
+  const existing = Object.values(state).find((i) =>
+    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+  )
   if (existing) return
 
   await client.send(
@@ -201,8 +217,10 @@ function currentMachineState(instance: Instance): GetDesiredStateResponse_Machin
   return GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING
 }
 
-async function reconcileMachine(state: Instance[], machine: GetDesiredStateResponse_MachineChange) {
-  const current = state.find((i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id))
+async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
+  const current = Object.values(state).find((i) =>
+    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+  )
   const currentState = current ? currentMachineState(current) : 'unknown'
 
   // Skip if already at the desired state

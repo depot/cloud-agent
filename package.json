@@ -5,7 +5,8 @@
   "scripts": {
     "build": "node ./build.cjs",
     "dev": "node-dev --no-notify src/index.ts",
-    "format": "prettier --write .",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --write .",
     "generate": "buf generate && prettier --write src/proto",
     "lint": "prettier --check .",
     "type-check": "tsc --noEmit"
