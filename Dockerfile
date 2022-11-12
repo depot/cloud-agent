@@ -1,4 +1,8 @@
-FROM node:18-alpine AS build
+FROM node:18-slim AS base
+
+RUN apt-get update && apt-get install -y ca-certificates openssl && rm -rf /var/lib/apt/lists/*
+
+FROM base AS build
 
 RUN corepack enable
 WORKDIR /app
@@ -7,14 +11,14 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-FROM node:18-alpine AS dependencies
+FROM base AS dependencies
 
 RUN corepack enable
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --production
 
-FROM node:18-alpine
+FROM base
 
 WORKDIR /app
 COPY --from=dependencies /app/node_modules /app/node_modules
