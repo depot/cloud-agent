@@ -2,13 +2,14 @@ import {startHealthStream} from './handlers/health'
 import {startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
 import {sleep} from './utils/common'
+import {CLOUD_AGENT_VERSION} from './utils/env'
 import {reportError} from './utils/errors'
 import {logger} from './utils/logger'
 
 const controller = new AbortController()
 
 async function main() {
-  logger.info('cloud-agent started')
+  logger.info(`cloud-agent ${CLOUD_AGENT_VERSION} started`)
   const signal = controller.signal
 
   function trapShutdown(signal: 'SIGINT' | 'SIGTERM') {

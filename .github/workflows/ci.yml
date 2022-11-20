@@ -30,6 +30,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: depot/setup-action@v1
+      - name: Compute version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+            echo "version=${GITHUB_REF}" >> $GITHUB_OUTPUT
+          fi
       - uses: docker/metadata-action@v4
         id: meta
         with:
@@ -52,3 +59,4 @@ jobs:
           push: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: CLOUD_AGENT_VERSION=${{ steps.version.outputs.version }}
