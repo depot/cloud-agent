@@ -14,6 +14,8 @@ export const CLOUD_AGENT_AWS_SG_DEFAULT = requiredEnv('CLOUD_AGENT_AWS_SG_DEFAUL
 
 export const CLOUD_AGENT_AWS_SUBNET_ID = requiredEnv('CLOUD_AGENT_AWS_SUBNET_ID')
 
+export const CLOUD_AGENT_VERSION = process.env.CLOUD_AGENT_VERSION ?? 'dev'
+
 function requiredEnv(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`Missing required environment variable ${name}`)

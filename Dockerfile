@@ -24,4 +24,7 @@ WORKDIR /app
 COPY --from=dependencies /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 
+ARG CLOUD_AGENT_VERSION=dev
+ENV CLOUD_AGENT_VERSION=${CLOUD_AGENT_VERSION}
+
 CMD [ "node", "dist/index.js" ]
