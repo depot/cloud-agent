@@ -1,5 +1,6 @@
 import {startHealthStream} from './handlers/health'
 import {startStateStream} from './handlers/state'
+import {startUpdater} from './handlers/updater'
 import {sleep} from './utils/common'
 import {CLOUD_AGENT_CONNECTION_ID} from './utils/env'
 import {client} from './utils/grpc'
@@ -10,7 +11,7 @@ async function main() {
 
   while (true) {
     try {
-      await Promise.all([startHealthStream(), startStateStream()])
+      await Promise.all([startHealthStream(), startStateStream(), startUpdater()])
     } catch (err: any) {
       const message: string = err.message || `${err}`
       logger.error(message)

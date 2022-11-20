@@ -303,6 +303,14 @@ export interface ReportHealthRequest {
 
 export interface ReportHealthResponse {}
 
+export interface GetActiveAgentVersionRequest {
+  connectionId: string
+}
+
+export interface GetActiveAgentVersionResponse {
+  newerThan: string
+}
+
 export interface CloudState {
   state?: {$case: 'aws'; aws: CloudState_Aws}
 }
@@ -1103,6 +1111,100 @@ export const ReportHealthResponse = {
   },
 }
 
+function createBaseGetActiveAgentVersionRequest(): GetActiveAgentVersionRequest {
+  return {connectionId: ''}
+}
+
+export const GetActiveAgentVersionRequest = {
+  encode(message: GetActiveAgentVersionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.connectionId !== '') {
+      writer.uint32(10).string(message.connectionId)
+    }
+    return writer
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetActiveAgentVersionRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = createBaseGetActiveAgentVersionRequest()
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.connectionId = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): GetActiveAgentVersionRequest {
+    return {connectionId: isSet(object.connectionId) ? String(object.connectionId) : ''}
+  },
+
+  toJSON(message: GetActiveAgentVersionRequest): unknown {
+    const obj: any = {}
+    message.connectionId !== undefined && (obj.connectionId = message.connectionId)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<GetActiveAgentVersionRequest>): GetActiveAgentVersionRequest {
+    const message = createBaseGetActiveAgentVersionRequest()
+    message.connectionId = object.connectionId ?? ''
+    return message
+  },
+}
+
+function createBaseGetActiveAgentVersionResponse(): GetActiveAgentVersionResponse {
+  return {newerThan: ''}
+}
+
+export const GetActiveAgentVersionResponse = {
+  encode(message: GetActiveAgentVersionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.newerThan !== '') {
+      writer.uint32(10).string(message.newerThan)
+    }
+    return writer
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetActiveAgentVersionResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input)
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = createBaseGetActiveAgentVersionResponse()
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.newerThan = reader.string()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): GetActiveAgentVersionResponse {
+    return {newerThan: isSet(object.newerThan) ? String(object.newerThan) : ''}
+  },
+
+  toJSON(message: GetActiveAgentVersionResponse): unknown {
+    const obj: any = {}
+    message.newerThan !== undefined && (obj.newerThan = message.newerThan)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<GetActiveAgentVersionResponse>): GetActiveAgentVersionResponse {
+    const message = createBaseGetActiveAgentVersionResponse()
+    message.newerThan = object.newerThan ?? ''
+    return message
+  },
+}
+
 function createBaseCloudState(): CloudState {
   return {state: undefined}
 }
@@ -1356,6 +1458,14 @@ export const CloudServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    getActiveAgentVersion: {
+      name: 'GetActiveAgentVersion',
+      requestType: GetActiveAgentVersionRequest,
+      requestStream: false,
+      responseType: GetActiveAgentVersionResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const
 
@@ -1376,6 +1486,10 @@ export interface CloudServiceServiceImplementation<CallContextExt = {}> {
     request: AsyncIterable<ReportHealthRequest>,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<ReportHealthResponse>>
+  getActiveAgentVersion(
+    request: GetActiveAgentVersionRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetActiveAgentVersionResponse>>
 }
 
 export interface CloudServiceClient<CallOptionsExt = {}> {
@@ -1395,6 +1509,10 @@ export interface CloudServiceClient<CallOptionsExt = {}> {
     request: AsyncIterable<DeepPartial<ReportHealthRequest>>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<ReportHealthResponse>
+  getActiveAgentVersion(
+    request: DeepPartial<GetActiveAgentVersionRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetActiveAgentVersionResponse>
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined
