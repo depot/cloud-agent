@@ -35,6 +35,7 @@ jobs:
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
             echo "version=${GITHUB_REF}" >> $GITHUB_OUTPUT
           fi
       - uses: docker/metadata-action@v4
