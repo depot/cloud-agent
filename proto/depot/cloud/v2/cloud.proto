@@ -9,6 +9,7 @@ service CloudService {
   rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
   rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
+  rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
 }
 
 // Messages
@@ -114,6 +115,14 @@ message ReportHealthRequest {
 }
 
 message ReportHealthResponse {}
+
+message GetActiveAgentVersionRequest {
+  string connection_id = 1;
+}
+
+message GetActiveAgentVersionResponse {
+  string newer_than = 1;
+}
 
 // Objects
 
