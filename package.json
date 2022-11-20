@@ -14,6 +14,7 @@
   "dependencies": {
     "@aws-sdk/client-ec2": "3.208.0",
     "@aws-sdk/client-ecs": "^3.213.0",
+    "abort-controller-x": "^0.4.1",
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
     "fast-json-patch": "^3.1.1",

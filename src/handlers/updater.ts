@@ -2,21 +2,19 @@ import {DescribeTasksCommand, ECSClient, ListTasksCommand, StopTaskCommand} from
 import {parseISO} from 'date-fns'
 import {sleep} from '../utils/common'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
+import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
-import {logger} from '../utils/logger'
 
 const ecs = new ECSClient({})
 const cluster = process.env.CLOUD_AGENT_CLUSTER_ARN
 const serviceName = process.env.CLOUD_AGENT_SERVICE_NAME
 
-export async function startUpdater() {
-  while (true) {
+export async function startUpdater(signal: AbortSignal) {
+  while (!signal.aborted) {
     try {
       await checkForUpdates()
     } catch (err: any) {
-      const message: string = err.message || `${err}`
-      logger.error(message)
-      await client.reportErrors({connectionId: CLOUD_AGENT_CONNECTION_ID, errors: [message]})
+      await reportError(err)
     }
     await sleep(1000 * 60)
   }

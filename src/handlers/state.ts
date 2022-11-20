@@ -3,15 +3,16 @@ import {ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud'
 import {CurrentState} from '../types'
 import {getCurrentState, reconcile} from '../utils/aws'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
+import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
-export async function startStateStream() {
-  while (true) {
+export async function startStateStream(signal: AbortSignal) {
+  while (!signal.aborted) {
     try {
       let currentState = await getCurrentState()
       await reportCurrentState(currentState)
 
-      const stream = client.getDesiredState({connectionId: CLOUD_AGENT_CONNECTION_ID})
+      const stream = client.getDesiredState({connectionId: CLOUD_AGENT_CONNECTION_ID}, {signal})
 
       for await (const response of stream) {
         currentState = await getCurrentState()
@@ -20,8 +21,7 @@ export async function startStateStream() {
         await reportCurrentState(currentState)
       }
     } catch (err: any) {
-      const message: string = err.message || `${err}`
-      await client.reportErrors({connectionId: CLOUD_AGENT_CONNECTION_ID, errors: [message]})
+      await reportError(err)
     }
   }
 }
