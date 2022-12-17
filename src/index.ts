@@ -1,5 +1,6 @@
+import {startHandleCreateStream} from './handlers/handleCreate'
+import {startHandleUpdateStream} from './handlers/handleUpdate'
 import {startHealthStream} from './handlers/health'
-import {startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
 import {sleep} from './utils/common'
 import {CLOUD_AGENT_VERSION} from './utils/env'
@@ -34,7 +35,12 @@ async function main() {
 
   while (!signal.aborted) {
     try {
-      await Promise.all([startHealthStream(signal), startStateStream(signal), startUpdater(signal)])
+      await Promise.all([
+        startHealthStream(signal),
+        startHandleCreateStream(signal),
+        startHandleUpdateStream(signal),
+        startUpdater(signal),
+      ])
     } catch (err: any) {
       await reportError(err)
     }

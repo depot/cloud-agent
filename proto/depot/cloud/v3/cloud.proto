@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package depot.cloud.v3;
+
+import "google/protobuf/timestamp.proto";
+
+service CloudService {
+  rpc GetCreateStream(GetCreateStreamRequest) returns (stream GetCreateStreamResponse) {}
+  rpc GetUpdateStream(GetUpdateStreamRequest) returns (stream GetUpdateStreamResponse) {}
+  rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
+  rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
+  rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
+  rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
+}
+
+// Messages
+
+message GetCreateStreamRequest {}
+
+message GetCreateStreamResponse {
+  oneof resource {
+    CreateMachine machine = 1;
+    CreateVolume volume = 2;
+  }
+
+  message CreateMachine {
+    string request_id = 1;
+    Architecture architecture = 2;
+    string image = 3;
+    SecurityGroup security_group = 4;
+  }
+
+  message CreateVolume {
+    string request_id = 1;
+    int32 size = 2;
+  }
+
+  enum Architecture {
+    ARCHITECTURE_UNSPECIFIED = 0;
+    ARCHITECTURE_X86_64 = 1;
+    ARCHITECTURE_ARM64 = 2;
+  }
+
+  enum SecurityGroup {
+    SECURITY_GROUP_UNSPECIFIED = 0;
+    SECURITY_GROUP_DEFAULT = 1;
+    SECURITY_GROUP_BUILDKIT = 2;
+  }
+}
+
+message GetUpdateStreamRequest {}
+
+message GetUpdateStreamResponse {
+  repeated UpdateMachine machines = 1;
+  repeated UpdateVolume volumes = 2;
+
+  message UpdateMachine {
+    string instance_id = 1;
+    MachineState desired_state = 2;
+  }
+
+  message UpdateVolume {
+    string volume_id = 1;
+    VolumeState desired_state = 2;
+    optional string attached_to = 3;
+    optional string device = 4;
+  }
+
+  enum MachineState {
+    MACHINE_STATE_UNSPECIFIED = 0;
+    MACHINE_STATE_RUNNING = 1;
+    MACHINE_STATE_STOPPED = 2;
+    MACHINE_STATE_DELETED = 3;
+  }
+
+  enum VolumeState {
+    VOLUME_STATE_UNSPECIFIED = 0;
+    VOLUME_STATE_AVAILABLE = 1;
+    VOLUME_STATE_ATTACHED = 2;
+    VOLUME_STATE_DELETED = 3;
+  }
+}
+
+message ReportCurrentStateRequest {
+  oneof state {
+    CloudState replace = 1;
+    CloudStatePatch patch = 2;
+  }
+
+  message CloudState {
+    oneof state {
+      Aws aws = 1;
+    }
+
+    message Aws {
+      string availability_zone = 1;
+      string state = 2;
+    }
+  }
+
+  message CloudStatePatch {
+    string etag = 1;
+    oneof patch {
+      Aws aws = 2;
+    }
+
+    message Aws {
+      string patch = 1;
+    }
+  }
+}
+
+message ReportCurrentStateResponse {
+  string etag = 1;
+}
+
+message ReportErrorsRequest {
+  repeated string errors = 1;
+}
+
+message ReportErrorsResponse {}
+
+message ReportHealthRequest {}
+
+message ReportHealthResponse {}
+
+message GetActiveAgentVersionRequest {}
+
+message GetActiveAgentVersionResponse {
+  string newer_than = 1;
+}
