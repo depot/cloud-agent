@@ -170,6 +170,32 @@ async function reconcileNewMachine(state: Record<string, Instance>, machine: Get
   )
   if (existing) return
 
+  // Construct user data with cloud connection ID
+  const userData = `
+#!/bin/bash
+set -e
+exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
+
+cat << EOF > /usr/lib/systemd/system/machine-agent.service
+[Unit]
+Description=machine-agent
+After=network-online.target
+Requires=network-online.target
+[Service]
+Type=simple
+ExecStart=/usr/bin/machine-agent
+Restart=always
+RestartSec=5
+Environment="DEPOT_CLOUD_CONNECTION_ID=${CLOUD_AGENT_CONNECTION_ID}"
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable machine-agent.service
+systemctl start machine-agent.service
+`.trim()
+
   await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
@@ -203,6 +229,7 @@ async function reconcileNewMachine(state: Record<string, Instance>, machine: Get
       ],
       MaxCount: 1,
       MinCount: 1,
+      UserData: Buffer.from(userData).toString('base64'),
     }),
   )
 }
