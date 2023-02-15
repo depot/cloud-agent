@@ -170,6 +170,20 @@ async function reconcileNewMachine(state: Record<string, Instance>, machine: Get
   )
   if (existing) return
 
+  const res = await client.send(
+    new DescribeInstancesCommand({
+      Filters: [
+        {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION_ID]},
+        {Name: 'tag:depot-machine-id', Values: [machine.id]},
+      ],
+    }),
+  )
+  const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
+  if (instances.length > 0) {
+    console.log(`Found existing ${instances.length} instances for machine ID ${machine.id}, skipping`)
+    return
+  }
+
   // Construct user data with cloud connection ID
   const userData = `
 #!/bin/bash
