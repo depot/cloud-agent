@@ -259,31 +259,34 @@ function currentMachineState(instance: Instance): GetDesiredStateResponse_Machin
 }
 
 async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
-  const current = Object.values(state).find((i) =>
+  const matches = Object.values(state).filter((i) =>
     i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
   )
-  const currentState = current ? currentMachineState(current) : 'unknown'
 
-  // Skip if already at the desired state
-  if (currentState === machine.desiredState) return
+  for (const current of matches) {
+    const currentState = current ? currentMachineState(current) : 'unknown'
 
-  if (!current || !current.InstanceId) return
+    // Skip if already at the desired state
+    if (currentState === machine.desiredState) return
 
-  if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) {
-    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
-    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
-    await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
-  }
+    if (!current || !current.InstanceId) return
 
-  if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED) {
-    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
-    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
-    await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
-  }
+    if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) {
+      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
+      await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
+    }
 
-  if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) {
-    if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
-    await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
+    if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED) {
+      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
+      await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
+    }
+
+    if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) {
+      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+      await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
+    }
   }
 }
 
