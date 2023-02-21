@@ -16,7 +16,12 @@ export async function startStateStream(signal: AbortSignal) {
 
       for await (const response of stream) {
         currentState = await getCurrentState()
-        await reconcile(response, currentState)
+        const errors = await reconcile(response, currentState)
+        if (errors.length > 0) {
+          for (const error of errors) {
+            await reportError(error)
+          }
+        }
         currentState = await getCurrentState()
         await reportCurrentState(currentState)
       }
