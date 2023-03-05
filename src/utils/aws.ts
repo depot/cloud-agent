@@ -241,6 +241,17 @@ systemctl start machine-agent.service
           SubnetId: CLOUD_AGENT_AWS_SUBNET_ID,
         },
       ],
+      BlockDeviceMappings: [
+        {
+          DeviceName: '/dev/xvda',
+          Ebs: {
+            VolumeSize: 40,
+            VolumeType: 'gp3',
+            DeleteOnTermination: true,
+            Encrypted: true,
+          },
+        },
+      ],
       MaxCount: 1,
       MinCount: 1,
       UserData: Buffer.from(userData).toString('base64'),
