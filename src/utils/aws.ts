@@ -51,7 +51,7 @@ export async function getCurrentState() {
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<string[]> {
   const results = await Promise.allSettled([
     ...response.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
-    ...response.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume)),
+    ...response.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume, state.instances)),
     ...response.newMachines.map((instance) => reconcileNewMachine(state.instances, instance)),
     ...response.machineChanges.map((instance) => reconcileMachine(state.instances, instance)),
   ])
@@ -122,7 +122,11 @@ function currentVolumeState(volume: Volume): GetDesiredStateResponse_VolumeState
   return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
 }
 
-async function reconcileVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_VolumeChange) {
+async function reconcileVolume(
+  state: Record<string, Volume>,
+  volume: GetDesiredStateResponse_VolumeChange,
+  machineState: Record<string, Instance>,
+) {
   const current = Object.values(state).find((i) =>
     i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
   )
@@ -146,6 +150,9 @@ async function reconcileVolume(state: Record<string, Volume>, volume: GetDesired
     if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
       await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
     } else {
+      const machine = machineState[volume.attachedTo!]
+      const currentState = machine ? currentMachineState(machine) : 'unknown'
+      if (currentState !== GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) return
       await client.send(
         new AttachVolumeCommand({Device: volume.device!, InstanceId: volume.attachedTo!, VolumeId: current.VolumeId}),
       )
