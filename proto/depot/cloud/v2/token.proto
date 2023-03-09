@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package depot.cloud.v2;
+
+import "google/protobuf/timestamp.proto";
+
+service TokenService {
+  rpc GetCacheRegistry(GetCacheRegistryRequest) returns (GetCacheRegistryResponse) {}
+}
+
+// Messages
+
+message GetCacheRegistryRequest {
+  string build_id = 1;
+}
+
+message GetCacheRegistryResponse {
+  string image = 1;
+  string token = 2;
+}
