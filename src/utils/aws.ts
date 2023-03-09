@@ -261,6 +261,7 @@ systemctl start machine-agent.service
       ],
       MaxCount: 1,
       MinCount: 1,
+      MetadataOptions: {HttpTokens: 'required'},
       UserData: Buffer.from(userData).toString('base64'),
     }),
   )
