@@ -1,9 +1,7 @@
 import {startHealthStream} from './handlers/health'
 import {startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
-import {sleep} from './utils/common'
 import {CLOUD_AGENT_VERSION} from './utils/env'
-import {reportError} from './utils/errors'
 import {logger} from './utils/logger'
 
 const controller = new AbortController()
@@ -32,14 +30,9 @@ async function main() {
   trapShutdown('SIGINT')
   trapShutdown('SIGTERM')
 
-  while (!signal.aborted) {
-    try {
-      await Promise.all([startHealthStream(signal), startStateStream(signal), startUpdater(signal)])
-    } catch (err: any) {
-      await reportError(err)
-    }
-    await sleep(1000)
-  }
+  startHealthStream(signal)
+  startStateStream(signal)
+  startUpdater(signal)
 }
 
 main().catch((err) => {

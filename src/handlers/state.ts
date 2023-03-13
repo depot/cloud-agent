@@ -15,6 +15,7 @@ export async function startStateStream(signal: AbortSignal) {
       const stream = client.getDesiredState({connectionId: CLOUD_AGENT_CONNECTION_ID}, {signal})
 
       for await (const response of stream) {
+        if (signal.aborted) return
         currentState = await getCurrentState()
         const errors = await reconcile(response, currentState)
         for (const error of errors) {
