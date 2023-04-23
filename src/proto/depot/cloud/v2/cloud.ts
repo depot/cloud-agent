@@ -309,6 +309,7 @@ export interface GetActiveAgentVersionRequest {
 
 export interface GetActiveAgentVersionResponse {
   newerThan: string
+  connectionDeleted?: boolean | undefined
 }
 
 export interface CloudState {
@@ -1159,13 +1160,16 @@ export const GetActiveAgentVersionRequest = {
 }
 
 function createBaseGetActiveAgentVersionResponse(): GetActiveAgentVersionResponse {
-  return {newerThan: ''}
+  return {newerThan: '', connectionDeleted: undefined}
 }
 
 export const GetActiveAgentVersionResponse = {
   encode(message: GetActiveAgentVersionResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.newerThan !== '') {
       writer.uint32(10).string(message.newerThan)
+    }
+    if (message.connectionDeleted !== undefined) {
+      writer.uint32(16).bool(message.connectionDeleted)
     }
     return writer
   },
@@ -1180,6 +1184,9 @@ export const GetActiveAgentVersionResponse = {
         case 1:
           message.newerThan = reader.string()
           break
+        case 2:
+          message.connectionDeleted = reader.bool()
+          break
         default:
           reader.skipType(tag & 7)
           break
@@ -1189,18 +1196,23 @@ export const GetActiveAgentVersionResponse = {
   },
 
   fromJSON(object: any): GetActiveAgentVersionResponse {
-    return {newerThan: isSet(object.newerThan) ? String(object.newerThan) : ''}
+    return {
+      newerThan: isSet(object.newerThan) ? String(object.newerThan) : '',
+      connectionDeleted: isSet(object.connectionDeleted) ? Boolean(object.connectionDeleted) : undefined,
+    }
   },
 
   toJSON(message: GetActiveAgentVersionResponse): unknown {
     const obj: any = {}
     message.newerThan !== undefined && (obj.newerThan = message.newerThan)
+    message.connectionDeleted !== undefined && (obj.connectionDeleted = message.connectionDeleted)
     return obj
   },
 
   fromPartial(object: DeepPartial<GetActiveAgentVersionResponse>): GetActiveAgentVersionResponse {
     const message = createBaseGetActiveAgentVersionResponse()
     message.newerThan = object.newerThan ?? ''
+    message.connectionDeleted = object.connectionDeleted ?? undefined
     return message
   },
 }

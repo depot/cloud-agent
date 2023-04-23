@@ -1,7 +1,9 @@
 import {startHealthStream} from './handlers/health'
 import {startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
-import {CLOUD_AGENT_VERSION} from './utils/env'
+import {sleep} from './utils/common'
+import {CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from './utils/env'
+import {client} from './utils/grpc'
 import {logger} from './utils/logger'
 
 const controller = new AbortController()
@@ -29,6 +31,13 @@ async function main() {
 
   trapShutdown('SIGINT')
   trapShutdown('SIGTERM')
+
+  const check = await client.getActiveAgentVersion({connectionId: CLOUD_AGENT_CONNECTION_ID}, {signal})
+  if (check.connectionDeleted) {
+    console.log('The connection has been deleted, please uninstall.')
+    console.log('Sleeping for 5 minutes, then shutting down...')
+    await sleep(5 * 60 * 1000)
+  }
 
   startHealthStream(signal)
   startStateStream(signal)
