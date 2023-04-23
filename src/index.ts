@@ -1,6 +1,8 @@
+import {startActionsLoop} from './handlers/actions'
 import {startHealthStream} from './handlers/health'
-import {startStateStream} from './handlers/state'
+import {startMachineStateLoop} from './handlers/machineState'
 import {startUpdater} from './handlers/updater'
+import {startVolumeStateLoop} from './handlers/volumeState'
 import {CLOUD_AGENT_VERSION} from './utils/env'
 import {logger} from './utils/logger'
 
@@ -31,7 +33,9 @@ async function main() {
   trapShutdown('SIGTERM')
 
   startHealthStream(signal)
-  startStateStream(signal)
+  startActionsLoop(signal)
+  startMachineStateLoop(signal)
+  startVolumeStateLoop(signal)
   startUpdater(signal)
 }
 

@@ -1,7 +1,6 @@
 import {DescribeTasksCommand, ECSClient, ListTasksCommand, StopTaskCommand} from '@aws-sdk/client-ecs'
 import {parseISO} from 'date-fns'
 import {sleep} from '../utils/common'
-import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
@@ -22,7 +21,7 @@ export async function startUpdater(signal: AbortSignal) {
 
 // Get the newer than date from the API, stop any tasks older than that date
 async function checkForUpdates() {
-  const req = await client.getActiveAgentVersion({connectionId: CLOUD_AGENT_CONNECTION_ID})
+  const req = await client.getActiveAgentVersion({})
   const newerThan = parseISO(req.newerThan)
 
   const {taskArns} = await ecs.send(new ListTasksCommand({cluster, serviceName}))

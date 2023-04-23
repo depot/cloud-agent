@@ -1,0 +1,156 @@
+syntax = "proto3";
+
+package depot.cloud.v3;
+
+service CloudService {
+  rpc Subscribe(stream SubscribeRequest) returns (stream SubscribeResponse) {}
+
+  rpc GetMachineEtags(GetMachineEtagsRequest) returns (GetMachineEtagsResponse) {}
+  rpc GetVolumeEtags(GetVolumeEtagsRequest) returns (GetVolumeEtagsResponse) {}
+
+  rpc ReportMachineState(ReportMachineStateRequest) returns (ReportMachineStateResponse) {}
+  rpc ReportVolumeState(ReportVolumeStateRequest) returns (ReportVolumeStateResponse) {}
+
+  rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
+  rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
+  rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
+}
+
+message SubscribeRequest {
+  oneof message {
+    StartMessage start = 1;
+    SuccessResult success = 2;
+    ErrorResult error = 3;
+  }
+
+  message StartMessage {}
+
+  message SuccessResult {
+    string message_id = 1;
+  }
+  message ErrorResult {
+    string message_id = 1;
+    string message = 2;
+  }
+}
+
+message SubscribeResponse {
+  string message_id = 1;
+  map<string, string> attributes = 2;
+  Action action = 3;
+}
+
+message Action {
+  oneof kind {
+    CreateMachine create_machine = 1;
+    CreateVolume create_volume = 2;
+
+    UpdateMachine update_machine = 3;
+    UpdateVolume update_volume = 4;
+  }
+
+  message CreateMachine {
+    string machine_id = 1;
+    Architecture architecture = 2;
+    string image = 3;
+    SecurityGroup security_group = 4;
+  }
+
+  message CreateVolume {
+    string volume_id = 1;
+    string org_id = 2;
+    string project_id = 3;
+    int32 size = 4;
+  }
+
+  message UpdateMachine {
+    string machine_id = 1;
+    MachineState desired_state = 2;
+  }
+
+  message UpdateVolume {
+    string volume_id = 1;
+    VolumeState desired_state = 2;
+    optional Attachment attachment = 3;
+    message Attachment {
+      string machine_resource_id = 1;
+      string device = 2;
+    }
+  }
+}
+
+message GetMachineEtagsRequest {}
+
+message GetMachineEtagsResponse {
+  map<string, string> etags = 1;
+}
+
+message GetVolumeEtagsRequest {}
+
+message GetVolumeEtagsResponse {
+  map<string, string> etags = 1;
+}
+
+message ReportMachineStateRequest {
+  string machine_id = 1;
+  string etag = 2;
+  string state = 3;
+}
+
+message ReportMachineStateResponse {}
+
+message ReportVolumeStateRequest {
+  string volume_id = 1;
+  string etag = 2;
+  string state = 3;
+}
+
+message ReportVolumeStateResponse {}
+
+enum Architecture {
+  ARCHITECTURE_UNSPECIFIED = 0;
+  ARCHITECTURE_X86 = 1;
+  ARCHITECTURE_ARM = 2;
+}
+
+enum MachineState {
+  MACHINE_STATE_UNSPECIFIED = 0;
+  MACHINE_STATE_PENDING = 1;
+  MACHINE_STATE_RUNNING = 2;
+  MACHINE_STATE_STOPPING = 3;
+  MACHINE_STATE_STOPPED = 4;
+  MACHINE_STATE_DELETING = 5;
+  MACHINE_STATE_DELETED = 6;
+  MACHINE_STATE_ERROR = 7;
+}
+
+enum SecurityGroup {
+  SECURITY_GROUP_UNSPECIFIED = 0;
+  SECURITY_GROUP_DEFAULT = 1;
+  SECURITY_GROUP_BUILDKIT = 2;
+}
+
+enum VolumeState {
+  VOLUME_STATE_UNSPECIFIED = 0;
+  VOLUME_STATE_PENDING = 1;
+  VOLUME_STATE_AVAILABLE = 2;
+  VOLUME_STATE_ATTACHED = 3;
+  VOLUME_STATE_DELETED = 4;
+  VOLUME_STATE_ERROR = 5;
+}
+
+message ReportErrorsRequest {
+  repeated string errors = 1;
+}
+
+message ReportErrorsResponse {}
+
+message ReportHealthRequest {}
+
+message ReportHealthResponse {}
+
+message GetActiveAgentVersionRequest {}
+
+message GetActiveAgentVersionResponse {
+  string newer_than = 1;
+}

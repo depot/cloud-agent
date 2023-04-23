@@ -1,12 +1,11 @@
 import {sleep} from '../utils/common'
-import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
 export async function startHealthStream(signal: AbortSignal) {
   async function* sendingStream() {
     while (!signal.aborted) {
-      yield {connectionId: CLOUD_AGENT_CONNECTION_ID}
+      yield {}
       await sleep(5000)
     }
   }

@@ -17,10 +17,12 @@
     "abort-controller-x": "^0.4.1",
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
+    "events-to-async": "^2.0.0",
     "fast-json-patch": "^3.1.1",
     "long": "4.x",
     "nice-grpc": "^2.0.1",
     "nice-grpc-common": "^2.0.0",
+    "node-object-hash": "^3.0.0",
     "protobufjs": "^7.1.2",
     "undici": "^5.12.0"
   },
