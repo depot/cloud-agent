@@ -37,6 +37,7 @@ async function main() {
     console.log('The connection has been deleted, please uninstall.')
     console.log('Sleeping for 5 minutes, then shutting down...')
     await sleep(5 * 60 * 1000)
+    process.exit(1)
   }
 
   startHealthStream(signal)
