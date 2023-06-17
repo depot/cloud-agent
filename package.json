@@ -1,6 +1,6 @@
 {
   "private": true,
-  "packageManager": "pnpm@8.3.1",
+  "packageManager": "pnpm@8.6.2",
   "engines": {
     "pnpm": ">=8.0.0"
   },
@@ -17,18 +17,17 @@
   "dependencies": {
     "@aws-sdk/client-ec2": "3.208.0",
     "@aws-sdk/client-ecs": "^3.213.0",
+    "@bufbuild/connect": "^0.10.0",
+    "@bufbuild/connect-node": "^0.10.0",
+    "@bufbuild/protobuf": "^1.2.1",
     "abort-controller-x": "^0.4.1",
     "date-fns": "^2.29.3",
     "dotenv": "^16.0.3",
-    "fast-json-patch": "^3.1.1",
-    "long": "4.x",
-    "nice-grpc": "^2.0.1",
-    "nice-grpc-common": "^2.0.0",
-    "protobufjs": "^7.1.2",
-    "undici": "^5.12.0"
+    "fast-json-patch": "^3.1.1"
   },
   "devDependencies": {
-    "@types/long": "4.x",
+    "@bufbuild/protoc-gen-connect-es": "^0.10.0",
+    "@bufbuild/protoc-gen-es": "^1.2.1",
     "@types/node": "~18.11.9",
     "esbuild": "^0.15.13",
     "esbuild-node-externals": "^1.5.0",
@@ -37,7 +36,6 @@
     "prettier": "^2.7.1",
     "prettier-plugin-organize-imports": "^3.2.0",
     "prettier-plugin-pkg": "^0.17.1",
-    "ts-proto": "^1.131.0",
     "typescript": "^4.8.4"
   }
 }
