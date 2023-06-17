@@ -222,6 +222,8 @@ systemctl start machine-agent.service
             ? process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_X86
             : process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_ARM,
       },
+      // Optional instance type override; otherwise will take the instance type from the launch templates.
+      InstanceType: machine.instanceType ?? undefined,
       ImageId: machine.image,
       TagSpecifications: [
         {

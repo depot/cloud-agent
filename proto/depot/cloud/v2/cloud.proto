@@ -31,6 +31,8 @@ message GetDesiredStateResponse {
     Architecture architecture = 4;
     string image = 5;
     SecurityGroup security_group = 6;
+    // Optionally override the instance type of the launch template.
+    optional string instance_type = 7;
   }
 
   message NewVolume {

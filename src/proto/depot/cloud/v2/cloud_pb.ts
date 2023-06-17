@@ -317,6 +317,13 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
    */
   securityGroup = GetDesiredStateResponse_SecurityGroup.UNSPECIFIED
 
+  /**
+   * Optionally override the instance type of the launch template.
+   *
+   * @generated from field: optional string instance_type = 7;
+   */
+  instanceType?: string
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewMachine>) {
     super()
     proto3.util.initPartial(data, this)
@@ -331,6 +338,7 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
     {no: 4, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
     {no: 5, name: 'image', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 6, name: 'security_group', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_SecurityGroup)},
+    {no: 7, name: 'instance_type', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewMachine {
