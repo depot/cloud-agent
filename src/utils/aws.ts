@@ -25,7 +25,7 @@ import {
   GetDesiredStateResponse_SecurityGroup,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
-} from '../proto/depot/cloud/v2/cloud'
+} from '../proto/depot/cloud/v2/cloud_pb'
 import {CurrentState} from '../types'
 import {promises} from './common'
 import {
@@ -115,11 +115,11 @@ async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesi
 
 function currentVolumeState(volume: Volume): GetDesiredStateResponse_VolumeState {
   const state = volume.State as AwsVolumeState
-  if (!state) return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
-  if (state === 'available') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE
-  if (state === 'in-use') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED
-  if (state === 'deleting' || state === 'deleted') return GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED
-  return GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING
+  if (!state) return GetDesiredStateResponse_VolumeState.PENDING
+  if (state === 'available') return GetDesiredStateResponse_VolumeState.AVAILABLE
+  if (state === 'in-use') return GetDesiredStateResponse_VolumeState.ATTACHED
+  if (state === 'deleting' || state === 'deleted') return GetDesiredStateResponse_VolumeState.DELETED
+  return GetDesiredStateResponse_VolumeState.PENDING
 }
 
 async function reconcileVolume(
@@ -134,39 +134,36 @@ async function reconcileVolume(
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
 
   // Skip if already at the desired state and attached to the correct machine
-  if (
-    currentState === volume.desiredState &&
-    volume.desiredState !== GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED
-  )
+  if (currentState === volume.desiredState && volume.desiredState !== GetDesiredStateResponse_VolumeState.ATTACHED)
     return
   if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
 
   if (!current || !current.VolumeId) return
 
-  if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) return
+  if (volume.desiredState === GetDesiredStateResponse_VolumeState.ATTACHED) {
+    if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
+    if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
 
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_ATTACHED) {
+    if (currentState === GetDesiredStateResponse_VolumeState.ATTACHED) {
       await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
     } else {
       const machine = machineState[volume.attachedTo!]
       const currentState = machine ? currentMachineState(machine) : 'unknown'
-      if (currentState !== GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) return
+      if (currentState !== GetDesiredStateResponse_MachineState.RUNNING) return
       await client.send(
         new AttachVolumeCommand({Device: volume.device!, InstanceId: volume.attachedTo!, VolumeId: current.VolumeId}),
       )
     }
   }
 
-  if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_AVAILABLE) {
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) return
+  if (volume.desiredState === GetDesiredStateResponse_VolumeState.AVAILABLE) {
+    if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
+    if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
     await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId}))
   }
 
-  if (volume.desiredState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_DELETED) {
-    if (currentState === GetDesiredStateResponse_VolumeState.VOLUME_STATE_PENDING) return
+  if (volume.desiredState === GetDesiredStateResponse_VolumeState.DELETED) {
+    if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
     await client.send(new DeleteVolumeCommand({VolumeId: current.VolumeId}))
   }
 }
@@ -221,7 +218,7 @@ systemctl start machine-agent.service
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
-          machine.architecture === GetDesiredStateResponse_Architecture.ARCHITECTURE_X86
+          machine.architecture === GetDesiredStateResponse_Architecture.X86
             ? process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_X86
             : process.env.CLOUD_AGENT_AWS_LAUNCH_TEMPLATE_ARM,
       },
@@ -241,7 +238,7 @@ systemctl start machine-agent.service
           DeviceIndex: 0,
           AssociatePublicIpAddress: true,
           Groups: [
-            machine.securityGroup === GetDesiredStateResponse_SecurityGroup.SECURITY_GROUP_BUILDKIT
+            machine.securityGroup === GetDesiredStateResponse_SecurityGroup.BUILDKIT
               ? CLOUD_AGENT_AWS_SG_BUILDKIT
               : CLOUD_AGENT_AWS_SG_DEFAULT,
           ],
@@ -268,12 +265,12 @@ systemctl start machine-agent.service
 
 function currentMachineState(instance: Instance): GetDesiredStateResponse_MachineState {
   const instanceState = (instance.State?.Name ?? 'unknown') as InstanceStateName | 'unknown'
-  if (instanceState === 'running') return GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING
-  if (instanceState === 'stopping') return GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPING
-  if (instanceState === 'stopped') return GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED
-  if (instanceState === 'shutting-down') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETING
-  if (instanceState === 'terminated') return GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED
-  return GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING
+  if (instanceState === 'running') return GetDesiredStateResponse_MachineState.RUNNING
+  if (instanceState === 'stopping') return GetDesiredStateResponse_MachineState.STOPPING
+  if (instanceState === 'stopped') return GetDesiredStateResponse_MachineState.STOPPED
+  if (instanceState === 'shutting-down') return GetDesiredStateResponse_MachineState.DELETING
+  if (instanceState === 'terminated') return GetDesiredStateResponse_MachineState.DELETED
+  return GetDesiredStateResponse_MachineState.PENDING
 }
 
 async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
@@ -289,20 +286,20 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
 
     if (!current || !current.InstanceId) return
 
-    if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_RUNNING) {
-      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
-      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
+    if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
+      if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
+      if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
       await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
-    if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_STOPPED) {
-      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
-      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) return
+    if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
+      if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
+      if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
       await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
-    if (machine.desiredState === GetDesiredStateResponse_MachineState.MACHINE_STATE_DELETED) {
-      if (currentState === GetDesiredStateResponse_MachineState.MACHINE_STATE_PENDING) return
+    if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
+      if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
   }

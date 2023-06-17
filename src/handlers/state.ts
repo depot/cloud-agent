@@ -1,5 +1,6 @@
+import {PlainMessage} from '@bufbuild/protobuf'
 import {compare} from 'fast-json-patch'
-import {ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud'
+import {ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
 import {CurrentState} from '../types'
 import {getCurrentState, reconcile} from '../utils/aws'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
@@ -44,15 +45,15 @@ export async function reportCurrentState(currentState: CurrentState) {
     // If there is no difference, don't send a request
     if (diff.length === 0) return
 
-    const request: ReportCurrentStateRequest = {
+    const request: PlainMessage<ReportCurrentStateRequest> = {
       connectionId: CLOUD_AGENT_CONNECTION_ID,
       state: {
-        $case: 'patch',
-        patch: {
+        case: 'patch',
+        value: {
           generation: stateCache.generation,
           patch: {
-            $case: 'aws',
-            aws: {
+            case: 'aws',
+            value: {
               patch: JSON.stringify(diff),
             },
           },
@@ -68,14 +69,14 @@ export async function reportCurrentState(currentState: CurrentState) {
     }
   }
 
-  const request: ReportCurrentStateRequest = {
+  const request: PlainMessage<ReportCurrentStateRequest> = {
     connectionId: CLOUD_AGENT_CONNECTION_ID,
     state: {
-      $case: 'replace',
-      replace: {
+      case: 'replace',
+      value: {
         state: {
-          $case: 'aws',
-          aws: {
+          case: 'aws',
+          value: {
             availabilityZone: currentState.availabilityZone,
             state: JSON.stringify(currentState),
           },

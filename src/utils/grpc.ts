@@ -1,14 +1,17 @@
-import {createChannel, createClient, Metadata} from 'nice-grpc'
-import {CloudServiceClient, CloudServiceDefinition} from '../proto/depot/cloud/v2/cloud'
-import {CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_TOKEN, CLOUD_AGENT_VERSION} from './env'
+import {createPromiseClient, Interceptor} from '@bufbuild/connect'
+import {createConnectTransport} from '@bufbuild/connect-node'
+import {CloudService} from '../proto/depot/cloud/v2/cloud_connect'
+import {CLOUD_AGENT_API_URL, CLOUD_AGENT_VERSION} from './env'
 
-const channel = createChannel(CLOUD_AGENT_API_URL)
+const userAgentInterceptor: Interceptor = (next) => async (req) => {
+  req.header.set('User-Agent', `cloud-agent/${CLOUD_AGENT_VERSION}`)
+  return await next(req)
+}
 
-export const client: CloudServiceClient = createClient(CloudServiceDefinition, channel, {
-  '*': {
-    metadata: Metadata({
-      Authorization: `Bearer ${CLOUD_AGENT_CONNECTION_TOKEN}`,
-      'User-Agent': `cloud-agent/${CLOUD_AGENT_VERSION}`,
-    }),
-  },
+const transport = createConnectTransport({
+  httpVersion: '2',
+  baseUrl: CLOUD_AGENT_API_URL,
+  interceptors: [userAgentInterceptor],
 })
+
+export const client = createPromiseClient(CloudService, transport)
