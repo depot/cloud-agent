@@ -7,6 +7,11 @@ export async function reportError(err: any) {
   try {
     if (isAbortError(err)) return
     const message: string = err.message || `${err}`
+
+    // Ignore stream termination errors
+    if (message.includes('deadline_exceeded')) return
+    if (message.includes('missing EndStreamResponse')) return
+
     logger.error(message)
     await client.reportErrors({connectionId: CLOUD_AGENT_CONNECTION_ID, errors: [message]})
   } catch (err: any) {
