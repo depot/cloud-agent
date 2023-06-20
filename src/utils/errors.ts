@@ -1,6 +1,6 @@
 import {isAbortError} from 'abort-controller-x'
 import {CLOUD_AGENT_CONNECTION_ID} from './env'
-import {client, sessionManager} from './grpc'
+import {client, recreateClient} from './grpc'
 import {logger} from './logger'
 
 export async function reportError(err: any) {
@@ -15,8 +15,8 @@ export async function reportError(err: any) {
     logger.error(message)
 
     if (message.includes('New streams cannot be created after receiving a GOAWAY')) {
-      logger.info('Restarting gRPC session')
-      sessionManager.abort(err)
+      logger.error('Recreating gRPC client')
+      recreateClient()
     }
 
     await client.reportErrors({connectionId: CLOUD_AGENT_CONNECTION_ID, errors: [message]})

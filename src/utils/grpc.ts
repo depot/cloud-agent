@@ -9,16 +9,24 @@ const headerInterceptor: Interceptor = (next) => async (req) => {
   return await next(req)
 }
 
-export const sessionManager = new Http2SessionManager(CLOUD_AGENT_API_URL, {
-  pingIntervalMs: 1000 * 60, // 1 minute
-  idleConnectionTimeoutMs: 1000 * 60 * 10, // 10 minutes
-})
+export function createClient() {
+  const sessionManager = new Http2SessionManager(CLOUD_AGENT_API_URL, {
+    pingIntervalMs: 1000 * 60, // 1 minute
+    idleConnectionTimeoutMs: 1000 * 60 * 10, // 10 minutes
+  })
 
-const transport = createConnectTransport({
-  httpVersion: '2',
-  baseUrl: CLOUD_AGENT_API_URL,
-  interceptors: [headerInterceptor],
-  sessionManager,
-})
+  const transport = createConnectTransport({
+    httpVersion: '2',
+    baseUrl: CLOUD_AGENT_API_URL,
+    interceptors: [headerInterceptor],
+    sessionManager,
+  })
 
-export const client = createPromiseClient(CloudService, transport)
+  return createPromiseClient(CloudService, transport)
+}
+
+export let client = createClient()
+
+export function recreateClient() {
+  client = createClient()
+}
