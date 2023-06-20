@@ -1,5 +1,5 @@
 import {createPromiseClient, Interceptor} from '@bufbuild/connect'
-import {createConnectTransport} from '@bufbuild/connect-node'
+import {createConnectTransport, Http2SessionManager} from '@bufbuild/connect-node'
 import {CloudService} from '../proto/depot/cloud/v2/cloud_connect'
 import {CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_TOKEN, CLOUD_AGENT_VERSION} from './env'
 
@@ -9,10 +9,16 @@ const headerInterceptor: Interceptor = (next) => async (req) => {
   return await next(req)
 }
 
+export const sessionManager = new Http2SessionManager(CLOUD_AGENT_API_URL, {
+  pingIntervalMs: 1000 * 60, // 1 minute
+  idleConnectionTimeoutMs: 1000 * 60 * 10, // 10 minutes
+})
+
 const transport = createConnectTransport({
   httpVersion: '2',
   baseUrl: CLOUD_AGENT_API_URL,
   interceptors: [headerInterceptor],
+  sessionManager,
 })
 
 export const client = createPromiseClient(CloudService, transport)
