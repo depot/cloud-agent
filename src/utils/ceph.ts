@@ -2,33 +2,31 @@ import {execa} from 'execa'
 
 const POOL = 'rbd'
 
+export function newImageSpec(projectID: string, architecture: string): string {
+  const name = blockDeviceName(projectID, architecture)
+  return `${POOL}/${projectID}/${name}`
+}
+
 export function blockDeviceName(projectID: string, architecture: string): string {
   return `${projectID}-${architecture}`
 }
 
-export async function newProjectDevice(projectID: string, architecture: string, gigabytes: number): Promise<boolean> {
-  return (
-    (await createNamespace(POOL, projectID)) &&
-    (await createBlockDevice(POOL, projectID, blockDeviceName(projectID, architecture), gigabytes))
-  )
+export function newClientName(name: string): string {
+  return `client.${name}`
 }
 
-export async function newWarmInstance(machineID: string): Promise<boolean> {
-  return await createAuthEntity(machineID)
+export async function newProjectDevice(projectID: string, architecture: string, gigabytes: number): Promise<boolean> {
+  const imageSpec = newImageSpec(projectID, architecture)
+  return (await createNamespace(POOL, projectID)) && (await createBlockDevice(imageSpec, gigabytes))
 }
 
 export async function assignProjectToWarmInstance(projectID: string, machineID: string): Promise<Auth | undefined> {
   return (await authCaps(POOL, projectID, machineID)) ? await authGetJson(machineID) : undefined
 }
 
-export async function stopInstance(machineID: string): Promise<boolean> {
-  return await authRm(machineID)
-}
-
 export async function deleteProject(projectID: string, architecture: string): Promise<boolean> {
-  return (
-    (await imageRm(POOL, projectID, blockDeviceName(projectID, architecture))) && (await namespaceRm(POOL, projectID))
-  )
+  const imageSpec = newImageSpec(projectID, architecture)
+  return (await imageRm(imageSpec)) && (await namespaceRm(POOL, projectID))
 }
 
 /*** Low-level Ceph functions ***/
@@ -56,14 +54,9 @@ export async function createNamespace(pool: string, namespace: string): Promise<
   }
 }
 
-export async function createBlockDevice(
-  pool: string,
-  namespace: string,
-  name: string,
-  gigabytes: number,
-): Promise<boolean> {
+export async function createBlockDevice(imageSpec: string, gigabytes: number): Promise<boolean> {
   try {
-    const {exitCode} = await execa('rbd', ['create', `${pool}/${namespace}/${name}`, '--size', `${gigabytes}G`])
+    const {exitCode} = await execa('rbd', ['create', imageSpec, '--size', `${gigabytes}G`])
     return exitCode == 0
   } catch (e) {
     console.log(e)
@@ -73,7 +66,7 @@ export async function createBlockDevice(
 
 export async function createAuthEntity(name: string): Promise<boolean> {
   try {
-    const {exitCode} = await execa('ceph', ['auth', 'add', `client.${name}`])
+    const {exitCode} = await execa('ceph', ['auth', 'add', name])
     return exitCode == 0
   } catch (e) {
     console.log(e)
@@ -86,7 +79,7 @@ export async function authCaps(pool: string, namespace: string, name: string): P
     const {exitCode} = await execa('ceph', [
       'auth',
       'caps',
-      `client.${name}`,
+      name,
       'osd',
       // TODO: I don't think this is all that we need.
       `'profile rbd pool=${pool} namespace=${namespace}'`,
@@ -105,7 +98,7 @@ export interface Auth {
 
 export async function authGetJson(name: string): Promise<Auth | undefined> {
   try {
-    const {exitCode, stdout} = await execa('ceph', ['auth', 'get', `client.${name}`, '-f', 'json'])
+    const {exitCode, stdout} = await execa('ceph', ['auth', 'get', name, '-f', 'json'])
     if (exitCode == 0) {
       // Parse the JSON output into an array of Auth objects
       const auth = JSON.parse(stdout) as Auth[]
@@ -120,7 +113,7 @@ export async function authGetJson(name: string): Promise<Auth | undefined> {
 
 export async function authRm(name: string): Promise<boolean> {
   try {
-    const {exitCode} = await execa('ceph', ['auth', 'rm', `client.${name}`])
+    const {exitCode} = await execa('ceph', ['auth', 'rm', name])
     return exitCode == 0
   } catch (e) {
     console.log(e)
@@ -128,9 +121,9 @@ export async function authRm(name: string): Promise<boolean> {
   }
 }
 
-export async function imageRm(pool: string, namespace: string, name: string): Promise<boolean> {
+export async function imageRm(imageSpec: string): Promise<boolean> {
   try {
-    const {exitCode} = await execa('rbd', ['rm', `${pool}/${namespace}/${name}`])
+    const {exitCode} = await execa('rbd', ['rm', imageSpec])
     return exitCode == 0
   } catch (e) {
     console.log(e)
@@ -147,3 +140,16 @@ export async function namespaceRm(pool: string, namespace: string): Promise<bool
     return false
   }
 }
+
+export async function cephConfig(): Promise<string | undefined> {
+  try {
+    const {exitCode, stdout} = await execa('ceph', ['config', 'generate-minimal-conf'])
+    if (exitCode == 0) {
+      return stdout
+    }
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+// TODO: note somewhere that we don't use get-or-create as we don't know the caps at that time.

@@ -196,24 +196,29 @@ message CreateVolumeAction {
 
 message CreateVolumeUpdate {
   string project_id = 1;
+  GetDesiredStateResponse.Architecture architecture = 2;
 }
 
 message ResizeVolumeAction {
   string project_id = 1;
+  GetDesiredStateResponse.Architecture architecture = 2;
   // Size in GB
-  int32 size = 2;
+  int32 size = 3;
 }
 
 message ResizeVolumeUpdate {
   string project_id = 1;
+  GetDesiredStateResponse.Architecture architecture = 2;
 }
 
 message DeleteVolumeAction {
   string project_id = 1;
+  GetDesiredStateResponse.Architecture architecture = 2;
 }
 
 message DeleteVolumeUpdate {
   string project_id = 1;
+  GetDesiredStateResponse.Architecture architecture = 2;
 }
 
 message CreateClientAction {
@@ -239,13 +244,15 @@ message DeleteClientUpdate {
 message AuthorizeClientAction {
   string client_name = 1;
   string project_id = 2;
+  GetDesiredStateResponse.Architecture architecture = 3;
 }
 
 // rbd device map {image_spec} --name {client_name} --keyfile {file w/ key}
 message AuthorizeClientUpdate {
   string client_name = 1;
   string project_id = 2;
-  string key = 3;
-  string config = 4;
-  string image_spec = 5;
+  GetDesiredStateResponse.Architecture architecture = 3;
+  string key = 4;
+  string config = 5;
+  string image_spec = 6;
 }
