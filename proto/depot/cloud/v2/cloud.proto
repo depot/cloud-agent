@@ -188,37 +188,31 @@ message ReportVolumeUpdatesRequest {
 message ReportVolumeUpdatesResponse {}
 
 message CreateVolumeAction {
-  string project_id = 1;
-  GetDesiredStateResponse.Architecture architecture = 2;
+  string volume_name = 1;
   // Size in GB
   int32 size = 3;
 }
 
 message CreateVolumeUpdate {
-  string project_id = 1;
-  GetDesiredStateResponse.Architecture architecture = 2;
+  string volume_name = 1;
 }
 
 message ResizeVolumeAction {
-  string project_id = 1;
-  GetDesiredStateResponse.Architecture architecture = 2;
+  string volume_name = 1;
   // Size in GB
   int32 size = 3;
 }
 
 message ResizeVolumeUpdate {
-  string project_id = 1;
-  GetDesiredStateResponse.Architecture architecture = 2;
+  string volume_name = 1;
 }
 
 message DeleteVolumeAction {
-  string project_id = 1;
-  GetDesiredStateResponse.Architecture architecture = 2;
+  string volume_name = 1;
 }
 
 message DeleteVolumeUpdate {
-  string project_id = 1;
-  GetDesiredStateResponse.Architecture architecture = 2;
+  string volume_name = 1;
 }
 
 message CreateClientAction {
@@ -240,19 +234,17 @@ message DeleteClientUpdate {
   string client_name = 1;
 }
 
-// AuthorizeClientRequest gives client_name access to project_id.
+// AuthorizeClientRequest gives client_name access to volume.
 message AuthorizeClientAction {
-  string client_name = 1;
-  string project_id = 2;
-  GetDesiredStateResponse.Architecture architecture = 3;
+  string volume_name = 1;
+  string client_name = 2;
 }
 
 // rbd device map {image_spec} --name {client_name} --keyfile {file w/ key}
 message AuthorizeClientUpdate {
   string client_name = 1;
-  string project_id = 2;
-  GetDesiredStateResponse.Architecture architecture = 3;
-  string key = 4;
-  string config = 5;
-  string image_spec = 6;
+  string volume_name = 2;
+  string key = 3;
+  string config = 4;
+  string image_spec = 5;
 }

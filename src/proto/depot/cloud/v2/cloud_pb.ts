@@ -1361,14 +1361,9 @@ export class ReportVolumeUpdatesResponse extends Message<ReportVolumeUpdatesResp
  */
 export class CreateVolumeAction extends Message<CreateVolumeAction> {
   /**
-   * @generated from field: string project_id = 1;
+   * @generated from field: string volume_name = 1;
    */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+  volumeName = ''
 
   /**
    * Size in GB
@@ -1385,8 +1380,7 @@ export class CreateVolumeAction extends Message<CreateVolumeAction> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.CreateVolumeAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 3, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
   ])
 
@@ -1415,14 +1409,9 @@ export class CreateVolumeAction extends Message<CreateVolumeAction> {
  */
 export class CreateVolumeUpdate extends Message<CreateVolumeUpdate> {
   /**
-   * @generated from field: string project_id = 1;
+   * @generated from field: string volume_name = 1;
    */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+  volumeName = ''
 
   constructor(data?: PartialMessage<CreateVolumeUpdate>) {
     super()
@@ -1432,8 +1421,7 @@ export class CreateVolumeUpdate extends Message<CreateVolumeUpdate> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.CreateVolumeUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateVolumeUpdate {
@@ -1461,14 +1449,9 @@ export class CreateVolumeUpdate extends Message<CreateVolumeUpdate> {
  */
 export class ResizeVolumeAction extends Message<ResizeVolumeAction> {
   /**
-   * @generated from field: string project_id = 1;
+   * @generated from field: string volume_name = 1;
    */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+  volumeName = ''
 
   /**
    * Size in GB
@@ -1485,8 +1468,7 @@ export class ResizeVolumeAction extends Message<ResizeVolumeAction> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.ResizeVolumeAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 3, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
   ])
 
@@ -1515,14 +1497,9 @@ export class ResizeVolumeAction extends Message<ResizeVolumeAction> {
  */
 export class ResizeVolumeUpdate extends Message<ResizeVolumeUpdate> {
   /**
-   * @generated from field: string project_id = 1;
+   * @generated from field: string volume_name = 1;
    */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+  volumeName = ''
 
   constructor(data?: PartialMessage<ResizeVolumeUpdate>) {
     super()
@@ -1532,8 +1509,7 @@ export class ResizeVolumeUpdate extends Message<ResizeVolumeUpdate> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.ResizeVolumeUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResizeVolumeUpdate {
@@ -1561,14 +1537,9 @@ export class ResizeVolumeUpdate extends Message<ResizeVolumeUpdate> {
  */
 export class DeleteVolumeAction extends Message<DeleteVolumeAction> {
   /**
-   * @generated from field: string project_id = 1;
+   * @generated from field: string volume_name = 1;
    */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+  volumeName = ''
 
   constructor(data?: PartialMessage<DeleteVolumeAction>) {
     super()
@@ -1578,8 +1549,7 @@ export class DeleteVolumeAction extends Message<DeleteVolumeAction> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.DeleteVolumeAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteVolumeAction {
@@ -1607,14 +1577,9 @@ export class DeleteVolumeAction extends Message<DeleteVolumeAction> {
  */
 export class DeleteVolumeUpdate extends Message<DeleteVolumeUpdate> {
   /**
-   * @generated from field: string project_id = 1;
+   * @generated from field: string volume_name = 1;
    */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+  volumeName = ''
 
   constructor(data?: PartialMessage<DeleteVolumeUpdate>) {
     super()
@@ -1624,8 +1589,7 @@ export class DeleteVolumeUpdate extends Message<DeleteVolumeUpdate> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.DeleteVolumeUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteVolumeUpdate {
@@ -1818,25 +1782,20 @@ export class DeleteClientUpdate extends Message<DeleteClientUpdate> {
 }
 
 /**
- * AuthorizeClientRequest gives client_name access to project_id.
+ * AuthorizeClientRequest gives client_name access to volume.
  *
  * @generated from message depot.cloud.v2.AuthorizeClientAction
  */
 export class AuthorizeClientAction extends Message<AuthorizeClientAction> {
   /**
-   * @generated from field: string client_name = 1;
+   * @generated from field: string volume_name = 1;
+   */
+  volumeName = ''
+
+  /**
+   * @generated from field: string client_name = 2;
    */
   clientName = ''
-
-  /**
-   * @generated from field: string project_id = 2;
-   */
-  projectId = ''
-
-  /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 3;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
 
   constructor(data?: PartialMessage<AuthorizeClientAction>) {
     super()
@@ -1846,9 +1805,8 @@ export class AuthorizeClientAction extends Message<AuthorizeClientAction> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.AuthorizeClientAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 3, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthorizeClientAction {
@@ -1883,27 +1841,22 @@ export class AuthorizeClientUpdate extends Message<AuthorizeClientUpdate> {
   clientName = ''
 
   /**
-   * @generated from field: string project_id = 2;
+   * @generated from field: string volume_name = 2;
    */
-  projectId = ''
+  volumeName = ''
 
   /**
-   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 3;
-   */
-  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
-
-  /**
-   * @generated from field: string key = 4;
+   * @generated from field: string key = 3;
    */
   key = ''
 
   /**
-   * @generated from field: string config = 5;
+   * @generated from field: string config = 4;
    */
   config = ''
 
   /**
-   * @generated from field: string image_spec = 6;
+   * @generated from field: string image_spec = 5;
    */
   imageSpec = ''
 
@@ -1916,11 +1869,10 @@ export class AuthorizeClientUpdate extends Message<AuthorizeClientUpdate> {
   static readonly typeName = 'depot.cloud.v2.AuthorizeClientUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 3, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
-    {no: 4, name: 'key', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 5, name: 'config', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 6, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 3, name: 'key', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 4, name: 'config', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 5, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthorizeClientUpdate {
