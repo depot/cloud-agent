@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package depot.cloud.v2;
 
-import "google/protobuf/timestamp.proto";
-
 service CloudService {
   rpc GetDesiredState(GetDesiredStateRequest) returns (stream GetDesiredStateResponse) {}
   rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
@@ -31,6 +29,7 @@ message GetDesiredStateResponse {
     Architecture architecture = 4;
     string image = 5;
     SecurityGroup security_group = 6;
+    RootVolume root_volume = 7;
   }
 
   message NewVolume {
@@ -88,6 +87,11 @@ message GetDesiredStateResponse {
     VOLUME_STATE_ATTACHED = 3;
     VOLUME_STATE_DELETED = 4;
     VOLUME_STATE_ERROR = 5;
+  }
+
+  message RootVolume {
+    string device_name = 1;
+    int32 size = 2;
   }
 }
 
