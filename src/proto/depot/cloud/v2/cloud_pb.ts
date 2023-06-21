@@ -1100,3 +1100,803 @@ export class CloudStatePatch_Aws extends Message<CloudStatePatch_Aws> {
     return proto3.util.equals(CloudStatePatch_Aws, a, b)
   }
 }
+
+/**
+ * @generated from message depot.cloud.v2.ReconcileVolumesRequest
+ */
+export class ReconcileVolumesRequest extends Message<ReconcileVolumesRequest> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = ''
+
+  constructor(data?: PartialMessage<ReconcileVolumesRequest>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ReconcileVolumesRequest'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconcileVolumesRequest {
+    return new ReconcileVolumesRequest().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReconcileVolumesRequest {
+    return new ReconcileVolumesRequest().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReconcileVolumesRequest {
+    return new ReconcileVolumesRequest().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ReconcileVolumesRequest | PlainMessage<ReconcileVolumesRequest> | undefined,
+    b: ReconcileVolumesRequest | PlainMessage<ReconcileVolumesRequest> | undefined,
+  ): boolean {
+    return proto3.util.equals(ReconcileVolumesRequest, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.ReconcileVolumesResponse
+ */
+export class ReconcileVolumesResponse extends Message<ReconcileVolumesResponse> {
+  /**
+   * @generated from oneof depot.cloud.v2.ReconcileVolumesResponse.action
+   */
+  action:
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CreateVolumeAction create_volume = 1;
+         */
+        value: CreateVolumeAction
+        case: 'createVolume'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.ResizeVolumeAction resize_volume = 2;
+         */
+        value: ResizeVolumeAction
+        case: 'resizeVolume'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.DeleteVolumeAction delete_volume = 3;
+         */
+        value: DeleteVolumeAction
+        case: 'deleteVolume'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CreateClientAction create_client = 4;
+         */
+        value: CreateClientAction
+        case: 'createClient'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.AuthorizeClientAction authorize_client = 5;
+         */
+        value: AuthorizeClientAction
+        case: 'authorizeClient'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.DeleteClientAction delete_client = 6;
+         */
+        value: DeleteClientAction
+        case: 'deleteClient'
+      }
+    | {case: undefined; value?: undefined} = {case: undefined}
+
+  constructor(data?: PartialMessage<ReconcileVolumesResponse>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ReconcileVolumesResponse'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'create_volume', kind: 'message', T: CreateVolumeAction, oneof: 'action'},
+    {no: 2, name: 'resize_volume', kind: 'message', T: ResizeVolumeAction, oneof: 'action'},
+    {no: 3, name: 'delete_volume', kind: 'message', T: DeleteVolumeAction, oneof: 'action'},
+    {no: 4, name: 'create_client', kind: 'message', T: CreateClientAction, oneof: 'action'},
+    {no: 5, name: 'authorize_client', kind: 'message', T: AuthorizeClientAction, oneof: 'action'},
+    {no: 6, name: 'delete_client', kind: 'message', T: DeleteClientAction, oneof: 'action'},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconcileVolumesResponse {
+    return new ReconcileVolumesResponse().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReconcileVolumesResponse {
+    return new ReconcileVolumesResponse().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReconcileVolumesResponse {
+    return new ReconcileVolumesResponse().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ReconcileVolumesResponse | PlainMessage<ReconcileVolumesResponse> | undefined,
+    b: ReconcileVolumesResponse | PlainMessage<ReconcileVolumesResponse> | undefined,
+  ): boolean {
+    return proto3.util.equals(ReconcileVolumesResponse, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.ReportVolumeUpdatesRequest
+ */
+export class ReportVolumeUpdatesRequest extends Message<ReportVolumeUpdatesRequest> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = ''
+
+  /**
+   * @generated from oneof depot.cloud.v2.ReportVolumeUpdatesRequest.update
+   */
+  update:
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CreateVolumeUpdate create_volume = 2;
+         */
+        value: CreateVolumeUpdate
+        case: 'createVolume'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.ResizeVolumeUpdate resize_volume = 3;
+         */
+        value: ResizeVolumeUpdate
+        case: 'resizeVolume'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.DeleteVolumeUpdate delete_volume = 4;
+         */
+        value: DeleteVolumeUpdate
+        case: 'deleteVolume'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CreateClientUpdate create_client = 5;
+         */
+        value: CreateClientUpdate
+        case: 'createClient'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.AuthorizeClientUpdate authorize_client = 6;
+         */
+        value: AuthorizeClientUpdate
+        case: 'authorizeClient'
+      }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.DeleteClientUpdate delete_client = 7;
+         */
+        value: DeleteClientUpdate
+        case: 'deleteClient'
+      }
+    | {case: undefined; value?: undefined} = {case: undefined}
+
+  constructor(data?: PartialMessage<ReportVolumeUpdatesRequest>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ReportVolumeUpdatesRequest'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'create_volume', kind: 'message', T: CreateVolumeUpdate, oneof: 'update'},
+    {no: 3, name: 'resize_volume', kind: 'message', T: ResizeVolumeUpdate, oneof: 'update'},
+    {no: 4, name: 'delete_volume', kind: 'message', T: DeleteVolumeUpdate, oneof: 'update'},
+    {no: 5, name: 'create_client', kind: 'message', T: CreateClientUpdate, oneof: 'update'},
+    {no: 6, name: 'authorize_client', kind: 'message', T: AuthorizeClientUpdate, oneof: 'update'},
+    {no: 7, name: 'delete_client', kind: 'message', T: DeleteClientUpdate, oneof: 'update'},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportVolumeUpdatesRequest {
+    return new ReportVolumeUpdatesRequest().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReportVolumeUpdatesRequest {
+    return new ReportVolumeUpdatesRequest().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReportVolumeUpdatesRequest {
+    return new ReportVolumeUpdatesRequest().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ReportVolumeUpdatesRequest | PlainMessage<ReportVolumeUpdatesRequest> | undefined,
+    b: ReportVolumeUpdatesRequest | PlainMessage<ReportVolumeUpdatesRequest> | undefined,
+  ): boolean {
+    return proto3.util.equals(ReportVolumeUpdatesRequest, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.ReportVolumeUpdatesResponse
+ */
+export class ReportVolumeUpdatesResponse extends Message<ReportVolumeUpdatesResponse> {
+  constructor(data?: PartialMessage<ReportVolumeUpdatesResponse>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ReportVolumeUpdatesResponse'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportVolumeUpdatesResponse {
+    return new ReportVolumeUpdatesResponse().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReportVolumeUpdatesResponse {
+    return new ReportVolumeUpdatesResponse().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReportVolumeUpdatesResponse {
+    return new ReportVolumeUpdatesResponse().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ReportVolumeUpdatesResponse | PlainMessage<ReportVolumeUpdatesResponse> | undefined,
+    b: ReportVolumeUpdatesResponse | PlainMessage<ReportVolumeUpdatesResponse> | undefined,
+  ): boolean {
+    return proto3.util.equals(ReportVolumeUpdatesResponse, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.CreateVolumeAction
+ */
+export class CreateVolumeAction extends Message<CreateVolumeAction> {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId = ''
+
+  /**
+   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.Architecture architecture = 2;
+   */
+  architecture = GetDesiredStateResponse_Architecture.UNSPECIFIED
+
+  /**
+   * Size in GB
+   *
+   * @generated from field: int32 size = 3;
+   */
+  size = 0
+
+  constructor(data?: PartialMessage<CreateVolumeAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CreateVolumeAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
+    {no: 3, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateVolumeAction {
+    return new CreateVolumeAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateVolumeAction {
+    return new CreateVolumeAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateVolumeAction {
+    return new CreateVolumeAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CreateVolumeAction | PlainMessage<CreateVolumeAction> | undefined,
+    b: CreateVolumeAction | PlainMessage<CreateVolumeAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(CreateVolumeAction, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.CreateVolumeUpdate
+ */
+export class CreateVolumeUpdate extends Message<CreateVolumeUpdate> {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId = ''
+
+  constructor(data?: PartialMessage<CreateVolumeUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CreateVolumeUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateVolumeUpdate {
+    return new CreateVolumeUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateVolumeUpdate {
+    return new CreateVolumeUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateVolumeUpdate {
+    return new CreateVolumeUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CreateVolumeUpdate | PlainMessage<CreateVolumeUpdate> | undefined,
+    b: CreateVolumeUpdate | PlainMessage<CreateVolumeUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(CreateVolumeUpdate, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.ResizeVolumeAction
+ */
+export class ResizeVolumeAction extends Message<ResizeVolumeAction> {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId = ''
+
+  /**
+   * Size in GB
+   *
+   * @generated from field: int32 size = 2;
+   */
+  size = 0
+
+  constructor(data?: PartialMessage<ResizeVolumeAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ResizeVolumeAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResizeVolumeAction {
+    return new ResizeVolumeAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResizeVolumeAction {
+    return new ResizeVolumeAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResizeVolumeAction {
+    return new ResizeVolumeAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ResizeVolumeAction | PlainMessage<ResizeVolumeAction> | undefined,
+    b: ResizeVolumeAction | PlainMessage<ResizeVolumeAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(ResizeVolumeAction, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.ResizeVolumeUpdate
+ */
+export class ResizeVolumeUpdate extends Message<ResizeVolumeUpdate> {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId = ''
+
+  constructor(data?: PartialMessage<ResizeVolumeUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ResizeVolumeUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResizeVolumeUpdate {
+    return new ResizeVolumeUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ResizeVolumeUpdate {
+    return new ResizeVolumeUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ResizeVolumeUpdate {
+    return new ResizeVolumeUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ResizeVolumeUpdate | PlainMessage<ResizeVolumeUpdate> | undefined,
+    b: ResizeVolumeUpdate | PlainMessage<ResizeVolumeUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(ResizeVolumeUpdate, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.DeleteVolumeAction
+ */
+export class DeleteVolumeAction extends Message<DeleteVolumeAction> {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId = ''
+
+  constructor(data?: PartialMessage<DeleteVolumeAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.DeleteVolumeAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteVolumeAction {
+    return new DeleteVolumeAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteVolumeAction {
+    return new DeleteVolumeAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteVolumeAction {
+    return new DeleteVolumeAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: DeleteVolumeAction | PlainMessage<DeleteVolumeAction> | undefined,
+    b: DeleteVolumeAction | PlainMessage<DeleteVolumeAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(DeleteVolumeAction, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.DeleteVolumeUpdate
+ */
+export class DeleteVolumeUpdate extends Message<DeleteVolumeUpdate> {
+  /**
+   * @generated from field: string project_id = 1;
+   */
+  projectId = ''
+
+  constructor(data?: PartialMessage<DeleteVolumeUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.DeleteVolumeUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteVolumeUpdate {
+    return new DeleteVolumeUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteVolumeUpdate {
+    return new DeleteVolumeUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteVolumeUpdate {
+    return new DeleteVolumeUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: DeleteVolumeUpdate | PlainMessage<DeleteVolumeUpdate> | undefined,
+    b: DeleteVolumeUpdate | PlainMessage<DeleteVolumeUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(DeleteVolumeUpdate, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.CreateClientAction
+ */
+export class CreateClientAction extends Message<CreateClientAction> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = ''
+
+  constructor(data?: PartialMessage<CreateClientAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CreateClientAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateClientAction {
+    return new CreateClientAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateClientAction {
+    return new CreateClientAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateClientAction {
+    return new CreateClientAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CreateClientAction | PlainMessage<CreateClientAction> | undefined,
+    b: CreateClientAction | PlainMessage<CreateClientAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(CreateClientAction, a, b)
+  }
+}
+
+/**
+ * Name is now associated with client_name.
+ * client_name is not authorized until `AuthorizeClientAction` is called.
+ *
+ * @generated from message depot.cloud.v2.CreateClientUpdate
+ */
+export class CreateClientUpdate extends Message<CreateClientUpdate> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = ''
+
+  /**
+   * @generated from field: string client_name = 2;
+   */
+  clientName = ''
+
+  constructor(data?: PartialMessage<CreateClientUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CreateClientUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateClientUpdate {
+    return new CreateClientUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateClientUpdate {
+    return new CreateClientUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateClientUpdate {
+    return new CreateClientUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CreateClientUpdate | PlainMessage<CreateClientUpdate> | undefined,
+    b: CreateClientUpdate | PlainMessage<CreateClientUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(CreateClientUpdate, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.DeleteClientAction
+ */
+export class DeleteClientAction extends Message<DeleteClientAction> {
+  /**
+   * @generated from field: string client_name = 1;
+   */
+  clientName = ''
+
+  constructor(data?: PartialMessage<DeleteClientAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.DeleteClientAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteClientAction {
+    return new DeleteClientAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteClientAction {
+    return new DeleteClientAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteClientAction {
+    return new DeleteClientAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: DeleteClientAction | PlainMessage<DeleteClientAction> | undefined,
+    b: DeleteClientAction | PlainMessage<DeleteClientAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(DeleteClientAction, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.DeleteClientUpdate
+ */
+export class DeleteClientUpdate extends Message<DeleteClientUpdate> {
+  /**
+   * @generated from field: string client_name = 1;
+   */
+  clientName = ''
+
+  constructor(data?: PartialMessage<DeleteClientUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.DeleteClientUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteClientUpdate {
+    return new DeleteClientUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): DeleteClientUpdate {
+    return new DeleteClientUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): DeleteClientUpdate {
+    return new DeleteClientUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: DeleteClientUpdate | PlainMessage<DeleteClientUpdate> | undefined,
+    b: DeleteClientUpdate | PlainMessage<DeleteClientUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(DeleteClientUpdate, a, b)
+  }
+}
+
+/**
+ * AuthorizeClientRequest gives client_name access to project_id.
+ *
+ * @generated from message depot.cloud.v2.AuthorizeClientAction
+ */
+export class AuthorizeClientAction extends Message<AuthorizeClientAction> {
+  /**
+   * @generated from field: string client_name = 1;
+   */
+  clientName = ''
+
+  /**
+   * @generated from field: string project_id = 2;
+   */
+  projectId = ''
+
+  constructor(data?: PartialMessage<AuthorizeClientAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.AuthorizeClientAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthorizeClientAction {
+    return new AuthorizeClientAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AuthorizeClientAction {
+    return new AuthorizeClientAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AuthorizeClientAction {
+    return new AuthorizeClientAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: AuthorizeClientAction | PlainMessage<AuthorizeClientAction> | undefined,
+    b: AuthorizeClientAction | PlainMessage<AuthorizeClientAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(AuthorizeClientAction, a, b)
+  }
+}
+
+/**
+ * rbd device map {image_spec} --name {client_name} --keyfile {file w/ key}
+ *
+ * @generated from message depot.cloud.v2.AuthorizeClientUpdate
+ */
+export class AuthorizeClientUpdate extends Message<AuthorizeClientUpdate> {
+  /**
+   * @generated from field: string client_name = 1;
+   */
+  clientName = ''
+
+  /**
+   * @generated from field: string project_id = 2;
+   */
+  projectId = ''
+
+  /**
+   * @generated from field: string key = 3;
+   */
+  key = ''
+
+  /**
+   * @generated from field: string config = 4;
+   */
+  config = ''
+
+  /**
+   * @generated from field: string image_spec = 5;
+   */
+  imageSpec = ''
+
+  constructor(data?: PartialMessage<AuthorizeClientUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.AuthorizeClientUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 3, name: 'key', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 4, name: 'config', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 5, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthorizeClientUpdate {
+    return new AuthorizeClientUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AuthorizeClientUpdate {
+    return new AuthorizeClientUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AuthorizeClientUpdate {
+    return new AuthorizeClientUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: AuthorizeClientUpdate | PlainMessage<AuthorizeClientUpdate> | undefined,
+    b: AuthorizeClientUpdate | PlainMessage<AuthorizeClientUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(AuthorizeClientUpdate, a, b)
+  }
+}

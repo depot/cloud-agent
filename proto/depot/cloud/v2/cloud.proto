@@ -8,6 +8,9 @@ service CloudService {
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
   rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
+
+  rpc ReconcileVolumes(ReconcileVolumesRequest) returns (stream ReconcileVolumesResponse) {}
+  rpc ReportVolumeUpdates(ReportVolumeUpdatesRequest) returns (ReportVolumeUpdatesResponse) {}
 }
 
 // Messages
@@ -151,4 +154,98 @@ message CloudStatePatch {
   message Aws {
     string patch = 1;
   }
+}
+
+message ReconcileVolumesRequest {
+  string connection_id = 1;
+}
+
+message ReconcileVolumesResponse {
+  oneof action {
+    CreateVolumeAction create_volume = 1;
+    ResizeVolumeAction resize_volume = 2;
+    DeleteVolumeAction delete_volume = 3;
+
+    CreateClientAction create_client = 4;
+    AuthorizeClientAction authorize_client = 5;
+    DeleteClientAction delete_client = 6;
+  }
+}
+
+message ReportVolumeUpdatesRequest {
+  string connection_id = 1;
+  oneof update {
+    CreateVolumeUpdate create_volume = 2;
+    ResizeVolumeUpdate resize_volume = 3;
+    DeleteVolumeUpdate delete_volume = 4;
+
+    CreateClientUpdate create_client = 5;
+    AuthorizeClientUpdate authorize_client = 6;
+    DeleteClientUpdate delete_client = 7;
+  }
+}
+
+message ReportVolumeUpdatesResponse {}
+
+message CreateVolumeAction {
+  string project_id = 1;
+  GetDesiredStateResponse.Architecture architecture = 2;
+  // Size in GB
+  int32 size = 3;
+}
+
+message CreateVolumeUpdate {
+  string project_id = 1;
+}
+
+message ResizeVolumeAction {
+  string project_id = 1;
+  // Size in GB
+  int32 size = 2;
+}
+
+message ResizeVolumeUpdate {
+  string project_id = 1;
+}
+
+message DeleteVolumeAction {
+  string project_id = 1;
+}
+
+message DeleteVolumeUpdate {
+  string project_id = 1;
+}
+
+message CreateClientAction {
+  string name = 1;
+}
+
+// Name is now associated with client_name.
+// client_name is not authorized until `AuthorizeClientAction` is called.
+message CreateClientUpdate {
+  string name = 1;
+  string client_name = 2;
+}
+
+message DeleteClientAction {
+  string client_name = 1;
+}
+
+message DeleteClientUpdate {
+  string client_name = 1;
+}
+
+// AuthorizeClientRequest gives client_name access to project_id.
+message AuthorizeClientAction {
+  string client_name = 1;
+  string project_id = 2;
+}
+
+// rbd device map {image_spec} --name {client_name} --keyfile {file w/ key}
+message AuthorizeClientUpdate {
+  string client_name = 1;
+  string project_id = 2;
+  string key = 3;
+  string config = 4;
+  string image_spec = 5;
 }
