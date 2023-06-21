@@ -214,6 +214,26 @@ systemctl enable machine-agent.service
 systemctl start machine-agent.service
 `.trim()
 
+  const rootVolume = machine.rootVolume
+    ? {
+        DeviceName: machine.rootVolume.deviceName ?? '/dev/xvda',
+        Ebs: {
+          VolumeSize: machine.rootVolume.size ?? 40,
+          VolumeType: 'gp3',
+          DeleteOnTermination: true,
+          Encrypted: true,
+        },
+      }
+    : {
+        DeviceName: '/dev/xvda',
+        Ebs: {
+          VolumeSize: 40,
+          VolumeType: 'gp3',
+          DeleteOnTermination: true,
+          Encrypted: true,
+        },
+      }
+
   await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
@@ -245,17 +265,7 @@ systemctl start machine-agent.service
           SubnetId: CLOUD_AGENT_AWS_SUBNET_ID,
         },
       ],
-      BlockDeviceMappings: [
-        {
-          DeviceName: '/dev/xvda',
-          Ebs: {
-            VolumeSize: 40,
-            VolumeType: 'gp3',
-            DeleteOnTermination: true,
-            Encrypted: true,
-          },
-        },
-      ],
+      BlockDeviceMappings: [rootVolume],
       MaxCount: 1,
       MinCount: 1,
       UserData: Buffer.from(userData).toString('base64'),

@@ -317,6 +317,11 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
    */
   securityGroup = GetDesiredStateResponse_SecurityGroup.UNSPECIFIED
 
+  /**
+   * @generated from field: depot.cloud.v2.GetDesiredStateResponse.RootVolume root_volume = 7;
+   */
+  rootVolume?: GetDesiredStateResponse_RootVolume
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewMachine>) {
     super()
     proto3.util.initPartial(data, this)
@@ -331,6 +336,7 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
     {no: 4, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
     {no: 5, name: 'image', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 6, name: 'security_group', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_SecurityGroup)},
+    {no: 7, name: 'root_volume', kind: 'message', T: GetDesiredStateResponse_RootVolume},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewMachine {
@@ -518,6 +524,52 @@ export class GetDesiredStateResponse_VolumeChange extends Message<GetDesiredStat
     b: GetDesiredStateResponse_VolumeChange | PlainMessage<GetDesiredStateResponse_VolumeChange> | undefined,
   ): boolean {
     return proto3.util.equals(GetDesiredStateResponse_VolumeChange, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.GetDesiredStateResponse.RootVolume
+ */
+export class GetDesiredStateResponse_RootVolume extends Message<GetDesiredStateResponse_RootVolume> {
+  /**
+   * @generated from field: string device_name = 1;
+   */
+  deviceName = ''
+
+  /**
+   * @generated from field: int32 size = 2;
+   */
+  size = 0
+
+  constructor(data?: PartialMessage<GetDesiredStateResponse_RootVolume>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.GetDesiredStateResponse.RootVolume'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'device_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_RootVolume {
+    return new GetDesiredStateResponse_RootVolume().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDesiredStateResponse_RootVolume {
+    return new GetDesiredStateResponse_RootVolume().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDesiredStateResponse_RootVolume {
+    return new GetDesiredStateResponse_RootVolume().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: GetDesiredStateResponse_RootVolume | PlainMessage<GetDesiredStateResponse_RootVolume> | undefined,
+    b: GetDesiredStateResponse_RootVolume | PlainMessage<GetDesiredStateResponse_RootVolume> | undefined,
+  ): boolean {
+    return proto3.util.equals(GetDesiredStateResponse_RootVolume, a, b)
   }
 }
 
