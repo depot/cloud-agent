@@ -33,6 +33,19 @@ export async function deleteProject(projectID: string, architecture: string): Pr
 
 /*** Low-level Ceph functions ***/
 
+export async function listNamespaces(pool: string): Promise<string[]> {
+  interface Namespace {
+    name: string
+  }
+
+  const {exitCode, stdout} = await execa('rbd', ['namespace', 'ls', '--format', 'json', pool])
+  if (exitCode == 0) {
+    const namespaces = JSON.parse(stdout) as Namespace[]
+    return namespaces.map((namespace) => namespace.name)
+  }
+  return []
+}
+
 export async function createNamespace(pool: string, namespace: string): Promise<boolean> {
   try {
     const {exitCode} = await execa('rbd', ['namespace', 'create', `${pool}/${namespace}`])
@@ -75,7 +88,7 @@ export async function authCaps(pool: string, namespace: string, name: string): P
       'caps',
       `client.${name}`,
       'osd',
-      // I don't think this is all that we need.
+      // TODO: I don't think this is all that we need.
       `'profile rbd pool=${pool} namespace=${namespace}'`,
     ])
     return exitCode == 0
