@@ -1,6 +1,5 @@
 import {
   AttachVolumeCommand,
-  VolumeState as AwsVolumeState,
   BlockDeviceMapping,
   CreateVolumeCommand,
   DeleteVolumeCommand,
@@ -15,6 +14,7 @@ import {
   StopInstancesCommand,
   TerminateInstancesCommand,
   Volume,
+  VolumeState as AwsVolumeState,
 } from '@aws-sdk/client-ec2'
 import {
   GetDesiredStateResponse,
