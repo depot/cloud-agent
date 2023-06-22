@@ -1604,9 +1604,9 @@ export class DeleteVolumeUpdate extends Message<DeleteVolumeUpdate> {
  */
 export class CreateClientAction extends Message<CreateClientAction> {
   /**
-   * @generated from field: string machine_name = 1;
+   * @generated from field: string client_name = 1;
    */
-  machineName = ''
+  clientName = ''
 
   constructor(data?: PartialMessage<CreateClientAction>) {
     super()
@@ -1616,7 +1616,7 @@ export class CreateClientAction extends Message<CreateClientAction> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.CreateClientAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'machine_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateClientAction {
@@ -1647,12 +1647,7 @@ export class CreateClientAction extends Message<CreateClientAction> {
  */
 export class CreateClientUpdate extends Message<CreateClientUpdate> {
   /**
-   * @generated from field: string machine_name = 1;
-   */
-  machineName = ''
-
-  /**
-   * @generated from field: string client_name = 2;
+   * @generated from field: string client_name = 1;
    */
   clientName = ''
 
@@ -1664,8 +1659,7 @@ export class CreateClientUpdate extends Message<CreateClientUpdate> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.CreateClientUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'machine_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateClientUpdate {

@@ -1,9 +1,12 @@
+import {PlainMessage} from '@bufbuild/protobuf'
 import {
   AuthorizeClientAction,
   CreateClientAction,
   CreateVolumeAction,
   DeleteClientAction,
   DeleteVolumeAction,
+  ReconcileVolumesResponse,
+  ReportVolumeUpdatesRequest,
   ResizeVolumeAction,
 } from '../proto/depot/cloud/v2/cloud_pb'
 import {
@@ -30,25 +33,12 @@ export async function startVolumeStream(signal: AbortSignal) {
       const stream = client.reconcileVolumes({}, {signal})
       for await (const response of stream) {
         if (signal.aborted) return
-        switch (response.action.case) {
-          case 'createVolume':
-            await createVolume(response.action.value)
-            break
-          case 'resizeVolume':
-            await resizeVolume(response.action.value)
-            break
-          case 'deleteVolume':
-            await deleteVolume(response.action.value)
-            break
-          case 'createClient':
-            await createClient(response.action.value)
-            break
-          case 'authorizeClient':
-            await authorizeClient(response.action.value)
-            break
-          case 'deleteClient':
-            await deleteClient(response.action.value)
-            break
+
+        try {
+          const update = await handleAction(response.action)
+          if (update) await client.reportVolumeUpdates(update)
+        } catch (err: any) {
+          await reportError(err)
         }
       }
     } catch (err: any) {
@@ -57,109 +47,117 @@ export async function startVolumeStream(signal: AbortSignal) {
   }
 }
 
-async function createVolume({volumeName, size}: CreateVolumeAction) {
+async function handleAction(
+  action: ReconcileVolumesResponse['action'],
+): Promise<PlainMessage<ReportVolumeUpdatesRequest> | null> {
+  switch (action.case) {
+    case 'createVolume':
+      return await createVolume(action.value)
+    case 'resizeVolume':
+      return await resizeVolume(action.value)
+    case 'deleteVolume':
+      return await deleteVolume(action.value)
+    case 'createClient':
+      return await createClient(action.value)
+    case 'authorizeClient':
+      return await authorizeClient(action.value)
+    case 'deleteClient':
+      return await deleteClient(action.value)
+    default:
+      return null
+  }
+}
+
+async function createVolume({volumeName, size}: CreateVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
   const poolSpec = newPoolSpec(volumeName)
   const imageSpec = newImageSpec(volumeName)
 
-  try {
-    await createNamespace(poolSpec)
-    await createBlockDevice(imageSpec, size)
+  await createNamespace(poolSpec)
+  await createBlockDevice(imageSpec, size)
 
-    await client.reportVolumeUpdates({
-      update: {
-        case: 'createVolume',
-        value: {
-          volumeName,
-        },
+  return {
+    update: {
+      case: 'createVolume',
+      value: {
+        volumeName,
       },
-    })
-  } catch (err: any) {
-    await reportError(err)
+    },
   }
 }
 
 async function resizeVolume(_action: ResizeVolumeAction) {
   // TODO: resize volume
+  return null
 }
 
-async function deleteVolume({volumeName}: DeleteVolumeAction) {
+async function deleteVolume({volumeName}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
   const imageSpec = newImageSpec(volumeName)
   const poolSpec = newPoolSpec(volumeName)
+  await imageRm(imageSpec)
+  await namespaceRm(poolSpec)
 
-  try {
-    await imageRm(imageSpec)
-    await namespaceRm(poolSpec)
-
-    await client.reportVolumeUpdates({
-      update: {
-        case: 'deleteVolume',
-        value: {
-          volumeName,
-        },
+  return {
+    update: {
+      case: 'deleteVolume',
+      value: {
+        volumeName,
       },
-    })
-  } catch (err: any) {
-    await reportError(err)
+    },
   }
 }
 
-async function createClient({machineName}: CreateClientAction) {
-  const clientName = newClientName(machineName)
-  try {
-    await createAuthEntity(clientName)
+async function createClient({
+  clientName: plainClientName,
+}: CreateClientAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
+  const clientName = newClientName(plainClientName)
+  await createAuthEntity(clientName)
 
-    await client.reportVolumeUpdates({
-      update: {
-        case: 'createClient',
-        value: {
-          machineName,
-          clientName,
-        },
+  return {
+    update: {
+      case: 'createClient',
+      value: {
+        clientName,
       },
-    })
-  } catch (err: any) {
-    await reportError(err)
+    },
   }
 }
 
-async function authorizeClient({volumeName, clientName}: AuthorizeClientAction) {
+async function authorizeClient({
+  volumeName,
+  clientName: plainClientName,
+}: AuthorizeClientAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
   const osdProfile = newOsdProfile(volumeName)
+  const clientName = newClientName(plainClientName)
+  await authCaps(osdProfile, clientName)
+  const {key} = await authGetJson(clientName)
+  const config = await cephConfig()
 
-  try {
-    await authCaps(osdProfile, clientName)
-    const {key} = await authGetJson(clientName)
-    const config = await cephConfig()
-
-    await client.reportVolumeUpdates({
-      update: {
-        case: 'authorizeClient',
-        value: {
-          clientName,
-          volumeName,
-          key,
-          config,
-          imageSpec: newImageSpec(volumeName),
-        },
+  return {
+    update: {
+      case: 'authorizeClient',
+      value: {
+        clientName,
+        volumeName,
+        key,
+        config,
+        imageSpec: newImageSpec(volumeName),
       },
-    })
-  } catch (err: any) {
-    await reportError(err)
+    },
   }
 }
 
-async function deleteClient({clientName}: DeleteClientAction) {
-  try {
-    await authRm(clientName)
+async function deleteClient({
+  clientName: plainClientName,
+}: DeleteClientAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
+  const clientName = newClientName(plainClientName)
+  await authRm(clientName)
 
-    await client.reportVolumeUpdates({
-      update: {
-        case: 'deleteClient',
-        value: {
-          clientName,
-        },
+  return {
+    update: {
+      case: 'deleteClient',
+      value: {
+        clientName,
       },
-    })
-  } catch (err: any) {
-    await reportError(err)
+    },
   }
 }
