@@ -21,14 +21,13 @@ import {
   newOsdProfile,
   newPoolSpec,
 } from '../utils/ceph'
-import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
 export async function startVolumeStream(signal: AbortSignal) {
   while (!signal.aborted) {
     try {
-      const stream = client.reconcileVolumes({connectionId: CLOUD_AGENT_CONNECTION_ID}, {signal})
+      const stream = client.reconcileVolumes({}, {signal})
       for await (const response of stream) {
         if (signal.aborted) return
         switch (response.action.case) {
