@@ -244,6 +244,7 @@ message AuthorizeClientAction {
 message AuthorizeClientUpdate {
   string client_name = 1;
   string volume_name = 2;
+
   string key = 3;
   string config = 4;
   string image_spec = 5;
