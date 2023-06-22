@@ -219,6 +219,10 @@ message CreateClientAction {
 // client_name is not authorized until `AuthorizeClientAction` is called.
 message CreateClientUpdate {
   string client_name = 1;
+  // key is the contents of the keyfile.
+  string key = 2;
+  // config is the contents of the ceph.conf file.
+  string config = 3;
 }
 
 message DeleteClientAction {
@@ -239,8 +243,4 @@ message AuthorizeClientAction {
 message AuthorizeClientUpdate {
   string client_name = 1;
   string volume_name = 2;
-
-  string key = 3;
-  string config = 4;
-  string image_spec = 5;
 }

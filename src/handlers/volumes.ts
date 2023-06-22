@@ -11,7 +11,7 @@ import {
 } from '../proto/depot/cloud/v2/cloud_pb'
 import {
   authCaps,
-  authGetJson,
+  authGetKey,
   authRm,
   cephConfig,
   createAuthEntity,
@@ -111,12 +111,16 @@ async function createClient({
 }: CreateClientAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
   const clientName = newClientName(plainClientName)
   await createAuthEntity(clientName)
+  const {key} = await authGetKey(clientName)
+  const config = await cephConfig()
 
   return {
     update: {
       case: 'createClient',
       value: {
         clientName,
+        key,
+        config,
       },
     },
   }
@@ -129,8 +133,6 @@ async function authorizeClient({
   const osdProfile = newOsdProfile(volumeName)
   const clientName = newClientName(plainClientName)
   await authCaps(osdProfile, clientName)
-  const {key} = await authGetJson(clientName)
-  const config = await cephConfig()
 
   return {
     update: {
@@ -138,9 +140,6 @@ async function authorizeClient({
       value: {
         clientName,
         volumeName,
-        key,
-        config,
-        imageSpec: newImageSpec(volumeName),
       },
     },
   }

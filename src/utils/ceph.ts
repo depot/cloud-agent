@@ -54,6 +54,20 @@ export async function createAuthEntity(name: ClientName) {
   throw new Error(stderr)
 }
 
+export interface Key {
+  key: string
+}
+
+export async function authGetKey(clientName: ClientName): Promise<Key> {
+  const {exitCode, stdout, stderr} = await execa('ceph', ['auth', 'get-key', clientName, '-f', 'json'], {reject: false})
+  if (exitCode === 0) {
+    const key = JSON.parse(stdout) as Key
+    return key
+  }
+
+  throw new Error(stderr)
+}
+
 export async function authCaps(osdProfile: OsdProfile, clientName: ClientName) {
   // We don't use get-or-create as the caps must always be the same.
   const {exitCode, stderr} = await execa(
@@ -73,26 +87,6 @@ export async function authCaps(osdProfile: OsdProfile, clientName: ClientName) {
 
   // ceph auth caps is idempotent.
   if (exitCode === 0) return
-
-  throw new Error(stderr)
-}
-
-export interface Auth {
-  entity: string
-  key: string
-}
-
-export async function authGetJson(clientName: ClientName): Promise<Auth> {
-  const {exitCode, stdout, stderr} = await execa('ceph', ['auth', 'get', clientName, '-f', 'json'], {reject: false})
-  if (exitCode === 0) {
-    // Parse the JSON output into an array of Auth objects
-    const auth = JSON.parse(stdout) as Auth[]
-    if (auth.length > 0) {
-      return auth[0]
-    }
-
-    throw new Error(`No auth found for ${clientName}`)
-  }
 
   throw new Error(stderr)
 }
