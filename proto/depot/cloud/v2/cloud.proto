@@ -8,7 +8,6 @@ service CloudService {
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
   rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
-
   rpc ReconcileVolumes(ReconcileVolumesRequest) returns (stream ReconcileVolumesResponse) {}
   rpc ReportVolumeUpdates(ReportVolumeUpdatesRequest) returns (ReportVolumeUpdatesResponse) {}
 }
@@ -156,9 +155,7 @@ message CloudStatePatch {
   }
 }
 
-message ReconcileVolumesRequest {
-  string connection_id = 1;
-}
+message ReconcileVolumesRequest {}
 
 message ReconcileVolumesResponse {
   oneof action {
@@ -173,15 +170,14 @@ message ReconcileVolumesResponse {
 }
 
 message ReportVolumeUpdatesRequest {
-  string connection_id = 1;
   oneof update {
-    CreateVolumeUpdate create_volume = 2;
-    ResizeVolumeUpdate resize_volume = 3;
-    DeleteVolumeUpdate delete_volume = 4;
+    CreateVolumeUpdate create_volume = 1;
+    ResizeVolumeUpdate resize_volume = 2;
+    DeleteVolumeUpdate delete_volume = 3;
 
-    CreateClientUpdate create_client = 5;
-    AuthorizeClientUpdate authorize_client = 6;
-    DeleteClientUpdate delete_client = 7;
+    CreateClientUpdate create_client = 4;
+    AuthorizeClientUpdate authorize_client = 5;
+    DeleteClientUpdate delete_client = 6;
   }
 }
 
@@ -216,13 +212,13 @@ message DeleteVolumeUpdate {
 }
 
 message CreateClientAction {
-  string name = 1;
+  string machine_name = 1;
 }
 
-// Name is now associated with client_name.
+// machine_name is now associated with client_name.
 // client_name is not authorized until `AuthorizeClientAction` is called.
 message CreateClientUpdate {
-  string name = 1;
+  string machine_name = 1;
   string client_name = 2;
 }
 

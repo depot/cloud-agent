@@ -1105,11 +1105,6 @@ export class CloudStatePatch_Aws extends Message<CloudStatePatch_Aws> {
  * @generated from message depot.cloud.v2.ReconcileVolumesRequest
  */
 export class ReconcileVolumesRequest extends Message<ReconcileVolumesRequest> {
-  /**
-   * @generated from field: string connection_id = 1;
-   */
-  connectionId = ''
-
   constructor(data?: PartialMessage<ReconcileVolumesRequest>) {
     super()
     proto3.util.initPartial(data, this)
@@ -1117,9 +1112,7 @@ export class ReconcileVolumesRequest extends Message<ReconcileVolumesRequest> {
 
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.ReconcileVolumesRequest'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-  ])
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconcileVolumesRequest {
     return new ReconcileVolumesRequest().fromBinary(bytes, options)
@@ -1234,52 +1227,47 @@ export class ReconcileVolumesResponse extends Message<ReconcileVolumesResponse> 
  */
 export class ReportVolumeUpdatesRequest extends Message<ReportVolumeUpdatesRequest> {
   /**
-   * @generated from field: string connection_id = 1;
-   */
-  connectionId = ''
-
-  /**
    * @generated from oneof depot.cloud.v2.ReportVolumeUpdatesRequest.update
    */
   update:
     | {
         /**
-         * @generated from field: depot.cloud.v2.CreateVolumeUpdate create_volume = 2;
+         * @generated from field: depot.cloud.v2.CreateVolumeUpdate create_volume = 1;
          */
         value: CreateVolumeUpdate
         case: 'createVolume'
       }
     | {
         /**
-         * @generated from field: depot.cloud.v2.ResizeVolumeUpdate resize_volume = 3;
+         * @generated from field: depot.cloud.v2.ResizeVolumeUpdate resize_volume = 2;
          */
         value: ResizeVolumeUpdate
         case: 'resizeVolume'
       }
     | {
         /**
-         * @generated from field: depot.cloud.v2.DeleteVolumeUpdate delete_volume = 4;
+         * @generated from field: depot.cloud.v2.DeleteVolumeUpdate delete_volume = 3;
          */
         value: DeleteVolumeUpdate
         case: 'deleteVolume'
       }
     | {
         /**
-         * @generated from field: depot.cloud.v2.CreateClientUpdate create_client = 5;
+         * @generated from field: depot.cloud.v2.CreateClientUpdate create_client = 4;
          */
         value: CreateClientUpdate
         case: 'createClient'
       }
     | {
         /**
-         * @generated from field: depot.cloud.v2.AuthorizeClientUpdate authorize_client = 6;
+         * @generated from field: depot.cloud.v2.AuthorizeClientUpdate authorize_client = 5;
          */
         value: AuthorizeClientUpdate
         case: 'authorizeClient'
       }
     | {
         /**
-         * @generated from field: depot.cloud.v2.DeleteClientUpdate delete_client = 7;
+         * @generated from field: depot.cloud.v2.DeleteClientUpdate delete_client = 6;
          */
         value: DeleteClientUpdate
         case: 'deleteClient'
@@ -1294,13 +1282,12 @@ export class ReportVolumeUpdatesRequest extends Message<ReportVolumeUpdatesReque
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.ReportVolumeUpdatesRequest'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-    {no: 2, name: 'create_volume', kind: 'message', T: CreateVolumeUpdate, oneof: 'update'},
-    {no: 3, name: 'resize_volume', kind: 'message', T: ResizeVolumeUpdate, oneof: 'update'},
-    {no: 4, name: 'delete_volume', kind: 'message', T: DeleteVolumeUpdate, oneof: 'update'},
-    {no: 5, name: 'create_client', kind: 'message', T: CreateClientUpdate, oneof: 'update'},
-    {no: 6, name: 'authorize_client', kind: 'message', T: AuthorizeClientUpdate, oneof: 'update'},
-    {no: 7, name: 'delete_client', kind: 'message', T: DeleteClientUpdate, oneof: 'update'},
+    {no: 1, name: 'create_volume', kind: 'message', T: CreateVolumeUpdate, oneof: 'update'},
+    {no: 2, name: 'resize_volume', kind: 'message', T: ResizeVolumeUpdate, oneof: 'update'},
+    {no: 3, name: 'delete_volume', kind: 'message', T: DeleteVolumeUpdate, oneof: 'update'},
+    {no: 4, name: 'create_client', kind: 'message', T: CreateClientUpdate, oneof: 'update'},
+    {no: 5, name: 'authorize_client', kind: 'message', T: AuthorizeClientUpdate, oneof: 'update'},
+    {no: 6, name: 'delete_client', kind: 'message', T: DeleteClientUpdate, oneof: 'update'},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportVolumeUpdatesRequest {
@@ -1617,9 +1604,9 @@ export class DeleteVolumeUpdate extends Message<DeleteVolumeUpdate> {
  */
 export class CreateClientAction extends Message<CreateClientAction> {
   /**
-   * @generated from field: string name = 1;
+   * @generated from field: string machine_name = 1;
    */
-  name = ''
+  machineName = ''
 
   constructor(data?: PartialMessage<CreateClientAction>) {
     super()
@@ -1629,7 +1616,7 @@ export class CreateClientAction extends Message<CreateClientAction> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.CreateClientAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 1, name: 'machine_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateClientAction {
@@ -1653,16 +1640,16 @@ export class CreateClientAction extends Message<CreateClientAction> {
 }
 
 /**
- * Name is now associated with client_name.
+ * machine_name is now associated with client_name.
  * client_name is not authorized until `AuthorizeClientAction` is called.
  *
  * @generated from message depot.cloud.v2.CreateClientUpdate
  */
 export class CreateClientUpdate extends Message<CreateClientUpdate> {
   /**
-   * @generated from field: string name = 1;
+   * @generated from field: string machine_name = 1;
    */
-  name = ''
+  machineName = ''
 
   /**
    * @generated from field: string client_name = 2;
@@ -1677,7 +1664,7 @@ export class CreateClientUpdate extends Message<CreateClientUpdate> {
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.CreateClientUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 1, name: 'machine_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 2, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 

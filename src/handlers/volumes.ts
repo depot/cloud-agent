@@ -67,7 +67,6 @@ async function createVolume({volumeName, size}: CreateVolumeAction) {
     await createBlockDevice(imageSpec, size)
 
     await client.reportVolumeUpdates({
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       update: {
         case: 'createVolume',
         value: {
@@ -93,7 +92,6 @@ async function deleteVolume({volumeName}: DeleteVolumeAction) {
     await namespaceRm(poolSpec)
 
     await client.reportVolumeUpdates({
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       update: {
         case: 'deleteVolume',
         value: {
@@ -106,17 +104,16 @@ async function deleteVolume({volumeName}: DeleteVolumeAction) {
   }
 }
 
-async function createClient({name}: CreateClientAction) {
-  const clientName = newClientName(name)
+async function createClient({machineName}: CreateClientAction) {
+  const clientName = newClientName(machineName)
   try {
     await createAuthEntity(clientName)
 
     await client.reportVolumeUpdates({
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       update: {
         case: 'createClient',
         value: {
-          name,
+          machineName,
           clientName,
         },
       },
@@ -135,7 +132,6 @@ async function authorizeClient({volumeName, clientName}: AuthorizeClientAction) 
     const config = await cephConfig()
 
     await client.reportVolumeUpdates({
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       update: {
         case: 'authorizeClient',
         value: {
@@ -157,7 +153,6 @@ async function deleteClient({clientName}: DeleteClientAction) {
     await authRm(clientName)
 
     await client.reportVolumeUpdates({
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       update: {
         case: 'deleteClient',
         value: {
