@@ -22,7 +22,7 @@ export function newClientName(name: string): ClientName {
 
 export function newOsdProfile(volumeName: string): OsdProfile {
   // Gives a user read-write access to the Ceph Block Devices in namespace.
-  return `'profile rbd pool=${POOL} namespace=${volumeName}'` as OsdProfile
+  return `profile rbd pool=${POOL} namespace=${volumeName}` as OsdProfile
 }
 
 /*** Low-level Ceph functions ***/
@@ -79,7 +79,7 @@ export async function authCaps(osdProfile: OsdProfile, clientName: ClientName) {
       clientName,
       'mon',
       // TODO: I'm not sure if it is better to have profile rbd here.
-      `'allow r'`,
+      'allow r',
       'osd',
       osdProfile,
     ],
