@@ -9,12 +9,16 @@ import {
   GetActiveAgentVersionResponse,
   GetDesiredStateRequest,
   GetDesiredStateResponse,
+  ReconcileVolumesRequest,
+  ReconcileVolumesResponse,
   ReportCurrentStateRequest,
   ReportCurrentStateResponse,
   ReportErrorsRequest,
   ReportErrorsResponse,
   ReportHealthRequest,
   ReportHealthResponse,
+  ReportVolumeUpdatesRequest,
+  ReportVolumeUpdatesResponse,
 } from './cloud_pb'
 
 /**
@@ -66,6 +70,24 @@ export const CloudService = {
       name: 'GetActiveAgentVersion',
       I: GetActiveAgentVersionRequest,
       O: GetActiveAgentVersionResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc depot.cloud.v2.CloudService.ReconcileVolumes
+     */
+    reconcileVolumes: {
+      name: 'ReconcileVolumes',
+      I: ReconcileVolumesRequest,
+      O: ReconcileVolumesResponse,
+      kind: MethodKind.ServerStreaming,
+    },
+    /**
+     * @generated from rpc depot.cloud.v2.CloudService.ReportVolumeUpdates
+     */
+    reportVolumeUpdates: {
+      name: 'ReportVolumeUpdates',
+      I: ReportVolumeUpdatesRequest,
+      O: ReportVolumeUpdatesResponse,
       kind: MethodKind.Unary,
     },
   },

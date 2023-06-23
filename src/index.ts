@@ -1,8 +1,9 @@
 import {startHealthStream} from './handlers/health'
 import {startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
+import {startVolumeStream} from './handlers/volumes'
 import {sleep} from './utils/common'
-import {CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_VERSION} from './utils/env'
+import {CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_USE_CEPH, CLOUD_AGENT_VERSION} from './utils/env'
 import {client} from './utils/grpc'
 import {logger} from './utils/logger'
 
@@ -43,6 +44,9 @@ async function main() {
   startHealthStream(signal)
   startStateStream(signal)
   startUpdater(signal)
+  if (CLOUD_AGENT_USE_CEPH) {
+    startVolumeStream(signal)
+  }
 }
 
 main().catch((err) => {

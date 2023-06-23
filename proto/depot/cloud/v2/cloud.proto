@@ -8,6 +8,8 @@ service CloudService {
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
   rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
+  rpc ReconcileVolumes(ReconcileVolumesRequest) returns (stream ReconcileVolumesResponse) {}
+  rpc ReportVolumeUpdates(ReportVolumeUpdatesRequest) returns (ReportVolumeUpdatesResponse) {}
 }
 
 // Messages
@@ -151,4 +153,94 @@ message CloudStatePatch {
   message Aws {
     string patch = 1;
   }
+}
+
+message ReconcileVolumesRequest {}
+
+message ReconcileVolumesResponse {
+  oneof action {
+    CreateVolumeAction create_volume = 1;
+    ResizeVolumeAction resize_volume = 2;
+    DeleteVolumeAction delete_volume = 3;
+
+    CreateClientAction create_client = 4;
+    AuthorizeClientAction authorize_client = 5;
+    DeleteClientAction delete_client = 6;
+  }
+}
+
+message ReportVolumeUpdatesRequest {
+  oneof update {
+    CreateVolumeUpdate create_volume = 1;
+    ResizeVolumeUpdate resize_volume = 2;
+    DeleteVolumeUpdate delete_volume = 3;
+
+    CreateClientUpdate create_client = 4;
+    AuthorizeClientUpdate authorize_client = 5;
+    DeleteClientUpdate delete_client = 6;
+  }
+}
+
+message ReportVolumeUpdatesResponse {}
+
+message CreateVolumeAction {
+  string volume_name = 1;
+  // Size in GB
+  int32 size = 3;
+}
+
+message CreateVolumeUpdate {
+  string volume_name = 1;
+}
+
+message ResizeVolumeAction {
+  string volume_name = 1;
+  // Size in GB
+  int32 size = 3;
+}
+
+message ResizeVolumeUpdate {
+  string volume_name = 1;
+}
+
+message DeleteVolumeAction {
+  string volume_name = 1;
+}
+
+message DeleteVolumeUpdate {
+  string volume_name = 1;
+}
+
+message CreateClientAction {
+  string client_name = 1;
+}
+
+// machine_name is now associated with client_name.
+// client_name is not authorized until `AuthorizeClientAction` is called.
+message CreateClientUpdate {
+  string client_name = 1;
+  // key is the contents of the keyfile.
+  string key = 2;
+  // config is the contents of the ceph.conf file.
+  string config = 3;
+}
+
+message DeleteClientAction {
+  string client_name = 1;
+}
+
+message DeleteClientUpdate {
+  string client_name = 1;
+}
+
+// AuthorizeClientRequest gives client_name access to volume.
+message AuthorizeClientAction {
+  string volume_name = 1;
+  string client_name = 2;
+}
+
+// rbd device map {image_spec} --name {client_name} --keyfile {file w/ key}
+message AuthorizeClientUpdate {
+  string client_name = 1;
+  string volume_name = 2;
 }

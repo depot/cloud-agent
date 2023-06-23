@@ -1,6 +1,15 @@
-FROM node:18-slim AS base
+FROM ubuntu:20.04 AS base
 
-RUN apt-get update && apt-get install -y ca-certificates openssl && rm -rf /var/lib/apt/lists/*
+RUN \
+  apt-get update && \
+  apt-get install -y ca-certificates curl openssl && \
+  curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+  apt-get install -y nodejs && \
+  curl --silent --remote-name --location https://github.com/ceph/ceph/raw/quincy/src/cephadm/cephadm && \
+  chmod +x cephadm && \
+  ./cephadm add-repo --release quincy && \
+  ./cephadm install ceph-common && \
+  rm -rf /var/lib/apt/lists/*
 
 FROM base AS build
 
