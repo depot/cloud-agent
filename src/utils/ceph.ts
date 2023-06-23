@@ -1,4 +1,5 @@
 import {execa} from 'execa'
+import * as fsp from 'node:fs/promises'
 
 const POOL = 'rbd'
 
@@ -128,4 +129,17 @@ export async function cephConfig(): Promise<string> {
   }
 
   throw new Error(stderr)
+}
+
+// Creates the ceph.conf and ceph.client.keyring files.
+export async function writeCephConf(clientName: string, cephConf: string, key: string) {
+  await fsp.mkdir('/etc/ceph', {recursive: true})
+  await fsp.chmod('/etc/ceph', 0o700)
+  await fsp.writeFile('/etc/ceph/ceph.conf', cephConf)
+
+  const keyringPath = `/etc/ceph/ceph.${clientName}.keyring`
+  const keyring = `[${clientName}]
+    key = ${key}`
+  await fsp.writeFile(keyringPath, keyring)
+  await fsp.chmod(keyringPath, 0o600)
 }
