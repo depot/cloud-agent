@@ -28,7 +28,8 @@ export function newOsdProfile(volumeName: string): OsdProfile {
 /*** Low-level Ceph functions ***/
 
 export async function createNamespace(poolSpec: PoolSpec) {
-  const {exitCode, stderr} = await execa('rbd', ['namespace', 'create', poolSpec], {reject: false})
+  console.log('Creating ceph namespace', poolSpec)
+  const {exitCode, stderr} = await execa('rbd', ['namespace', 'create', poolSpec], {reject: false, stdio: 'inherit'})
   // 17 is "already exists" a.k.a EEXIST.
   if (exitCode === 0 || exitCode === 17) {
     return
@@ -38,7 +39,11 @@ export async function createNamespace(poolSpec: PoolSpec) {
 }
 
 export async function createBlockDevice(imageSpec: ImageSpec, gigabytes: number) {
-  const {exitCode, stderr} = await execa('rbd', ['create', imageSpec, '--size', `${gigabytes}G`], {reject: false})
+  console.log('Creating ceph block device', imageSpec, gigabytes)
+  const {exitCode, stderr} = await execa('rbd', ['create', imageSpec, '--size', `${gigabytes}G`], {
+    reject: false,
+    stdio: 'inherit',
+  })
   // 17 is "already exists" a.k.a EEXIST.
   if (exitCode === 0 || exitCode === 17) {
     return
@@ -48,7 +53,8 @@ export async function createBlockDevice(imageSpec: ImageSpec, gigabytes: number)
 }
 
 export async function createAuthEntity(name: ClientName) {
-  const {exitCode, stderr} = await execa('ceph', ['auth', 'add', name], {reject: false})
+  console.log('Creating ceph auth entity', name)
+  const {exitCode, stderr} = await execa('ceph', ['auth', 'add', name], {reject: false, stdio: 'inherit'})
   // ceph auth add is idempotent.
   if (exitCode === 0) return
 
@@ -70,11 +76,12 @@ export async function authGetKey(clientName: ClientName): Promise<Key> {
 }
 
 export async function authCaps(osdProfile: OsdProfile, clientName: ClientName) {
+  console.log('Setting ceph auth caps', osdProfile, clientName)
   // We don't use get-or-create as the caps must always be the same.
   const {exitCode, stderr} = await execa(
     'ceph',
-    ['auth', 'caps', clientName, 'mon', 'profile rbd', 'osd', osdProfile],
-    {reject: false},
+    ['auth', 'caps', clientName, 'mon', 'profile rbd', 'osd', osdProfile, 'mgr', osdProfile],
+    {reject: false, stdio: 'inherit'},
   )
 
   // ceph auth caps is idempotent.
@@ -84,7 +91,8 @@ export async function authCaps(osdProfile: OsdProfile, clientName: ClientName) {
 }
 
 export async function authRm(clientName: ClientName) {
-  const {exitCode, stderr} = await execa('ceph', ['auth', 'rm', clientName], {reject: false})
+  console.log('Removing ceph auth entity', clientName)
+  const {exitCode, stderr} = await execa('ceph', ['auth', 'rm', clientName], {reject: false, stdio: 'inherit'})
   // ceph auth rm is idempotent.
   if (exitCode === 0) {
     return
@@ -94,7 +102,8 @@ export async function authRm(clientName: ClientName) {
 }
 
 export async function imageRm(imageSpec: ImageSpec) {
-  const {exitCode, stderr} = await execa('rbd', ['rm', imageSpec], {reject: false})
+  console.log('Removing ceph image', imageSpec)
+  const {exitCode, stderr} = await execa('rbd', ['rm', imageSpec], {reject: false, stdio: 'inherit'})
   // 2 is "image does not exist" a.k.a ENOENT.
   if (exitCode === 0 || exitCode === 2) {
     return
@@ -104,7 +113,8 @@ export async function imageRm(imageSpec: ImageSpec) {
 }
 
 export async function namespaceRm(poolSpec: PoolSpec) {
-  const {exitCode, stderr} = await execa('rbd', ['namespace', 'rm', poolSpec], {reject: false})
+  console.log('Removing ceph namespace', poolSpec)
+  const {exitCode, stderr} = await execa('rbd', ['namespace', 'rm', poolSpec], {reject: false, stdio: 'inherit'})
   // 2 is "namespace does not exist" a.k.a ENOENT.
   if (exitCode === 0 || exitCode === 2) {
     return
