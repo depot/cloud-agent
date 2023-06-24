@@ -73,16 +73,7 @@ export async function authCaps(osdProfile: OsdProfile, clientName: ClientName) {
   // We don't use get-or-create as the caps must always be the same.
   const {exitCode, stderr} = await execa(
     'ceph',
-    [
-      'auth',
-      'caps',
-      clientName,
-      'mon',
-      // TODO: I'm not sure if it is better to have profile rbd here.
-      'allow r',
-      'osd',
-      osdProfile,
-    ],
+    ['auth', 'caps', clientName, 'mon', 'profile rbd', 'osd', osdProfile],
     {reject: false},
   )
 
