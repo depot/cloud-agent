@@ -17,6 +17,7 @@ import {
   createAuthEntity,
   createBlockDevice,
   createNamespace,
+  enableCephMetrics,
   imageRm,
   namespaceRm,
   newClientName,
@@ -81,6 +82,11 @@ async function createVolume({volumeName, size}: CreateVolumeAction): Promise<Pla
 
   await createNamespace(poolSpec)
   await createBlockDevice(imageSpec, size)
+  try {
+    await enableCephMetrics()
+  } catch (err: any) {
+    console.warn('failed to enable ceph metrics', err)
+  }
 
   return {
     update: {

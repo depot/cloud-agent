@@ -123,6 +123,13 @@ export async function namespaceRm(poolSpec: PoolSpec) {
   throw new Error(stderr)
 }
 
+export async function enableCephMetrics() {
+  console.log('Enabling ceph metrics')
+  await execa('ceph', ['config', 'set', 'mgr', 'mgr/prometheus/rbd_stats_pools', '*'], {
+    stdio: 'inherit',
+  })
+}
+
 export async function cephConfig(): Promise<string> {
   const {exitCode, stdout, stderr} = await execa('ceph', ['config', 'generate-minimal-conf'], {reject: false})
   if (exitCode === 0) {
