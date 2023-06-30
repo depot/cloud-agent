@@ -159,3 +159,24 @@ export async function writeCephConf(clientName: string, cephConf: string, key: s
   await fsp.writeFile(keyringPath, keyring)
   await fsp.chmod(keyringPath, 0o600)
 }
+
+export async function sparsify(imageSpec: ImageSpec) {
+  console.log('Sparsify-ing ceph block device', imageSpec)
+  const startTime = new Date()
+  const {exitCode, stderr} = await execa('rbd', ['sparsify', '--no-progress', imageSpec], {
+    reject: false,
+    stdio: 'inherit',
+  })
+
+  const endTime = new Date()
+  const executionTime = endTime.getTime() - startTime.getTime()
+
+  console.log(`Sparsified ${imageSpec} in ${executionTime} ms`)
+
+  // 2 is "image does not exist" a.k.a ENOENT.
+  if (exitCode === 0 || exitCode === 2) {
+    return
+  }
+
+  throw new Error(stderr)
+}

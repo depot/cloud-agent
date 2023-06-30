@@ -8,6 +8,7 @@ import {
   ReconcileVolumesResponse,
   ReportVolumeUpdatesRequest,
   ResizeVolumeAction,
+  TrimVolumeAction,
 } from '../proto/depot/cloud/v2/cloud_pb'
 import {
   authCaps,
@@ -24,6 +25,7 @@ import {
   newImageSpec,
   newOsdProfile,
   newPoolSpec,
+  sparsify,
 } from '../utils/ceph'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
@@ -70,6 +72,8 @@ async function handleAction(
       return await createVolume(action.value)
     case 'resizeVolume':
       return await resizeVolume(action.value)
+    case 'trimVolume':
+      return await trimVolume(action.value)
     case 'deleteVolume':
       return await deleteVolume(action.value)
     case 'createClient':
@@ -108,6 +112,20 @@ async function createVolume({volumeName, size}: CreateVolumeAction): Promise<Pla
 async function resizeVolume(_action: ResizeVolumeAction) {
   // TODO: resize volume
   return null
+}
+
+async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
+  const imageSpec = newImageSpec(volumeName)
+  await sparsify(imageSpec)
+
+  return {
+    update: {
+      case: 'trimVolume',
+      value: {
+        volumeName,
+      },
+    },
+  }
 }
 
 async function deleteVolume({volumeName}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {

@@ -166,6 +166,8 @@ message ReconcileVolumesResponse {
     CreateClientAction create_client = 4;
     AuthorizeClientAction authorize_client = 5;
     DeleteClientAction delete_client = 6;
+
+    TrimVolumeAction trim_volume = 7;
   }
 }
 
@@ -178,6 +180,8 @@ message ReportVolumeUpdatesRequest {
     CreateClientUpdate create_client = 4;
     AuthorizeClientUpdate authorize_client = 5;
     DeleteClientUpdate delete_client = 6;
+
+    TrimVolumeUpdate trim_volume = 7;
   }
 }
 
@@ -190,6 +194,14 @@ message CreateVolumeAction {
 }
 
 message CreateVolumeUpdate {
+  string volume_name = 1;
+}
+
+message TrimVolumeAction {
+  string volume_name = 1;
+}
+
+message TrimVolumeUpdate {
   string volume_name = 1;
 }
 
