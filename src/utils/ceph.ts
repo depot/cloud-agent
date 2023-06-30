@@ -178,5 +178,11 @@ export async function sparsify(imageSpec: ImageSpec) {
     return
   }
 
+  // 30 is "read-only file system" a.k.a EROFS.
+  // This means that someone is using this block device and we cannot sparsify it right now.
+  if (exitCode === 30) {
+    return
+  }
+
   throw new Error(stderr)
 }
