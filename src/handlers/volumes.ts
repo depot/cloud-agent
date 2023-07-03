@@ -35,19 +35,20 @@ export async function startVolumeStream(signal: AbortSignal) {
       const stream = client.reconcileVolumes({}, {signal})
       for await (const response of stream) {
         if (signal.aborted) return
-
-        try {
-          const actionKey = JSON.stringify(response.action)
-          if (completedUpdates[actionKey]) continue
-          const update = await handleAction(response.action)
-          if (update) await client.reportVolumeUpdates(update)
-          completedUpdates[actionKey] = true
-          setTimeout(() => {
-            delete completedUpdates[actionKey]
-          }, 15 * 1000)
-        } catch (err: any) {
-          await reportError(err)
-        }
+        ;(async () => {
+          try {
+            const actionKey = JSON.stringify(response.action)
+            if (completedUpdates[actionKey]) return
+            const update = await handleAction(response.action)
+            if (update) await client.reportVolumeUpdates(update)
+            completedUpdates[actionKey] = true
+            setTimeout(() => {
+              delete completedUpdates[actionKey]
+            }, 30 * 1000)
+          } catch (err: any) {
+            await reportError(err)
+          }
+        })()
       }
     } catch (err: any) {
       await reportError(err)
