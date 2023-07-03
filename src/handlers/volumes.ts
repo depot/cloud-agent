@@ -31,14 +31,18 @@ import {client} from '../utils/grpc'
 export async function startVolumeStream(signal: AbortSignal) {
   while (!signal.aborted) {
     try {
+      const inProgressUpdates: Record<string, boolean> = {}
       const completedUpdates: Record<string, boolean> = {}
+
       const stream = client.reconcileVolumes({}, {signal})
+
       for await (const response of stream) {
         if (signal.aborted) return
         ;(async () => {
+          const actionKey = JSON.stringify(response.action)
+          if (inProgressUpdates[actionKey] || completedUpdates[actionKey]) return
           try {
-            const actionKey = JSON.stringify(response.action)
-            if (completedUpdates[actionKey]) return
+            inProgressUpdates[actionKey] = true
             const update = await handleAction(response.action)
             if (update) await client.reportVolumeUpdates(update)
             completedUpdates[actionKey] = true
@@ -47,6 +51,8 @@ export async function startVolumeStream(signal: AbortSignal) {
             }, 30 * 1000)
           } catch (err: any) {
             await reportError(err)
+          } finally {
+            delete inProgressUpdates[actionKey]
           }
         })()
       }
