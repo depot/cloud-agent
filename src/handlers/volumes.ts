@@ -114,17 +114,27 @@ async function resizeVolume(_action: ResizeVolumeAction) {
   return null
 }
 
-async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
-  const imageSpec = newImageSpec(volumeName)
-  await sparsify(imageSpec)
+let isSparsifyInProgress = false
 
-  return {
-    update: {
-      case: 'trimVolume',
-      value: {
-        volumeName,
+// Only one sparsify operation can be in progress at a time to make sure we do not overload Ceph.
+async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest> | null> {
+  if (isSparsifyInProgress) return null
+  isSparsifyInProgress = true
+
+  try {
+    const imageSpec = newImageSpec(volumeName)
+    await sparsify(imageSpec)
+
+    return {
+      update: {
+        case: 'trimVolume',
+        value: {
+          volumeName,
+        },
       },
-    },
+    }
+  } finally {
+    isSparsifyInProgress = false
   }
 }
 
