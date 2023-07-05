@@ -8,6 +8,7 @@ import {
   ReconcileVolumesResponse,
   ReportVolumeUpdatesRequest,
   ResizeVolumeAction,
+  TrimVolumeAction,
 } from '../proto/depot/cloud/v2/cloud_pb'
 import {
   authCaps,
@@ -24,6 +25,7 @@ import {
   newImageSpec,
   newOsdProfile,
   newPoolSpec,
+  sparsify,
 } from '../utils/ceph'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
@@ -70,6 +72,8 @@ async function handleAction(
       return await createVolume(action.value)
     case 'resizeVolume':
       return await resizeVolume(action.value)
+    case 'trimVolume':
+      return await trimVolume(action.value)
     case 'deleteVolume':
       return await deleteVolume(action.value)
     case 'createClient':
@@ -108,6 +112,31 @@ async function createVolume({volumeName, size}: CreateVolumeAction): Promise<Pla
 async function resizeVolume(_action: ResizeVolumeAction) {
   // TODO: resize volume
   return null
+}
+
+let isSparsifyInProgress = false
+
+// Only one sparsify operation can be in progress at a time to make sure we do not overload Ceph.
+async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest> | null> {
+  if (isSparsifyInProgress) return null
+  isSparsifyInProgress = true
+
+  try {
+    const imageSpec = newImageSpec(volumeName)
+    const completed = await sparsify(imageSpec)
+    if (!completed) return null
+
+    return {
+      update: {
+        case: 'trimVolume',
+        value: {
+          volumeName,
+        },
+      },
+    }
+  } finally {
+    isSparsifyInProgress = false
+  }
 }
 
 async function deleteVolume({volumeName}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
