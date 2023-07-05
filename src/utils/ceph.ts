@@ -114,7 +114,10 @@ export async function imageRm(imageSpec: ImageSpec) {
 
 export async function namespaceRm(poolSpec: PoolSpec) {
   console.log('Removing ceph namespace', poolSpec)
-  const {exitCode, stderr} = await execa('rbd', ['namespace', 'rm', poolSpec], {reject: false, stdio: 'inherit'})
+  const {exitCode, stderr} = await execa('rbd', ['namespace', 'rm', '--no-progress', poolSpec], {
+    reject: false,
+    stdio: 'inherit',
+  })
   // 2 is "namespace does not exist" a.k.a ENOENT.
   if (exitCode === 0 || exitCode === 2) {
     return
