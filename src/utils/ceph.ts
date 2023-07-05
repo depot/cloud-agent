@@ -40,10 +40,14 @@ export async function createNamespace(poolSpec: PoolSpec) {
 
 export async function createBlockDevice(imageSpec: ImageSpec, gigabytes: number) {
   console.log('Creating ceph block device', imageSpec, gigabytes)
-  const {exitCode, stderr} = await execa('rbd', ['create', imageSpec, '--size', `${gigabytes}G`], {
-    reject: false,
-    stdio: 'inherit',
-  })
+  const {exitCode, stderr} = await execa(
+    'rbd',
+    ['create', imageSpec, '--size', `${gigabytes}G`, '--stripe-unit', '64K', '--stripe-count', '4'],
+    {
+      reject: false,
+      stdio: 'inherit',
+    },
+  )
   // 17 is "already exists" a.k.a EEXIST.
   if (exitCode === 0 || exitCode === 17) {
     return
