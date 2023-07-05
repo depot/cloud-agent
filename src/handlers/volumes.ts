@@ -124,7 +124,7 @@ async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<
   try {
     const imageSpec = newImageSpec(volumeName)
     const completed = await sparsify(imageSpec)
-    if (!completed) return
+    if (!completed) return null
 
     return {
       update: {
