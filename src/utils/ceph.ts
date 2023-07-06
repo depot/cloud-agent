@@ -107,7 +107,7 @@ export async function authRm(clientName: ClientName) {
 
 export async function imageRm(imageSpec: ImageSpec) {
   console.log('Removing ceph image', imageSpec)
-  const {exitCode, stderr} = await execa('rbd', ['rm', imageSpec], {reject: false, stdio: 'inherit'})
+  const {exitCode, stderr} = await execa('rbd', ['rm', '--no-progress', imageSpec], {reject: false, stdio: 'inherit'})
   // 2 is "image does not exist" a.k.a ENOENT.
   if (exitCode === 0 || exitCode === 2) {
     return
@@ -118,7 +118,7 @@ export async function imageRm(imageSpec: ImageSpec) {
 
 export async function namespaceRm(poolSpec: PoolSpec) {
   console.log('Removing ceph namespace', poolSpec)
-  const {exitCode, stderr} = await execa('rbd', ['namespace', 'rm', '--no-progress', poolSpec], {
+  const {exitCode, stderr} = await execa('rbd', ['namespace', 'rm', poolSpec], {
     reject: false,
     stdio: 'inherit',
   })
