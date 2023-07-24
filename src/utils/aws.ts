@@ -198,7 +198,7 @@ exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&
 cat << EOF > /usr/lib/systemd/system/machine-agent.service
 [Unit]
 Description=machine-agent
-After=network-online.target
+After=network-online.target vector.service
 Requires=network-online.target
 [Service]
 Type=simple
