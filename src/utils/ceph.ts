@@ -163,7 +163,7 @@ export async function writeCephConf(clientName: string, cephConf: string, key: s
 export async function sparsify(imageSpec: ImageSpec): Promise<boolean> {
   console.log('Sparsify-ing ceph block device', imageSpec)
   const startTime = new Date()
-  const {exitCode, stderr} = await execa('rbd', ['sparsify', '--no-progress', imageSpec], {
+  const {exitCode, stderr} = await execa('rbd', ['sparsify', '--no-progress', '--sparse-size', '4M', imageSpec], {
     reject: false,
     stdio: 'inherit',
   })
