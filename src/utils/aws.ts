@@ -69,27 +69,33 @@ const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION
 async function getInstancesState() {
   const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter]}))
   const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
-  return instances.reduce((acc, instance) => {
-    if (!instance.InstanceId) return acc
-    acc[instance.InstanceId] = instance
-    return acc
-  }, {} as Record<string, Instance>)
+  return instances.reduce(
+    (acc, instance) => {
+      if (!instance.InstanceId) return acc
+      acc[instance.InstanceId] = instance
+      return acc
+    },
+    {} as Record<string, Instance>,
+  )
 }
 
 /** Queries for all managed volumes */
 async function getVolumesState() {
   const res = await client.send(new DescribeVolumesCommand({Filters: [tagFilter]}))
   const volumes = res.Volumes || []
-  return volumes.reduce((acc, volume) => {
-    if (!volume.VolumeId) return acc
-    acc[volume.VolumeId] = volume
-    return acc
-  }, {} as Record<string, Volume>)
+  return volumes.reduce(
+    (acc, volume) => {
+      if (!volume.VolumeId) return acc
+      acc[volume.VolumeId] = volume
+      return acc
+    },
+    {} as Record<string, Volume>,
+  )
 }
 
 async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_NewVolume) {
-  const existing = Object.values(state).find((v) =>
-    v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+  const existing = Object.values(state).find(
+    (v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
   )
   if (existing) return
 
@@ -128,8 +134,8 @@ async function reconcileVolume(
   volume: GetDesiredStateResponse_VolumeChange,
   machineState: Record<string, Instance>,
 ) {
-  const current = Object.values(state).find((i) =>
-    i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+  const current = Object.values(state).find(
+    (i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
   )
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
@@ -170,8 +176,8 @@ async function reconcileVolume(
 }
 
 async function reconcileNewMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_NewMachine) {
-  const existing = Object.values(state).find((i) =>
-    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+  const existing = Object.values(state).find(
+    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
   )
   if (existing) return
 
@@ -297,8 +303,8 @@ function currentMachineState(instance: Instance): GetDesiredStateResponse_Machin
 }
 
 async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
-  const matches = Object.values(state).filter((i) =>
-    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+  const matches = Object.values(state).filter(
+    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
   )
 
   for (const current of matches) {
