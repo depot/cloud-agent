@@ -25,8 +25,8 @@ message GetDesiredStateResponse {
   repeated VolumeChange volume_changes = 4;
 
   message NewMachine {
+    reserved 2;
     string id = 1;
-    string realm = 2;
     Kind kind = 3;
     Architecture architecture = 4;
     string image = 5;
@@ -35,8 +35,8 @@ message GetDesiredStateResponse {
   }
 
   message NewVolume {
+    reserved 2;
     string id = 1;
-    string realm = 2;
     Kind kind = 3;
     Architecture architecture = 4;
     int32 size = 5;
