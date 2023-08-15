@@ -111,7 +111,6 @@ async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesi
             {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${volume.id}`},
             {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
             {Key: 'depot-volume-id', Value: volume.id},
-            {Key: 'depot-volume-realm', Value: volume.realm},
           ],
         },
       ],
