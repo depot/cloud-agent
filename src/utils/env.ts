@@ -2,7 +2,6 @@ import {config} from 'dotenv'
 
 config()
 
-export const CLOUD_AGENT_TF_MODULE_VERSION = process.env.CLOUD_AGENT_TF_MODULE_VERSION ?? 'devel'
 export const CLOUD_AGENT_API_URL = process.env.CLOUD_AGENT_API_URL ?? 'https://api.depot.dev'
 
 export const CLOUD_AGENT_CONNECTION_ID = requiredEnv('CLOUD_AGENT_CONNECTION_ID')
