@@ -23,7 +23,6 @@ import {
   GetDesiredStateResponse_MachineState,
   GetDesiredStateResponse_NewMachine,
   GetDesiredStateResponse_NewVolume,
-  GetDesiredStateResponse_SecurityGroup,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
 } from '../proto/depot/cloud/v2/cloud_pb'
@@ -31,9 +30,9 @@ import {CurrentState} from '../types'
 import {promises} from './common'
 import {
   CLOUD_AGENT_AWS_SG_BUILDKIT,
-  CLOUD_AGENT_AWS_SG_DEFAULT,
   CLOUD_AGENT_AWS_SUBNET_ID,
   CLOUD_AGENT_CONNECTION_ID,
+  additionalSubnetIDs,
 } from './env'
 
 const client = new EC2Client({})
@@ -180,6 +179,32 @@ async function reconcileNewMachine(state: Record<string, Instance>, machine: Get
   )
   if (existing) return
 
+  try {
+    return await runInstance(machine)
+  } catch (err: any) {
+    if (isCapacityError(err)) {
+      console.log(`[${machine.id}] No capacity in subnet ${CLOUD_AGENT_AWS_SUBNET_ID}, trying additional subnets`)
+      for (const subnetID of additionalSubnetIDs) {
+        try {
+          return await runInstance(machine, subnetID)
+        } catch (err: any) {
+          if (isCapacityError(err)) {
+            console.log(`[${machine.id}] No capacity in subnet ${subnetID}, skipping`)
+          } else {
+            throw err
+          }
+        }
+      }
+    }
+    throw err
+  }
+}
+
+function isCapacityError(err: Error) {
+  return err.toString().includes('InsufficientInstanceCapacity')
+}
+
+async function runInstance(machine: GetDesiredStateResponse_NewMachine, subnetID = CLOUD_AGENT_AWS_SUBNET_ID) {
   const res = await client.send(
     new DescribeInstancesCommand({
       Filters: [
@@ -275,12 +300,8 @@ systemctl start machine-agent.service
         {
           DeviceIndex: 0,
           AssociatePublicIpAddress: true,
-          Groups: [
-            machine.securityGroup === GetDesiredStateResponse_SecurityGroup.BUILDKIT
-              ? CLOUD_AGENT_AWS_SG_BUILDKIT
-              : CLOUD_AGENT_AWS_SG_DEFAULT,
-          ],
-          SubnetId: CLOUD_AGENT_AWS_SUBNET_ID,
+          Groups: [CLOUD_AGENT_AWS_SG_BUILDKIT],
+          SubnetId: subnetID,
         },
       ],
       BlockDeviceMappings: blockDeviceMappings,
