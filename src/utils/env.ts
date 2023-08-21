@@ -7,10 +7,7 @@ export const CLOUD_AGENT_API_URL = process.env.CLOUD_AGENT_API_URL ?? 'https://a
 export const CLOUD_AGENT_CONNECTION_ID = requiredEnv('CLOUD_AGENT_CONNECTION_ID')
 export const CLOUD_AGENT_CONNECTION_TOKEN = requiredEnv('CLOUD_AGENT_CONNECTION_TOKEN')
 
-// Security groups - open allows incoming 443, closed allows nothing
 export const CLOUD_AGENT_AWS_SG_BUILDKIT = requiredEnv('CLOUD_AGENT_AWS_SG_BUILDKIT')
-export const CLOUD_AGENT_AWS_SG_DEFAULT = requiredEnv('CLOUD_AGENT_AWS_SG_DEFAULT')
-
 export const CLOUD_AGENT_AWS_SUBNET_ID = requiredEnv('CLOUD_AGENT_AWS_SUBNET_ID')
 
 export const CLOUD_AGENT_VERSION = process.env.CLOUD_AGENT_VERSION ?? 'dev'
@@ -23,3 +20,21 @@ function requiredEnv(name: string): string {
   if (!value) throw new Error(`Missing required environment variable ${name}`)
   return value
 }
+
+interface Subnet {
+  arn: string
+  availability_zone: string
+  cidr_block: string
+  id: string
+}
+
+export const additionalSubnetIDs = (() => {
+  try {
+    const data = process.env.CLOUD_AGENT_AWS_SUBNETS
+    if (!data) return []
+    const subnets: Subnet[] = JSON.parse(data)
+    return subnets.map((s) => s.id).filter((id) => id !== CLOUD_AGENT_AWS_SUBNET_ID)
+  } catch {
+    return []
+  }
+})()
