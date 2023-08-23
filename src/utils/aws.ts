@@ -219,9 +219,9 @@ async function runInstance(machine: GetDesiredStateResponse_NewMachine, subnetID
     return
   }
 
-  if (subnetID === 'subnet-0401dcbe48439ad9b') {
-    throw new Error('InsufficientInstanceCapacity: simulating capacity error')
-  }
+  // if (subnetID === 'subnet-0401dcbe48439ad9b') {
+  //   throw new Error('InsufficientInstanceCapacity: simulating capacity error')
+  // }
 
   // Construct user data with cloud connection ID
   const userData = `
