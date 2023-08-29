@@ -1,5 +1,6 @@
 import {execa} from 'execa'
 import * as fsp from 'node:fs/promises'
+import {CLOUD_AGENT_CEPH_CONFIG} from './env'
 
 const POOL = 'rbd'
 
@@ -138,6 +139,9 @@ export async function enableCephMetrics() {
 }
 
 export async function cephConfig(): Promise<string> {
+  // Temporarily use the CLOUD_AGENT_CEPH_CONFIG environment variable if it is set
+  if (CLOUD_AGENT_CEPH_CONFIG) return CLOUD_AGENT_CEPH_CONFIG
+
   const {exitCode, stdout, stderr} = await execa('ceph', ['config', 'generate-minimal-conf'], {reject: false})
   if (exitCode === 0) {
     return stdout
