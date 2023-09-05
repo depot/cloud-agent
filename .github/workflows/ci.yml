@@ -11,7 +11,7 @@ jobs:
     name: Build
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2.4.0
         with:
           version: 8.x.x
@@ -28,7 +28,7 @@ jobs:
     name: Package
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: depot/setup-action@v1
       - name: Compute version
         id: version
