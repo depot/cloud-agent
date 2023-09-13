@@ -38,7 +38,7 @@ jobs:
           else
             echo "version=${GITHUB_REF}" >> $GITHUB_OUTPUT
           fi
-      - uses: docker/metadata-action@v4
+      - uses: docker/metadata-action@v5
         id: meta
         with:
           images: ghcr.io/depot/cloud-agent
