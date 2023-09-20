@@ -32,6 +32,7 @@ message GetDesiredStateResponse {
     string image = 5;
     SecurityGroup security_group = 6;
     RootVolume root_volume = 7;
+    optional string user_data = 8;
   }
 
   message NewVolume {
