@@ -224,7 +224,9 @@ async function runInstance(machine: GetDesiredStateResponse_NewMachine, subnetID
   // }
 
   // Construct user data with cloud connection ID
-  const userData = `
+  const userData =
+    machine.userData ||
+    `
 #!/bin/bash
 set -e
 exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1

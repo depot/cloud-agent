@@ -317,6 +317,11 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
    */
   rootVolume?: GetDesiredStateResponse_RootVolume
 
+  /**
+   * @generated from field: optional string user_data = 8;
+   */
+  userData?: string
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewMachine>) {
     super()
     proto3.util.initPartial(data, this)
@@ -331,6 +336,7 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
     {no: 5, name: 'image', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 6, name: 'security_group', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_SecurityGroup)},
     {no: 7, name: 'root_volume', kind: 'message', T: GetDesiredStateResponse_RootVolume},
+    {no: 8, name: 'user_data', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewMachine {
