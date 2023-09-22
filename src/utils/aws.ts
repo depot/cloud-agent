@@ -98,6 +98,7 @@ async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesi
   )
   if (existing) return
 
+  console.log(`Creating new volume ${volume.id}`)
   await client.send(
     new CreateVolumeCommand({
       AvailabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE,
@@ -150,11 +151,13 @@ async function reconcileVolume(
     if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
 
     if (currentState === GetDesiredStateResponse_VolumeState.ATTACHED) {
+      console.log(`Detaching volume ${current.VolumeId} from ${currentAttachment}`)
       await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
     } else {
       const machine = machineState[volume.attachedTo!]
       const currentState = machine ? currentMachineState(machine) : 'unknown'
       if (currentState !== GetDesiredStateResponse_MachineState.RUNNING) return
+      console.log(`Attaching volume ${current.VolumeId} to ${volume.attachedTo}`)
       await client.send(
         new AttachVolumeCommand({Device: volume.device!, InstanceId: volume.attachedTo!, VolumeId: current.VolumeId}),
       )
@@ -164,11 +167,13 @@ async function reconcileVolume(
   if (volume.desiredState === GetDesiredStateResponse_VolumeState.AVAILABLE) {
     if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
     if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
+    console.log(`Detaching volume ${current.VolumeId} from ${currentAttachment}`)
     await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId}))
   }
 
   if (volume.desiredState === GetDesiredStateResponse_VolumeState.DELETED) {
     if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
+    console.log(`Deleting volume ${current.VolumeId}`)
     await client.send(new DeleteVolumeCommand({VolumeId: current.VolumeId}))
   }
 }
@@ -283,6 +288,7 @@ systemctl start machine-agent.service
     })
   }
 
+  console.log(`Creating new instance for machine ID ${machine.id}`)
   await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
@@ -344,17 +350,20 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
     if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
+      console.log(`Starting instance ${current.InstanceId}`)
       await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
+      console.log(`Stopping instance ${current.InstanceId}`)
       await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
+      console.log(`Terminating instance ${current.InstanceId}`)
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
   }
