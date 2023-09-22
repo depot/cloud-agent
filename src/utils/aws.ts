@@ -350,7 +350,7 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
     if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
-      console.log(`Starting instance ${current.InstanceId}`)
+      console.log(`Starting instance ${machine.id} (${current.InstanceId})`)
       await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
@@ -358,14 +358,14 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
       if (currentState === GetDesiredStateResponse_MachineState.STOPPING) return
-      console.log(`Stopping instance ${current.InstanceId}`)
+      console.log(`Stopping instance ${machine.id} (${current.InstanceId})`)
       await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETING) return
-      console.log(`Terminating instance ${current.InstanceId}`)
+      console.log(`Terminating instance ${machine.id} (${current.InstanceId})`)
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
   }
