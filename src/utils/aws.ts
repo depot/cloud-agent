@@ -357,12 +357,14 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
     if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
+      if (currentState === GetDesiredStateResponse_MachineState.STOPPING) return
       console.log(`Stopping instance ${current.InstanceId}`)
       await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
+      if (currentState === GetDesiredStateResponse_MachineState.DELETING) return
       console.log(`Terminating instance ${current.InstanceId}`)
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
