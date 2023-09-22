@@ -66,7 +66,7 @@ const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION
 
 /** Queries for all managed instances */
 async function getInstancesState() {
-  const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter]}))
+  const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter], MaxResults: 500}))
   const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
   return instances.reduce(
     (acc, instance) => {
