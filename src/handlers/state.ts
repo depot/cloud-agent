@@ -14,6 +14,8 @@ export async function startStateStream(signal: AbortSignal) {
     try {
       logger.info('Getting current AWS state to report')
       let currentState = await getCurrentState()
+
+      logger.info('Reporting current AWS state')
       await reportCurrentState(currentState)
 
       logger.info('Getting desired state')
@@ -48,6 +50,7 @@ let stateCache: StateCache | null = null
 
 export async function reportCurrentState(currentState: CurrentState) {
   if (stateCache) {
+    logger.info('Computing state diff')
     const diff = compare(stateCache.state, currentState)
 
     // If there is no difference, don't send a request
@@ -70,8 +73,10 @@ export async function reportCurrentState(currentState: CurrentState) {
     }
 
     try {
+      logger.info('Sending state diff to API')
       const res = await client.reportCurrentState(request)
       stateCache = {state: currentState, generation: res.generation}
+      return
     } catch {
       // Ignore an error here and fall down to below
     }
@@ -92,7 +97,9 @@ export async function reportCurrentState(currentState: CurrentState) {
       },
     },
   }
+  logger.info('Sending full state to API')
   const res = await client.reportCurrentState(request)
+  logger.info('Saving state in cache')
   stateCache = {state: currentState, generation: res.generation}
 }
 
