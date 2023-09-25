@@ -12,23 +12,18 @@ import {logger} from '../utils/logger'
 export async function startStateStream(signal: AbortSignal) {
   while (!signal.aborted) {
     try {
-      logger.info('Getting current AWS state to report')
       let currentState = await getCurrentState()
 
-      logger.info('Reporting current AWS state')
       await reportCurrentState(currentState)
 
-      logger.info('Getting desired state')
       const {response} = await client.getDesiredStateUnary(
         {request: {connectionId: CLOUD_AGENT_CONNECTION_ID}},
         {signal},
       )
       if (!response) continue
 
-      logger.info('Refreshing current AWS state')
       currentState = await getCurrentState()
 
-      logger.info('Reconciling current AWS state with desired state')
       const errors = await reconcile(response, currentState)
       for (const error of errors) {
         await reportError(error)
@@ -50,7 +45,6 @@ let stateCache: StateCache | null = null
 
 export async function reportCurrentState(currentState: CurrentState) {
   if (stateCache) {
-    logger.info('Computing state diff')
     const diff = compare(stateCache.state, currentState)
 
     // If there is no difference, don't send a request
@@ -73,7 +67,6 @@ export async function reportCurrentState(currentState: CurrentState) {
     }
 
     try {
-      logger.info('Sending state diff to API')
       const res = await client.reportCurrentState(request)
       stateCache = {state: currentState, generation: res.generation}
       return
@@ -97,7 +90,6 @@ export async function reportCurrentState(currentState: CurrentState) {
       },
     },
   }
-  logger.info('Sending full state to API')
   const res = await client.reportCurrentState(request)
   logger.info('Saving state in cache')
   stateCache = {state: currentState, generation: res.generation}
