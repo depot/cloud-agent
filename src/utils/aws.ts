@@ -84,7 +84,11 @@ async function getInstancesState() {
 
 /** Queries for all managed volumes */
 async function getVolumesState() {
-  const res = await client.send(new DescribeVolumesCommand({Filters: [tagFilter]}))
+  const res = await client.send(
+    new DescribeVolumesCommand({
+      Filters: [tagFilter, {Name: 'tag:depot-volume-id', Values: ['*']}],
+    }),
+  )
   const volumes = res.Volumes || []
   return volumes.reduce(
     (acc, volume) => {
