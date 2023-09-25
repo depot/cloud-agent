@@ -15,6 +15,7 @@ import {
   StopInstancesCommand,
   TerminateInstancesCommand,
   Volume,
+  paginateDescribeInstances,
 } from '@aws-sdk/client-ec2'
 import {
   GetDesiredStateResponse,
@@ -66,16 +67,19 @@ const tagFilter = {Name: 'tag:depot-connection', Values: [CLOUD_AGENT_CONNECTION
 
 /** Queries for all managed instances */
 async function getInstancesState() {
-  const res = await client.send(new DescribeInstancesCommand({Filters: [tagFilter], MaxResults: 500}))
-  const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
-  return instances.reduce(
-    (acc, instance) => {
-      if (!instance.InstanceId) return acc
-      acc[instance.InstanceId] = instance
-      return acc
-    },
-    {} as Record<string, Instance>,
-  )
+  const paginator = paginateDescribeInstances({client, pageSize: 100}, {Filters: [tagFilter]})
+
+  const instanceState: Record<string, Instance> = {}
+
+  for await (const page of paginator) {
+    const instances = page.Reservations?.flatMap((r) => r.Instances || []) || []
+    for (const instance of instances) {
+      if (!instance.InstanceId) continue
+      instanceState[instance.InstanceId] = instance
+    }
+  }
+
+  return instanceState
 }
 
 /** Queries for all managed volumes */
