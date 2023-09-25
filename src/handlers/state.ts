@@ -25,6 +25,8 @@ export async function startStateStream(signal: AbortSignal) {
 
       logger.info('Refreshing current AWS state')
       currentState = await getCurrentState()
+
+      logger.info('Reconciling current AWS state with desired state')
       const errors = await reconcile(response, currentState)
       for (const error of errors) {
         await reportError(error)
