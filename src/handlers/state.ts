@@ -7,19 +7,23 @@ import {sleep} from '../utils/common'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
+import {logger} from '../utils/logger'
 
 export async function startStateStream(signal: AbortSignal) {
   while (!signal.aborted) {
     try {
+      logger.info('Getting current AWS state to report')
       let currentState = await getCurrentState()
       await reportCurrentState(currentState)
 
+      logger.info('Getting desired state')
       const {response} = await client.getDesiredStateUnary(
         {request: {connectionId: CLOUD_AGENT_CONNECTION_ID}},
         {signal},
       )
       if (!response) continue
 
+      logger.info('Refreshing current AWS state')
       currentState = await getCurrentState()
       const errors = await reconcile(response, currentState)
       for (const error of errors) {
