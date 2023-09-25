@@ -9,6 +9,8 @@ import {
   GetActiveAgentVersionResponse,
   GetDesiredStateRequest,
   GetDesiredStateResponse,
+  GetDesiredStateUnaryRequest,
+  GetDesiredStateUnaryResponse,
   ReconcileVolumesRequest,
   ReconcileVolumesResponse,
   ReportCurrentStateRequest,
@@ -88,6 +90,15 @@ export const CloudService = {
       name: 'ReportVolumeUpdates',
       I: ReportVolumeUpdatesRequest,
       O: ReportVolumeUpdatesResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc depot.cloud.v2.CloudService.GetDesiredStateUnary
+     */
+    getDesiredStateUnary: {
+      name: 'GetDesiredStateUnary',
+      I: GetDesiredStateUnaryRequest,
+      O: GetDesiredStateUnaryResponse,
       kind: MethodKind.Unary,
     },
   },

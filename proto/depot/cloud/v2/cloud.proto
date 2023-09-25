@@ -10,9 +10,19 @@ service CloudService {
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
   rpc ReconcileVolumes(ReconcileVolumesRequest) returns (stream ReconcileVolumesResponse) {}
   rpc ReportVolumeUpdates(ReportVolumeUpdatesRequest) returns (ReportVolumeUpdatesResponse) {}
+
+  rpc GetDesiredStateUnary(GetDesiredStateUnaryRequest) returns (GetDesiredStateUnaryResponse) {}
 }
 
 // Messages
+
+message GetDesiredStateUnaryRequest {
+  GetDesiredStateRequest request = 1;
+}
+
+message GetDesiredStateUnaryResponse {
+  GetDesiredStateResponse response = 1;
+}
 
 message GetDesiredStateRequest {
   string connection_id = 1;

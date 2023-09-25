@@ -3,6 +3,7 @@ import {compare} from 'fast-json-patch'
 import {ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
 import {CurrentState} from '../types'
 import {getCurrentState, reconcile} from '../utils/aws'
+import {sleep} from '../utils/common'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
@@ -13,20 +14,21 @@ export async function startStateStream(signal: AbortSignal) {
       let currentState = await getCurrentState()
       await reportCurrentState(currentState)
 
-      const stream = client.getDesiredState({connectionId: CLOUD_AGENT_CONNECTION_ID}, {signal})
+      const {response} = await client.getDesiredStateUnary(
+        {request: {connectionId: CLOUD_AGENT_CONNECTION_ID}},
+        {signal},
+      )
+      if (!response) continue
 
-      for await (const response of stream) {
-        if (signal.aborted) return
-        currentState = await getCurrentState()
-        const errors = await reconcile(response, currentState)
-        for (const error of errors) {
-          await reportError(error)
-        }
-        currentState = await getCurrentState()
-        await reportCurrentState(currentState)
+      currentState = await getCurrentState()
+      const errors = await reconcile(response, currentState)
+      for (const error of errors) {
+        await reportError(error)
       }
     } catch (err: any) {
       await reportError(err)
+    } finally {
+      await sleep(1000)
     }
   }
 }
