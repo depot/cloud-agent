@@ -14,6 +14,86 @@ import type {
 import {Message, proto3} from '@bufbuild/protobuf'
 
 /**
+ * @generated from message depot.cloud.v2.GetDesiredStateUnaryRequest
+ */
+export class GetDesiredStateUnaryRequest extends Message<GetDesiredStateUnaryRequest> {
+  /**
+   * @generated from field: depot.cloud.v2.GetDesiredStateRequest request = 1;
+   */
+  request?: GetDesiredStateRequest
+
+  constructor(data?: PartialMessage<GetDesiredStateUnaryRequest>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.GetDesiredStateUnaryRequest'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'request', kind: 'message', T: GetDesiredStateRequest},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateUnaryRequest {
+    return new GetDesiredStateUnaryRequest().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDesiredStateUnaryRequest {
+    return new GetDesiredStateUnaryRequest().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDesiredStateUnaryRequest {
+    return new GetDesiredStateUnaryRequest().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: GetDesiredStateUnaryRequest | PlainMessage<GetDesiredStateUnaryRequest> | undefined,
+    b: GetDesiredStateUnaryRequest | PlainMessage<GetDesiredStateUnaryRequest> | undefined,
+  ): boolean {
+    return proto3.util.equals(GetDesiredStateUnaryRequest, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.GetDesiredStateUnaryResponse
+ */
+export class GetDesiredStateUnaryResponse extends Message<GetDesiredStateUnaryResponse> {
+  /**
+   * @generated from field: depot.cloud.v2.GetDesiredStateResponse response = 1;
+   */
+  response?: GetDesiredStateResponse
+
+  constructor(data?: PartialMessage<GetDesiredStateUnaryResponse>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.GetDesiredStateUnaryResponse'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'response', kind: 'message', T: GetDesiredStateResponse},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateUnaryResponse {
+    return new GetDesiredStateUnaryResponse().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetDesiredStateUnaryResponse {
+    return new GetDesiredStateUnaryResponse().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetDesiredStateUnaryResponse {
+    return new GetDesiredStateUnaryResponse().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: GetDesiredStateUnaryResponse | PlainMessage<GetDesiredStateUnaryResponse> | undefined,
+    b: GetDesiredStateUnaryResponse | PlainMessage<GetDesiredStateUnaryResponse> | undefined,
+  ): boolean {
+    return proto3.util.equals(GetDesiredStateUnaryResponse, a, b)
+  }
+}
+
+/**
  * @generated from message depot.cloud.v2.GetDesiredStateRequest
  */
 export class GetDesiredStateRequest extends Message<GetDesiredStateRequest> {
