@@ -1,6 +1,6 @@
 import {PlainMessage} from '@bufbuild/protobuf'
 import {compare} from 'fast-json-patch'
-import {ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
+import {GetDesiredStateResponse, ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
 import {CurrentState} from '../types'
 import {getCurrentState, reconcile} from '../utils/aws'
 import {sleep} from '../utils/common'
@@ -20,7 +20,7 @@ export async function startStateStream(signal: AbortSignal) {
         {request: {connectionId: CLOUD_AGENT_CONNECTION_ID}},
         {signal},
       )
-      if (!response) continue
+      if (!response || isEmptyResponse(response)) continue
 
       currentState = await getCurrentState()
 
@@ -95,6 +95,11 @@ export async function reportCurrentState(currentState: CurrentState) {
   stateCache = {state: currentState, generation: res.generation}
 }
 
-function toPlainObject<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj))
+function isEmptyResponse(response: GetDesiredStateResponse): boolean {
+  return (
+    response.newMachines.length === 0 &&
+    response.newVolumes.length === 0 &&
+    response.machineChanges.length === 0 &&
+    response.volumeChanges.length === 0
+  )
 }
