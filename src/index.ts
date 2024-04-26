@@ -1,5 +1,5 @@
 import {startHealthStream} from './handlers/health'
-import {startStateStream} from './handlers/state'
+import {AwsProvider, FlyProvider, startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
 import {startVolumeStream} from './handlers/volumes'
 import {writeCephConf} from './utils/ceph'
@@ -8,6 +8,7 @@ import {
   CLOUD_AGENT_CEPH_CONFIG,
   CLOUD_AGENT_CEPH_KEY,
   CLOUD_AGENT_CONNECTION_ID,
+  CLOUD_AGENT_PROVIDER,
   CLOUD_AGENT_VERSION,
 } from './utils/env'
 import {client} from './utils/grpc'
@@ -48,7 +49,18 @@ async function main() {
   }
 
   startHealthStream(signal)
-  startStateStream(signal)
+
+  switch (CLOUD_AGENT_PROVIDER) {
+    case 'fly':
+      startStateStream(signal, FlyProvider)
+      break
+    case 'aws':
+      startStateStream(signal, AwsProvider)
+      break
+    default:
+      startStateStream(signal, AwsProvider)
+  }
+
   startUpdater(signal)
   if (CLOUD_AGENT_CEPH_CONFIG && CLOUD_AGENT_CEPH_KEY) {
     await writeCephConf('client.admin', CLOUD_AGENT_CEPH_CONFIG, CLOUD_AGENT_CEPH_KEY)

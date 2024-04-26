@@ -1,19 +1,42 @@
 import {PlainMessage} from '@bufbuild/protobuf'
 import {compare} from 'fast-json-patch'
 import {GetDesiredStateResponse, ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
-import {CurrentState} from '../types'
-import {getCurrentState, reconcile} from '../utils/aws'
+import {CurrentState as AwsCurrentState} from '../types'
+import {getCurrentState as getCurrentAwsState, reconcile as reconcileAws} from '../utils/aws'
 import {sleep} from '../utils/common'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
+import {
+  CurrentState as FlyCurrentState,
+  getCurrentState as getCurrentFlyState,
+  reconcile as reconcileFly,
+} from '../utils/fly/reconcile'
 import {client} from '../utils/grpc'
 
-export async function startStateStream(signal: AbortSignal) {
+interface CloudProvider<T> {
+  getCurrentState(): Promise<T>
+  reportCurrentState(currentState: T): Promise<void>
+  reconcile(response: GetDesiredStateResponse, state: T): Promise<string[]>
+}
+
+export const AwsProvider: CloudProvider<AwsCurrentState> = {
+  getCurrentState: () => getCurrentAwsState(),
+  reportCurrentState: reportAwsState(),
+  reconcile: (response, currentState) => reconcileAws(response, currentState),
+}
+
+export const FlyProvider: CloudProvider<FlyCurrentState> = {
+  getCurrentState: () => getCurrentFlyState(),
+  reportCurrentState: reportFlyState(),
+  reconcile: (response, currentState) => reconcileFly(response, currentState),
+}
+
+export async function startStateStream<T>(signal: AbortSignal, provider: CloudProvider<T>) {
   while (!signal.aborted) {
     try {
-      let currentState = await getCurrentState()
+      let currentState = await provider.getCurrentState()
 
-      await reportCurrentState(currentState)
+      await provider.reportCurrentState(currentState)
 
       const {response} = await client.getDesiredStateUnary(
         {request: {connectionId: CLOUD_AGENT_CONNECTION_ID}},
@@ -21,9 +44,9 @@ export async function startStateStream(signal: AbortSignal) {
       )
       if (!response || isEmptyResponse(response)) continue
 
-      currentState = await getCurrentState()
+      currentState = await provider.getCurrentState()
 
-      const errors = await reconcile(response, currentState)
+      const errors = await provider.reconcile(response, currentState)
       for (const error of errors) {
         await reportError(error)
       }
@@ -35,39 +58,70 @@ export async function startStateStream(signal: AbortSignal) {
   }
 }
 
-interface StateCache {
+interface StateCache<T> {
   generation: number
-  state: CurrentState
+  state: T
 }
 
-let stateCache: StateCache | null = null
-
-export async function reportCurrentState(currentState: CurrentState) {
-  const request: PlainMessage<ReportCurrentStateRequest> = {
-    connectionId: CLOUD_AGENT_CONNECTION_ID,
-    state: {
-      case: 'replace',
-      value: {
-        state: {
-          case: 'aws',
-          value: {
-            availabilityZone: currentState.availabilityZone,
-            state: JSON.stringify(currentState),
+function reportAwsState(): (state: AwsCurrentState) => Promise<void> {
+  let stateCache: StateCache<AwsCurrentState> | null = null
+  return async function reportCurrentState(currentState: AwsCurrentState) {
+    const request: PlainMessage<ReportCurrentStateRequest> = {
+      connectionId: CLOUD_AGENT_CONNECTION_ID,
+      state: {
+        case: 'replace',
+        value: {
+          state: {
+            case: 'aws',
+            value: {
+              availabilityZone: currentState.availabilityZone,
+              state: JSON.stringify(currentState),
+            },
           },
         },
       },
-    },
+    }
+
+    if (stateCache) {
+      const diff = compare(stateCache.state, currentState)
+
+      // If there is no difference, don't send a request
+      if (diff.length === 0) return
+    }
+
+    const res = await client.reportCurrentState(request)
+    stateCache = {state: currentState, generation: res.generation}
   }
+}
+function reportFlyState(): (state: FlyCurrentState) => Promise<void> {
+  let stateCache: StateCache<FlyCurrentState> | null = null
+  return async function reportCurrentState(currentState: FlyCurrentState) {
+    const request: PlainMessage<ReportCurrentStateRequest> = {
+      connectionId: CLOUD_AGENT_CONNECTION_ID,
+      state: {
+        case: 'replace',
+        value: {
+          state: {
+            case: currentState.cloud,
+            value: {
+              region: currentState.region,
+              state: JSON.stringify(currentState),
+            },
+          },
+        },
+      },
+    }
 
-  if (stateCache) {
-    const diff = compare(stateCache.state, currentState)
+    if (stateCache) {
+      const diff = compare(stateCache.state, currentState)
 
-    // If there is no difference, don't send a request
-    if (diff.length === 0) return
+      // If there is no difference, don't send a request
+      if (diff.length === 0) return
+    }
+
+    const res = await client.reportCurrentState(request)
+    stateCache = {state: currentState, generation: res.generation}
   }
-
-  const res = await client.reportCurrentState(request)
-  stateCache = {state: currentState, generation: res.generation}
 }
 
 function isEmptyResponse(response: GetDesiredStateResponse): boolean {
