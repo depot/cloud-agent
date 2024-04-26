@@ -35,6 +35,7 @@ import {
   CLOUD_AGENT_CONNECTION_ID,
   additionalSubnetIDs,
 } from './env'
+import {toPlainObject} from './plain'
 
 const client = new EC2Client({})
 
@@ -377,8 +378,4 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
   }
-}
-
-function toPlainObject<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj))
 }

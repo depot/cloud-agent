@@ -35,6 +35,9 @@ dependencies:
   fast-json-patch:
     specifier: ^3.1.1
     version: 3.1.1
+  undici:
+    specifier: ^6.14.1
+    version: 6.14.1
 
 devDependencies:
   '@bufbuild/protoc-gen-connect-es':
@@ -1581,6 +1584,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
+
+  /undici@6.14.1:
+    resolution: {integrity: sha512-mAel3i4BsYhkeVPXeIPXVGPJKeBzqCieZYoFsbWfUzd68JmHByhc1Plit5WlylxXFaGpgkZB8mExlxnt+Q1p7A==}
+    engines: {node: '>=18.17'}
+    dev: false
 
   /uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}

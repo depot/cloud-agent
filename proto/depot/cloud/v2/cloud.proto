@@ -43,6 +43,7 @@ message GetDesiredStateResponse {
     SecurityGroup security_group = 6;
     RootVolume root_volume = 7;
     optional string user_data = 8;
+    optional string volume_id = 9;
   }
 
   message NewVolume {
@@ -147,10 +148,16 @@ message GetActiveAgentVersionResponse {
 message CloudState {
   oneof state {
     Aws aws = 1;
+    Fly fly = 2;
   }
 
   message Aws {
     string availability_zone = 1;
+    string state = 2;
+  }
+
+  message Fly {
+    string region = 1;
     string state = 2;
   }
 }
@@ -159,9 +166,14 @@ message CloudStatePatch {
   int32 generation = 1;
   oneof patch {
     Aws aws = 2;
+    Fly fly = 3;
   }
 
   message Aws {
+    string patch = 1;
+  }
+
+  message Fly {
     string patch = 1;
   }
 }
