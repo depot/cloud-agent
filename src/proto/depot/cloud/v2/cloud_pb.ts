@@ -402,6 +402,11 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
    */
   userData?: string
 
+  /**
+   * @generated from field: optional string volume_id = 9;
+   */
+  volumeId?: string
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewMachine>) {
     super()
     proto3.util.initPartial(data, this)
@@ -417,6 +422,7 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
     {no: 6, name: 'security_group', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_SecurityGroup)},
     {no: 7, name: 'root_volume', kind: 'message', T: GetDesiredStateResponse_RootVolume},
     {no: 8, name: 'user_data', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
+    {no: 9, name: 'volume_id', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewMachine {
@@ -1002,6 +1008,13 @@ export class CloudState extends Message<CloudState> {
         value: CloudState_Aws
         case: 'aws'
       }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CloudState.Fly fly = 2;
+         */
+        value: CloudState_Fly
+        case: 'fly'
+      }
     | {case: undefined; value?: undefined} = {case: undefined}
 
   constructor(data?: PartialMessage<CloudState>) {
@@ -1013,6 +1026,7 @@ export class CloudState extends Message<CloudState> {
   static readonly typeName = 'depot.cloud.v2.CloudState'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'aws', kind: 'message', T: CloudState_Aws, oneof: 'state'},
+    {no: 2, name: 'fly', kind: 'message', T: CloudState_Fly, oneof: 'state'},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudState {
@@ -1082,6 +1096,52 @@ export class CloudState_Aws extends Message<CloudState_Aws> {
 }
 
 /**
+ * @generated from message depot.cloud.v2.CloudState.Fly
+ */
+export class CloudState_Fly extends Message<CloudState_Fly> {
+  /**
+   * @generated from field: string region = 1;
+   */
+  region = ''
+
+  /**
+   * @generated from field: string state = 2;
+   */
+  state = ''
+
+  constructor(data?: PartialMessage<CloudState_Fly>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CloudState.Fly'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'region', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'state', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudState_Fly {
+    return new CloudState_Fly().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CloudState_Fly {
+    return new CloudState_Fly().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CloudState_Fly {
+    return new CloudState_Fly().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CloudState_Fly | PlainMessage<CloudState_Fly> | undefined,
+    b: CloudState_Fly | PlainMessage<CloudState_Fly> | undefined,
+  ): boolean {
+    return proto3.util.equals(CloudState_Fly, a, b)
+  }
+}
+
+/**
  * @generated from message depot.cloud.v2.CloudStatePatch
  */
 export class CloudStatePatch extends Message<CloudStatePatch> {
@@ -1101,6 +1161,13 @@ export class CloudStatePatch extends Message<CloudStatePatch> {
         value: CloudStatePatch_Aws
         case: 'aws'
       }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CloudStatePatch.Fly fly = 3;
+         */
+        value: CloudStatePatch_Fly
+        case: 'fly'
+      }
     | {case: undefined; value?: undefined} = {case: undefined}
 
   constructor(data?: PartialMessage<CloudStatePatch>) {
@@ -1113,6 +1180,7 @@ export class CloudStatePatch extends Message<CloudStatePatch> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'generation', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
     {no: 2, name: 'aws', kind: 'message', T: CloudStatePatch_Aws, oneof: 'patch'},
+    {no: 3, name: 'fly', kind: 'message', T: CloudStatePatch_Fly, oneof: 'patch'},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudStatePatch {
@@ -1172,6 +1240,46 @@ export class CloudStatePatch_Aws extends Message<CloudStatePatch_Aws> {
     b: CloudStatePatch_Aws | PlainMessage<CloudStatePatch_Aws> | undefined,
   ): boolean {
     return proto3.util.equals(CloudStatePatch_Aws, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.CloudStatePatch.Fly
+ */
+export class CloudStatePatch_Fly extends Message<CloudStatePatch_Fly> {
+  /**
+   * @generated from field: string patch = 1;
+   */
+  patch = ''
+
+  constructor(data?: PartialMessage<CloudStatePatch_Fly>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CloudStatePatch.Fly'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'patch', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudStatePatch_Fly {
+    return new CloudStatePatch_Fly().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CloudStatePatch_Fly {
+    return new CloudStatePatch_Fly().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CloudStatePatch_Fly {
+    return new CloudStatePatch_Fly().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CloudStatePatch_Fly | PlainMessage<CloudStatePatch_Fly> | undefined,
+    b: CloudStatePatch_Fly | PlainMessage<CloudStatePatch_Fly> | undefined,
+  ): boolean {
+    return proto3.util.equals(CloudStatePatch_Fly, a, b)
   }
 }
 
