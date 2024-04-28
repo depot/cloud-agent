@@ -2,6 +2,9 @@ import {config} from 'dotenv'
 
 config()
 
+// CLOUD_AGENT_PROVIDER defines the cloud provider. It defaults to 'aws' but can be 'fly'.
+export const CLOUD_AGENT_PROVIDER = process.env.CLOUD_AGENT_PROVIDER ?? 'aws'
+
 export const CLOUD_AGENT_API_URL = process.env.CLOUD_AGENT_API_URL ?? 'https://api.depot.dev'
 
 export const CLOUD_AGENT_CONNECTION_ID = requiredEnv('CLOUD_AGENT_CONNECTION_ID')
