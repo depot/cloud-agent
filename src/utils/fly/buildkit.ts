@@ -6,28 +6,26 @@ export interface BuildkitMachineRequest {
   volumeID: string
   image: string
   env: Record<string, string>
-  buildkitToml: string
+  files: Record<string, string>
 }
 
 export async function launchBuildkitMachine(buildkit: BuildkitMachineRequest): Promise<V1Machine> {
-  const {depotID, region, volumeID, image, env, buildkitToml} = buildkit
+  const {depotID, region, volumeID, image, env, files} = buildkit
   const machine = await launchMachine({
     name: depotID,
     region,
     config: {
       guest: {
-        cpu_kind: 'shared',
+        cpu_kind: 'performance',
         cpus: 16,
         memory_mb: 1024 * 32,
       },
-      files: [
-        {
-          guest_path: '/etc/buildkit/buildkitd.toml',
-          raw_value: Buffer.from(buildkitToml).toString('base64'),
-        },
-      ],
+      files: Object.entries(files).map(([guest_path, raw_value]) => ({
+        guest_path,
+        raw_value: Buffer.from(raw_value).toString('base64'),
+      })),
       init: {
-        entryPoint: ['/usr/bin/buildkitd'],
+        entryPoint: ['/usr/bin/machine-agent'],
       },
       env,
       image,

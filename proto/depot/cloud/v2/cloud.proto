@@ -43,7 +43,14 @@ message GetDesiredStateResponse {
     SecurityGroup security_group = 6;
     RootVolume root_volume = 7;
     optional string user_data = 8;
-    optional string volume_id = 9;
+    optional FlyMachineOptions fly_options = 9;
+
+    message FlyMachineOptions {
+      // Volume to attach to the machine.
+      string volume_id = 1;
+      // File path/content to write to the fly machine.
+      map<string, string> files = 2;
+    }
   }
 
   message NewVolume {
