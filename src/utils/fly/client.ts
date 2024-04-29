@@ -1,6 +1,6 @@
 import type {BodyInit} from 'undici'
 import {fetch} from 'undici'
-import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from './env'
+import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from '../env'
 
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 

@@ -9,7 +9,7 @@ import {
   GetDesiredStateResponse_VolumeState,
 } from '../../proto/depot/cloud/v2/cloud_pb'
 import {promises} from '../common'
-import {CLOUD_AGENT_CONNECTION_ID} from '../env'
+import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {toPlainObject} from '../plain'
 import {createBuildkitVolume, launchBuildkitMachine} from './buildkit'
 import {
@@ -23,7 +23,6 @@ import {
   stopMachine,
   waitMachine,
 } from './client'
-import {FLY_REGION} from './env'
 
 export interface CurrentState {
   cloud: 'fly'
