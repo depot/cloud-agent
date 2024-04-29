@@ -173,14 +173,9 @@ message CloudStatePatch {
   int32 generation = 1;
   oneof patch {
     Aws aws = 2;
-    Fly fly = 3;
   }
 
   message Aws {
-    string patch = 1;
-  }
-
-  message Fly {
     string patch = 1;
   }
 }

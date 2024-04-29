@@ -1232,13 +1232,6 @@ export class CloudStatePatch extends Message<CloudStatePatch> {
         value: CloudStatePatch_Aws
         case: 'aws'
       }
-    | {
-        /**
-         * @generated from field: depot.cloud.v2.CloudStatePatch.Fly fly = 3;
-         */
-        value: CloudStatePatch_Fly
-        case: 'fly'
-      }
     | {case: undefined; value?: undefined} = {case: undefined}
 
   constructor(data?: PartialMessage<CloudStatePatch>) {
@@ -1251,7 +1244,6 @@ export class CloudStatePatch extends Message<CloudStatePatch> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'generation', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
     {no: 2, name: 'aws', kind: 'message', T: CloudStatePatch_Aws, oneof: 'patch'},
-    {no: 3, name: 'fly', kind: 'message', T: CloudStatePatch_Fly, oneof: 'patch'},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudStatePatch {
@@ -1311,46 +1303,6 @@ export class CloudStatePatch_Aws extends Message<CloudStatePatch_Aws> {
     b: CloudStatePatch_Aws | PlainMessage<CloudStatePatch_Aws> | undefined,
   ): boolean {
     return proto3.util.equals(CloudStatePatch_Aws, a, b)
-  }
-}
-
-/**
- * @generated from message depot.cloud.v2.CloudStatePatch.Fly
- */
-export class CloudStatePatch_Fly extends Message<CloudStatePatch_Fly> {
-  /**
-   * @generated from field: string patch = 1;
-   */
-  patch = ''
-
-  constructor(data?: PartialMessage<CloudStatePatch_Fly>) {
-    super()
-    proto3.util.initPartial(data, this)
-  }
-
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'depot.cloud.v2.CloudStatePatch.Fly'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'patch', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-  ])
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudStatePatch_Fly {
-    return new CloudStatePatch_Fly().fromBinary(bytes, options)
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CloudStatePatch_Fly {
-    return new CloudStatePatch_Fly().fromJson(jsonValue, options)
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CloudStatePatch_Fly {
-    return new CloudStatePatch_Fly().fromJsonString(jsonString, options)
-  }
-
-  static equals(
-    a: CloudStatePatch_Fly | PlainMessage<CloudStatePatch_Fly> | undefined,
-    b: CloudStatePatch_Fly | PlainMessage<CloudStatePatch_Fly> | undefined,
-  ): boolean {
-    return proto3.util.equals(CloudStatePatch_Fly, a, b)
   }
 }
 
