@@ -84,8 +84,8 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   if (!machine.flyOptions) return
   const flyOptions = machine.flyOptions
 
-  const attachedVolume = volumes.find((v) => v.name === flyOptions.volumeId)
-  if (!attachedVolume) return
+  const volume = volumes.find((v) => v.name === flyOptions.volumeId)
+  if (!volume) return
 
   if (machine.architecture !== GetDesiredStateResponse_Architecture.X86) {
     throw new Error('Unsupported architecture, Fly only supports x86 (amd64) machines')
@@ -94,7 +94,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   const flyMachine = await launchBuildkitMachine({
     depotID: machine.id,
     region: FLY_REGION,
-    volumeID: flyOptions.volumeId,
+    volumeID: volume.id,
     image: machine.image,
     env: {
       DEPOT_CLOUD: 'fly',
