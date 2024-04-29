@@ -73,9 +73,7 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
   const current = state.find((v) => v.name === volume.id)
   if (!current) return
 
-  const isDestroyed = current ? (current.state ? current.state === 'destroyed' : true) : true
-
-  if (!isDestroyed) {
+  if (current.state !== 'destroyed' && current.state !== 'destroying') {
     await deleteVolume(volume.id)
   }
 }
