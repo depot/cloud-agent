@@ -9,6 +9,7 @@ import {
   GetDesiredStateResponse_VolumeState,
 } from '../../proto/depot/cloud/v2/cloud_pb'
 import {promises} from '../common'
+import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {toPlainObject} from '../plain'
 import {createBuildkitVolume, launchBuildkitMachine} from './buildkit'
 import {
@@ -22,7 +23,6 @@ import {
   stopMachine,
   waitMachine,
 } from './client'
-import {FLY_REGION} from './env'
 
 export interface CurrentState {
   cloud: 'fly'
@@ -63,42 +63,16 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
   await createBuildkitVolume({depotID: volume.id, region: FLY_REGION, sizeGB: volume.size})
 }
 
-function currentVolumeState(volume: Volume): GetDesiredStateResponse_VolumeState {
-  const state = volume.state
-  if (!state) return GetDesiredStateResponse_VolumeState.PENDING
-  if (state === 'created' && !volume.attached_machine_id) return GetDesiredStateResponse_VolumeState.AVAILABLE
-  if (state === 'created' && volume.attached_machine_id) return GetDesiredStateResponse_VolumeState.ATTACHED
-  if (state === 'destroyed') return GetDesiredStateResponse_VolumeState.DELETED
-  console.log(`Unknown volume state: ${state}`)
-  return GetDesiredStateResponse_VolumeState.PENDING
-}
-
+// fly volumes are not attached/detatched.  The only modification is deleting the volume.
 async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_VolumeChange) {
-  const current = state.find((v) => v.name === volume.id)
-  const currentState = current ? currentVolumeState(current) : 'unknown'
-  const currentAttachment = current?.attached_machine_id
-
-  // Skip if already at the desired state and attached to the correct machine
-  if (currentState === volume.desiredState && volume.desiredState !== GetDesiredStateResponse_VolumeState.ATTACHED)
+  if (volume.desiredState !== GetDesiredStateResponse_VolumeState.DELETED) {
     return
-  if (currentState === volume.desiredState && currentAttachment === volume.attachedTo) return
+  }
 
+  const current = state.find((v) => v.name === volume.id)
   if (!current) return
 
-  if (volume.desiredState === GetDesiredStateResponse_VolumeState.ATTACHED) {
-    if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
-    if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
-    // Volumes in Fly are attached to a machine via the machine's metadata, nothing to do here
-  }
-
-  if (volume.desiredState === GetDesiredStateResponse_VolumeState.AVAILABLE) {
-    if (currentState === GetDesiredStateResponse_VolumeState.PENDING) return
-    if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
-    // Volumes in Fly are attached to a machine via the machine's metadata, nothing to do here
-  }
-
-  if (volume.desiredState === GetDesiredStateResponse_VolumeState.DELETED) {
-    if (currentState === GetDesiredStateResponse_VolumeState.DELETED) return
+  if (current.state !== 'destroyed' && current.state !== 'destroying') {
     await deleteVolume(volume.id)
   }
 }
@@ -106,10 +80,11 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
 async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateResponse_NewMachine, volumes: Volume[]) {
   const existing = state.find((m) => m.name === machine.id)
   if (existing) return
-  if (!machine.volumeId) return
+  if (!machine.flyOptions) return
+  const flyOptions = machine.flyOptions
 
-  const attachedVolume = volumes.find((v) => v.name === machine.volumeId)
-  if (!attachedVolume) return
+  const volume = volumes.find((v) => v.name === flyOptions.volumeId)
+  if (!volume) return
 
   if (machine.architecture !== GetDesiredStateResponse_Architecture.X86) {
     throw new Error('Unsupported architecture, Fly only supports x86 (amd64) machines')
@@ -118,13 +93,14 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   const flyMachine = await launchBuildkitMachine({
     depotID: machine.id,
     region: FLY_REGION,
-    volumeID: machine.volumeId,
+    volumeID: volume.id,
     image: machine.image,
     env: {
-      DEPOT_CLOUD_PROVIDER: 'fly',
+      DEPOT_CLOUD: 'fly',
+      DEPOT_CLOUD_CONNECTION_ID: CLOUD_AGENT_CONNECTION_ID,
       DEPOT_CLOUD_MACHINE_ID: machine.id,
     },
-    buildkitToml: machine.userData ?? '',
+    files: flyOptions.files,
   })
 
   if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)

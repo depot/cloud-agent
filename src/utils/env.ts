@@ -18,6 +18,11 @@ export const CLOUD_AGENT_VERSION = process.env.CLOUD_AGENT_VERSION ?? 'dev'
 export const CLOUD_AGENT_CEPH_CONFIG = process.env.CLOUD_AGENT_CEPH_CONFIG
 export const CLOUD_AGENT_CEPH_KEY = process.env.CLOUD_AGENT_CEPH_KEY
 
+export const FLY_APP_ID = process.env.FLY_APP_ID ?? 'depot-machines'
+export const FLY_API_TOKEN = process.env.FLY_API_TOKEN ?? ''
+export const FLY_API_HOST = process.env.FLY_API_HOST ?? 'https://api.machines.dev'
+export const FLY_REGION = process.env.FLY_REGION ?? 'iad'
+
 function requiredEnv(name: string): string {
   const value = process.env[name]
   if (!value) throw new Error(`Missing required environment variable ${name}`)

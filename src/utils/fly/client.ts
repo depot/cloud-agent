@@ -1,6 +1,6 @@
 import type {BodyInit} from 'undici'
 import {fetch} from 'undici'
-import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from './env'
+import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from '../env'
 
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 
@@ -121,11 +121,8 @@ export interface MachineConfig {
 export interface MachineCheck {
   type?: 'http' | 'tcp'
   port?: number
-  // TODO
   interval?: number
-  // TODO
   timeout?: number
-  // TODO
   grace_period?: number
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEAD' | 'OPTIONS' | 'TRACE' | 'CONNECT' | 'PATCH'
   path?: string
@@ -175,7 +172,6 @@ export interface MachineProcess {
 export interface MachineService {
   protocol: 'tcp' | 'udp'
   internal_port: number
-  // TODO:
 }
 
 export interface MachineStatic {
@@ -302,6 +298,7 @@ export interface Volume {
   id: string
   name: string
   state:
+    | 'creating'
     | 'created'
     | 'pending_destroy'
     | 'scheduling_destroy'
