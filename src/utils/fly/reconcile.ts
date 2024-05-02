@@ -39,6 +39,7 @@ export async function getCurrentState() {
     volumes: listVolumes(),
     errors: [],
   })
+
   return toPlainObject(state)
 }
 
@@ -69,11 +70,12 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
     return
   }
 
-  const current = state.find((v) => v.name === volume.id)
-  if (!current) return
+  const toDelete = state.find((v) => v.name === volume.id)
+  if (!toDelete) return
 
-  if (current.state !== 'destroyed' && current.state !== 'destroying') {
-    await deleteVolume(volume.id)
+  if (toDelete.state !== 'destroyed' && toDelete.state !== 'destroying') {
+    console.log('Deleting volume', volume.id, toDelete.id)
+    await deleteVolume(toDelete.id)
   }
 }
 
@@ -90,6 +92,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
     throw new Error('Unsupported architecture, Fly only supports x86 (amd64) machines')
   }
 
+  console.log(`Launching new machine ${machine.id}`)
   const flyMachine = await launchBuildkitMachine({
     depotID: machine.id,
     region: FLY_REGION,
@@ -130,22 +133,37 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
   if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
+    console.log('Starting machine', current.id)
     await startMachine(current.id)
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
-    await stopMachine({id: current.id, timeout: timeoutSeconds * 1_000_000_000})
-    await waitMachine({id: current.id, state: 'stopped', timeout: timeoutSeconds * 1_000_000_000})
+    console.log('Stopping machine', current.id)
+    await stopMachine({id: current.id, timeout: timeoutSeconds})
+    await waitMachine({
+      id: current.id,
+      instance_id: current.instance_id,
+      state: 'stopped',
+      timeout: timeoutSeconds,
+    })
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.RUNNING) {
-      await stopMachine({id: current.id, timeout: timeoutSeconds * 1_000_000_000})
-      await waitMachine({id: current.id, state: 'stopped', timeout: timeoutSeconds * 1_000_000_000})
+      try {
+        await stopMachine({id: current.id, timeout: timeoutSeconds})
+        await waitMachine({
+          id: current.id,
+          instance_id: current.instance_id,
+          state: 'stopped',
+          timeout: timeoutSeconds,
+        })
+      } catch {} // stop can sometime fail, ignore.
     }
+    console.log('Deleting machine', current.id)
     await deleteMachine(current.id)
   }
 }
