@@ -5,7 +5,7 @@ import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from '../env'
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 
 export async function listMachines(): Promise<V1Machine[]> {
-  const res = await rest<V1Machine[]>('GET', '/machines')
+  const res = await rest<V1Machine[]>('GET', '/machines?include_deleted=true')
   return res
 }
 
@@ -74,7 +74,6 @@ export async function killMachine(machineID: string) {
 
 async function rest<T>(method: string, endpoint: string, body?: BodyInit): Promise<T> {
   const url = `${FLY_API_HOST}/v1/apps/${FLY_APP_ID}${endpoint}`
-  console.log(method, url)
   const res = await fetch(url, {
     method,
     body,
@@ -172,6 +171,25 @@ export interface MachineProcess {
 export interface MachineService {
   protocol: 'tcp' | 'udp'
   internal_port: number
+  ports: ServicePort[]
+  autostart?: boolean
+  autostop?: boolean
+  // checks
+  // concurrency
+  force_instance_description?: string
+  force_instance_key?: string
+  min_machines_running?: number
+}
+
+export interface ServicePort {
+  protocol: 'tcp' | 'udp'
+  port: number
+  start_port?: number
+  end_port?: number
+  force_https?: boolean
+  // http_options
+  // proxy_proto_options
+  // tls_options
 }
 
 export interface MachineStatic {
