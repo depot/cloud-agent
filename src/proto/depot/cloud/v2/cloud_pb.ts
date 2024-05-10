@@ -407,6 +407,11 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
    */
   flyOptions?: GetDesiredStateResponse_NewMachine_FlyMachineOptions
 
+  /**
+   * @generated from field: optional string zone = 10;
+   */
+  zone?: string
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewMachine>) {
     super()
     proto3.util.initPartial(data, this)
@@ -423,6 +428,7 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
     {no: 7, name: 'root_volume', kind: 'message', T: GetDesiredStateResponse_RootVolume},
     {no: 8, name: 'user_data', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
     {no: 9, name: 'fly_options', kind: 'message', T: GetDesiredStateResponse_NewMachine_FlyMachineOptions, opt: true},
+    {no: 10, name: 'zone', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewMachine {
@@ -540,6 +546,11 @@ export class GetDesiredStateResponse_NewVolume extends Message<GetDesiredStateRe
    */
   size = 0
 
+  /**
+   * @generated from field: optional string zone = 6;
+   */
+  zone?: string
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewVolume>) {
     super()
     proto3.util.initPartial(data, this)
@@ -552,6 +563,7 @@ export class GetDesiredStateResponse_NewVolume extends Message<GetDesiredStateRe
     {no: 3, name: 'kind', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Kind)},
     {no: 4, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
     {no: 5, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
+    {no: 6, name: 'zone', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewVolume {

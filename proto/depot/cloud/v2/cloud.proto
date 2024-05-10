@@ -44,6 +44,7 @@ message GetDesiredStateResponse {
     RootVolume root_volume = 7;
     optional string user_data = 8;
     optional FlyMachineOptions fly_options = 9;
+    optional string zone = 10;
 
     message FlyMachineOptions {
       // Volume to attach to the machine.
@@ -59,6 +60,7 @@ message GetDesiredStateResponse {
     Kind kind = 3;
     Architecture architecture = 4;
     int32 size = 5;
+    optional string zone = 6;
   }
 
   message MachineChange {

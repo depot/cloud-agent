@@ -61,7 +61,7 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
   if (existing) return
 
   console.log(`Creating new volume ${volume.id}`)
-  await createBuildkitVolume({depotID: volume.id, region: FLY_REGION, sizeGB: volume.size})
+  await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
 }
 
 // fly volumes are not attached/detatched.  The only modification is deleting the volume.
@@ -95,7 +95,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   console.log(`Launching new machine ${machine.id}`)
   const flyMachine = await launchBuildkitMachine({
     depotID: machine.id,
-    region: FLY_REGION,
+    region: machine.zone ?? FLY_REGION,
     volumeID: volume.id,
     image: machine.image,
     env: {
