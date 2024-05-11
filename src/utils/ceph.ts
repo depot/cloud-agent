@@ -6,7 +6,9 @@ const POOL = 'rbd'
 
 type PoolSpec = string & {readonly $type: unique symbol}
 type ImageSpec = string & {readonly $type: unique symbol}
+type CloneSpec = string & {readonly $type: unique symbol}
 type ClientName = string & {readonly $type: unique symbol}
+type SnapshotName = string & {readonly $type: unique symbol}
 type OsdProfile = string & {readonly $type: unique symbol}
 
 export function newPoolSpec(volumeName: string): PoolSpec {
@@ -17,6 +19,10 @@ export function newImageSpec(volumeName: string): ImageSpec {
   return `${POOL}/${volumeName}/${volumeName}` as ImageSpec
 }
 
+export function newCloneSpec(pool: PoolSpec, cloneName: string): CloneSpec {
+  return `${pool}/${cloneName}` as CloneSpec
+}
+
 export function newClientName(name: string): ClientName {
   return name as ClientName
 }
@@ -24,6 +30,10 @@ export function newClientName(name: string): ClientName {
 export function newOsdProfile(volumeName: string): OsdProfile {
   // Gives a user read-write access to the Ceph Block Devices in namespace.
   return `profile rbd pool=${POOL} namespace=${volumeName}` as OsdProfile
+}
+
+export function newSnapshotName(snapshotName: string): SnapshotName {
+  return snapshotName as SnapshotName
 }
 
 /*** Low-level Ceph functions ***/
@@ -44,6 +54,42 @@ export async function createBlockDevice(imageSpec: ImageSpec, gigabytes: number)
   const {exitCode, stderr} = await execa(
     'rbd',
     ['create', imageSpec, '--size', `${gigabytes}G`, '--stripe-unit', '64K', '--stripe-count', '4'],
+    {
+      reject: false,
+      stdio: 'inherit',
+    },
+  )
+  // 17 is "already exists" a.k.a EEXIST.
+  if (exitCode === 0 || exitCode === 17) {
+    return
+  }
+
+  throw new Error(stderr)
+}
+
+export async function createSnapshot(imageSpec: ImageSpec, snapshotName: SnapshotName) {
+  console.log('Creating ceph snapshot', imageSpec, snapshotName)
+  const {exitCode, stderr} = await execa(
+    'rbd',
+    ['snap', 'create', imageSpec, '--snap', snapshotName, '--no-progress'],
+    {
+      reject: false,
+      stdio: 'inherit',
+    },
+  )
+  // 17 is "already exists" a.k.a EEXIST.
+  if (exitCode === 0 || exitCode === 17) {
+    return
+  }
+
+  throw new Error(stderr)
+}
+
+export async function createClone(imageSpec: ImageSpec, snapshotName: SnapshotName, cloneSpec: CloneSpec) {
+  console.log('Creating ceph clone', imageSpec, snapshotName, cloneSpec)
+  const {exitCode, stderr} = await execa(
+    'rbd',
+    ['clone', imageSpec, '--snap', snapshotName, cloneSpec, '--rbd-default-clone-format=2'],
     {
       reject: false,
       stdio: 'inherit',
@@ -109,6 +155,31 @@ export async function authRm(clientName: ClientName) {
 export async function imageRm(imageSpec: ImageSpec) {
   console.log('Removing ceph image', imageSpec)
   const {exitCode, stderr} = await execa('rbd', ['rm', '--no-progress', imageSpec], {reject: false, stdio: 'inherit'})
+  // 2 is "image does not exist" a.k.a ENOENT.
+  if (exitCode === 0 || exitCode === 2) {
+    return
+  }
+
+  throw new Error(stderr)
+}
+
+export async function snapshotRm(imageSpec: ImageSpec, snapshotName: SnapshotName) {
+  console.log('Removing ceph snapshot', imageSpec, snapshotName)
+  const {exitCode, stderr} = await execa('rbd', ['snap', 'rm', imageSpec, '--snap', snapshotName, '--no-progress'], {
+    reject: false,
+    stdio: 'inherit',
+  })
+  // 2 is "snapshot does not exist" a.k.a ENOENT.
+  if (exitCode === 0 || exitCode === 2) {
+    return
+  }
+
+  throw new Error(stderr)
+}
+
+export async function cloneRm(cloneSpec: CloneSpec) {
+  console.log('Removing ceph clone', cloneSpec)
+  const {exitCode, stderr} = await execa('rbd', ['rm', '--no-progress', cloneSpec], {reject: false, stdio: 'inherit'})
   // 2 is "image does not exist" a.k.a ENOENT.
   if (exitCode === 0 || exitCode === 2) {
     return
