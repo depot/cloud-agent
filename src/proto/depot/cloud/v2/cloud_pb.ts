@@ -1633,6 +1633,13 @@ export class CreateVolumeUpdate extends Message<CreateVolumeUpdate> {
    */
   volumeName = ''
 
+  /**
+   * Image ID to use for the volume.
+   *
+   * @generated from field: string image_spec = 2;
+   */
+  imageSpec = ''
+
   constructor(data?: PartialMessage<CreateVolumeUpdate>) {
     super()
     proto3.util.initPartial(data, this)
@@ -1642,6 +1649,7 @@ export class CreateVolumeUpdate extends Message<CreateVolumeUpdate> {
   static readonly typeName = 'depot.cloud.v2.CreateVolumeUpdate'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateVolumeUpdate {
@@ -1760,6 +1768,11 @@ export class ResizeVolumeAction extends Message<ResizeVolumeAction> {
    */
   size = 0
 
+  /**
+   * @generated from field: string image_spec = 4;
+   */
+  imageSpec = ''
+
   constructor(data?: PartialMessage<ResizeVolumeAction>) {
     super()
     proto3.util.initPartial(data, this)
@@ -1770,6 +1783,7 @@ export class ResizeVolumeAction extends Message<ResizeVolumeAction> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 3, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
+    {no: 4, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ResizeVolumeAction {
@@ -1841,6 +1855,11 @@ export class DeleteVolumeAction extends Message<DeleteVolumeAction> {
    */
   volumeName = ''
 
+  /**
+   * @generated from field: string image_spec = 2;
+   */
+  imageSpec = ''
+
   constructor(data?: PartialMessage<DeleteVolumeAction>) {
     super()
     proto3.util.initPartial(data, this)
@@ -1850,6 +1869,7 @@ export class DeleteVolumeAction extends Message<DeleteVolumeAction> {
   static readonly typeName = 'depot.cloud.v2.DeleteVolumeAction'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): DeleteVolumeAction {
@@ -2107,6 +2127,11 @@ export class AuthorizeClientAction extends Message<AuthorizeClientAction> {
    */
   clientName = ''
 
+  /**
+   * @generated from field: string image_spec = 3;
+   */
+  imageSpec = ''
+
   constructor(data?: PartialMessage<AuthorizeClientAction>) {
     super()
     proto3.util.initPartial(data, this)
@@ -2117,6 +2142,7 @@ export class AuthorizeClientAction extends Message<AuthorizeClientAction> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 2, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 3, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthorizeClientAction {
@@ -2155,6 +2181,11 @@ export class AuthorizeClientUpdate extends Message<AuthorizeClientUpdate> {
    */
   volumeName = ''
 
+  /**
+   * @generated from field: string image_spec = 3;
+   */
+  imageSpec = ''
+
   constructor(data?: PartialMessage<AuthorizeClientUpdate>) {
     super()
     proto3.util.initPartial(data, this)
@@ -2165,6 +2196,7 @@ export class AuthorizeClientUpdate extends Message<AuthorizeClientUpdate> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'client_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 2, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 3, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AuthorizeClientUpdate {

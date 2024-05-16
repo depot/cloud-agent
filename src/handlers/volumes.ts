@@ -104,6 +104,7 @@ async function createVolume({volumeName, size}: CreateVolumeAction): Promise<Pla
       case: 'createVolume',
       value: {
         volumeName,
+        imageSpec,
       },
     },
   }
@@ -139,10 +140,17 @@ async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<
   }
 }
 
-async function deleteVolume({volumeName}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
-  const imageSpec = newImageSpec(volumeName)
+async function deleteVolume({
+  volumeName,
+  imageSpec,
+}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
+  if (imageSpec) {
+    await imageRm(newImageSpec(imageSpec))
+  } else {
+    await imageRm(newImageSpec(volumeName))
+  }
+
   const poolSpec = newPoolSpec(volumeName)
-  await imageRm(imageSpec)
   await namespaceRm(poolSpec)
 
   return {
@@ -178,6 +186,7 @@ async function createClient({
 async function authorizeClient({
   volumeName,
   clientName: plainClientName,
+  imageSpec,
 }: AuthorizeClientAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
   const osdProfile = newOsdProfile(volumeName)
   const clientName = newClientName(plainClientName)
@@ -189,6 +198,7 @@ async function authorizeClient({
       value: {
         clientName,
         volumeName,
+        imageSpec,
       },
     },
   }
