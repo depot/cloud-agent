@@ -16,6 +16,10 @@ export function newPoolSpec(volumeName: string): PoolSpec {
 }
 
 export function newImageSpec(volumeName: string): ImageSpec {
+  // Assume that if the volume name contains a slash, it is already a full image spec.
+  if (volumeName.includes('/')) {
+    return volumeName as ImageSpec
+  }
   return `${POOL}/${volumeName}/${volumeName}` as ImageSpec
 }
 

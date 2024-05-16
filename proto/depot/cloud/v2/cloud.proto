@@ -222,6 +222,8 @@ message CreateVolumeAction {
 
 message CreateVolumeUpdate {
   string volume_name = 1;
+  // Image ID to use for the volume.
+  string image_spec = 2;
 }
 
 message TrimVolumeAction {
@@ -236,6 +238,7 @@ message ResizeVolumeAction {
   string volume_name = 1;
   // Size in GB
   int32 size = 3;
+  string image_spec = 4;
 }
 
 message ResizeVolumeUpdate {
@@ -244,6 +247,7 @@ message ResizeVolumeUpdate {
 
 message DeleteVolumeAction {
   string volume_name = 1;
+  string image_spec = 2;
 }
 
 message DeleteVolumeUpdate {
@@ -276,10 +280,12 @@ message DeleteClientUpdate {
 message AuthorizeClientAction {
   string volume_name = 1;
   string client_name = 2;
+  string image_spec = 3;
 }
 
 // rbd device map {image_spec} --name {client_name} --keyfile {file w/ key}
 message AuthorizeClientUpdate {
   string client_name = 1;
   string volume_name = 2;
+  string image_spec = 3;
 }
