@@ -1408,6 +1408,13 @@ export class ReconcileVolumesResponse extends Message<ReconcileVolumesResponse> 
         value: TrimVolumeAction
         case: 'trimVolume'
       }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CopyVolumeAction copy_volume = 8;
+         */
+        value: CopyVolumeAction
+        case: 'copyVolume'
+      }
     | {case: undefined; value?: undefined} = {case: undefined}
 
   constructor(data?: PartialMessage<ReconcileVolumesResponse>) {
@@ -1425,6 +1432,7 @@ export class ReconcileVolumesResponse extends Message<ReconcileVolumesResponse> 
     {no: 5, name: 'authorize_client', kind: 'message', T: AuthorizeClientAction, oneof: 'action'},
     {no: 6, name: 'delete_client', kind: 'message', T: DeleteClientAction, oneof: 'action'},
     {no: 7, name: 'trim_volume', kind: 'message', T: TrimVolumeAction, oneof: 'action'},
+    {no: 8, name: 'copy_volume', kind: 'message', T: CopyVolumeAction, oneof: 'action'},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconcileVolumesResponse {
@@ -1504,6 +1512,13 @@ export class ReportVolumeUpdatesRequest extends Message<ReportVolumeUpdatesReque
         value: TrimVolumeUpdate
         case: 'trimVolume'
       }
+    | {
+        /**
+         * @generated from field: depot.cloud.v2.CopyVolumeUpdate copy_volume = 8;
+         */
+        value: CopyVolumeUpdate
+        case: 'copyVolume'
+      }
     | {case: undefined; value?: undefined} = {case: undefined}
 
   constructor(data?: PartialMessage<ReportVolumeUpdatesRequest>) {
@@ -1521,6 +1536,7 @@ export class ReportVolumeUpdatesRequest extends Message<ReportVolumeUpdatesReque
     {no: 5, name: 'authorize_client', kind: 'message', T: AuthorizeClientUpdate, oneof: 'update'},
     {no: 6, name: 'delete_client', kind: 'message', T: DeleteClientUpdate, oneof: 'update'},
     {no: 7, name: 'trim_volume', kind: 'message', T: TrimVolumeUpdate, oneof: 'update'},
+    {no: 8, name: 'copy_volume', kind: 'message', T: CopyVolumeUpdate, oneof: 'update'},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportVolumeUpdatesRequest {
@@ -2218,3 +2234,167 @@ export class AuthorizeClientUpdate extends Message<AuthorizeClientUpdate> {
     return proto3.util.equals(AuthorizeClientUpdate, a, b)
   }
 }
+
+/**
+ * @generated from message depot.cloud.v2.CopyVolumeAction
+ */
+export class CopyVolumeAction extends Message<CopyVolumeAction> {
+  /**
+   * @generated from field: depot.cloud.v2.CopyVolumeAction.Kind kind = 1;
+   */
+  kind = CopyVolumeAction_Kind.UNSPECIFIED
+
+  /**
+   * @generated from field: string volume_name = 2;
+   */
+  volumeName = ''
+
+  /**
+   * The parent spec is the volume id of the volume that the snapshot or clone is a child of.
+   *
+   * @generated from field: string parent_image_spec = 3;
+   */
+  parentImageSpec = ''
+
+  constructor(data?: PartialMessage<CopyVolumeAction>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CopyVolumeAction'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'kind', kind: 'enum', T: proto3.getEnumType(CopyVolumeAction_Kind)},
+    {no: 2, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 3, name: 'parent_image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CopyVolumeAction {
+    return new CopyVolumeAction().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CopyVolumeAction {
+    return new CopyVolumeAction().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CopyVolumeAction {
+    return new CopyVolumeAction().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CopyVolumeAction | PlainMessage<CopyVolumeAction> | undefined,
+    b: CopyVolumeAction | PlainMessage<CopyVolumeAction> | undefined,
+  ): boolean {
+    return proto3.util.equals(CopyVolumeAction, a, b)
+  }
+}
+
+/**
+ * @generated from enum depot.cloud.v2.CopyVolumeAction.Kind
+ */
+export enum CopyVolumeAction_Kind {
+  /**
+   * @generated from enum value: KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: KIND_SNAPSHOT = 1;
+   */
+  SNAPSHOT = 1,
+
+  /**
+   * @generated from enum value: KIND_CLONE = 2;
+   */
+  CLONE = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(CopyVolumeAction_Kind)
+proto3.util.setEnumType(CopyVolumeAction_Kind, 'depot.cloud.v2.CopyVolumeAction.Kind', [
+  {no: 0, name: 'KIND_UNSPECIFIED'},
+  {no: 1, name: 'KIND_SNAPSHOT'},
+  {no: 2, name: 'KIND_CLONE'},
+])
+
+/**
+ * @generated from message depot.cloud.v2.CopyVolumeUpdate
+ */
+export class CopyVolumeUpdate extends Message<CopyVolumeUpdate> {
+  /**
+   * @generated from field: depot.cloud.v2.CopyVolumeUpdate.Kind kind = 1;
+   */
+  kind = CopyVolumeUpdate_Kind.UNSPECIFIED
+
+  /**
+   * @generated from field: string volume_name = 2;
+   */
+  volumeName = ''
+
+  /**
+   * @generated from field: string image_spec = 3;
+   */
+  imageSpec = ''
+
+  /**
+   * @generated from field: string parent_image_spec = 4;
+   */
+  parentImageSpec = ''
+
+  constructor(data?: PartialMessage<CopyVolumeUpdate>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.CopyVolumeUpdate'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'kind', kind: 'enum', T: proto3.getEnumType(CopyVolumeUpdate_Kind)},
+    {no: 2, name: 'volume_name', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 3, name: 'image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 4, name: 'parent_image_spec', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CopyVolumeUpdate {
+    return new CopyVolumeUpdate().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CopyVolumeUpdate {
+    return new CopyVolumeUpdate().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CopyVolumeUpdate {
+    return new CopyVolumeUpdate().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: CopyVolumeUpdate | PlainMessage<CopyVolumeUpdate> | undefined,
+    b: CopyVolumeUpdate | PlainMessage<CopyVolumeUpdate> | undefined,
+  ): boolean {
+    return proto3.util.equals(CopyVolumeUpdate, a, b)
+  }
+}
+
+/**
+ * @generated from enum depot.cloud.v2.CopyVolumeUpdate.Kind
+ */
+export enum CopyVolumeUpdate_Kind {
+  /**
+   * @generated from enum value: KIND_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: KIND_SNAPSHOT = 1;
+   */
+  SNAPSHOT = 1,
+
+  /**
+   * @generated from enum value: KIND_CLONE = 2;
+   */
+  CLONE = 2,
+}
+// Retrieve enum metadata with: proto3.getEnumType(CopyVolumeUpdate_Kind)
+proto3.util.setEnumType(CopyVolumeUpdate_Kind, 'depot.cloud.v2.CopyVolumeUpdate.Kind', [
+  {no: 0, name: 'KIND_UNSPECIFIED'},
+  {no: 1, name: 'KIND_SNAPSHOT'},
+  {no: 2, name: 'KIND_CLONE'},
+])
