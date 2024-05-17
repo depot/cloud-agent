@@ -1,6 +1,9 @@
 import {PlainMessage} from '@bufbuild/protobuf'
 import {
   AuthorizeClientAction,
+  CopyVolumeAction,
+  CopyVolumeAction_Kind,
+  CopyVolumeUpdate_Kind,
   CreateClientAction,
   CreateVolumeAction,
   DeleteClientAction,
@@ -17,14 +20,20 @@ import {
   cephConfig,
   createAuthEntity,
   createBlockDevice,
+  createClone,
   createNamespace,
+  createSnapshot,
   enableCephMetrics,
   imageRm,
   namespaceRm,
   newClientName,
+  newCloneSpec,
   newImageSpec,
   newOsdProfile,
   newPoolSpec,
+  newSnapshotSpec,
+  snapshotFromImageSpec,
+  snapshotRm,
   sparsify,
 } from '../utils/ceph'
 import {reportError} from '../utils/errors'
@@ -70,6 +79,8 @@ async function handleAction(
   switch (action.case) {
     case 'createVolume':
       return await createVolume(action.value)
+    case 'copyVolume':
+      return await copyVolume(action.value)
     case 'resizeVolume':
       return await resizeVolume(action.value)
     case 'trimVolume':
@@ -110,6 +121,70 @@ async function createVolume({volumeName, size}: CreateVolumeAction): Promise<Pla
   }
 }
 
+async function copyVolume({
+  volumeName,
+  parentImageSpec,
+  kind,
+}: CopyVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest> | null> {
+  switch (kind) {
+    case CopyVolumeAction_Kind.SNAPSHOT:
+      return await snapshotVolume(volumeName, parentImageSpec)
+    case CopyVolumeAction_Kind.CLONE:
+      return await cloneVolume(volumeName, parentImageSpec)
+    default:
+      return null
+  }
+}
+
+async function snapshotVolume(
+  volumeName: string,
+  parentImage: string,
+): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
+  const parentImageSpec = newImageSpec(parentImage)
+  const snapshotSpec = snapshotFromImageSpec(parentImageSpec, volumeName)
+  await createSnapshot(snapshotSpec)
+
+  return {
+    update: {
+      case: 'copyVolume',
+      value: {
+        kind: CopyVolumeUpdate_Kind.SNAPSHOT,
+        volumeName,
+        imageSpec: snapshotSpec,
+        parentImageSpec,
+      },
+    },
+  }
+}
+
+async function cloneVolume(
+  volumeName: string,
+  parentImageSpec: string,
+): Promise<PlainMessage<ReportVolumeUpdatesRequest> | null> {
+  // PRECONDITION: parent name is a snapshot name with the `@` symbol.
+  if (!parentImageSpec.includes('@')) {
+    console.error(`Invalid snapshot name: ${parentImageSpec}`)
+    return null
+  }
+  const [snapshotParentName] = parentImageSpec.split('@')
+  const snapshotSpec = newSnapshotSpec(parentImageSpec)
+
+  const cloneSpec = newCloneSpec(newPoolSpec(snapshotParentName), volumeName)
+  await createClone(snapshotSpec, cloneSpec)
+
+  return {
+    update: {
+      case: 'copyVolume',
+      value: {
+        kind: CopyVolumeUpdate_Kind.CLONE,
+        volumeName,
+        imageSpec: cloneSpec,
+        parentImageSpec,
+      },
+    },
+  }
+}
+
 async function resizeVolume(_action: ResizeVolumeAction) {
   // TODO: resize volume
   return null
@@ -143,8 +218,20 @@ async function trimVolume({volumeName}: TrimVolumeAction): Promise<PlainMessage<
 async function deleteVolume({
   volumeName,
   imageSpec,
-}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
+}: DeleteVolumeAction): Promise<PlainMessage<ReportVolumeUpdatesRequest> | null> {
   if (imageSpec) {
+    if (imageSpec.includes('@')) {
+      const snapshotSpec = newSnapshotSpec(imageSpec)
+      await snapshotRm(snapshotSpec)
+      return {
+        update: {
+          case: 'deleteVolume',
+          value: {
+            volumeName,
+          },
+        },
+      }
+    }
     await imageRm(newImageSpec(imageSpec))
   } else {
     await imageRm(newImageSpec(volumeName))

@@ -195,6 +195,8 @@ message ReconcileVolumesResponse {
     DeleteClientAction delete_client = 6;
 
     TrimVolumeAction trim_volume = 7;
+
+    CopyVolumeAction copy_volume = 8;
   }
 }
 
@@ -209,6 +211,7 @@ message ReportVolumeUpdatesRequest {
     DeleteClientUpdate delete_client = 6;
 
     TrimVolumeUpdate trim_volume = 7;
+    CopyVolumeUpdate copy_volume = 8;
   }
 }
 
@@ -288,4 +291,29 @@ message AuthorizeClientUpdate {
   string client_name = 1;
   string volume_name = 2;
   string image_spec = 3;
+}
+
+message CopyVolumeAction {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_SNAPSHOT = 1;
+    KIND_CLONE = 2;
+  }
+
+  Kind kind = 1;
+  string volume_name = 2;
+  // The parent spec is the volume id of the volume that the snapshot or clone is a child of.
+  string parent_image_spec = 3;
+}
+
+message CopyVolumeUpdate {
+  enum Kind {
+    KIND_UNSPECIFIED = 0;
+    KIND_SNAPSHOT = 1;
+    KIND_CLONE = 2;
+  }
+  Kind kind = 1;
+  string volume_name = 2;
+  string image_spec = 3;
+  string parent_image_spec = 4;
 }
