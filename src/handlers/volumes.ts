@@ -169,10 +169,10 @@ async function cloneVolume(
     console.error(`Invalid snapshot name: ${parentImageSpec}`)
     return null
   }
-  const [snapshotParentName] = parentImageSpec.split('@')
+  const [, parentVolume] = parentImageSpec.split('/')
   const snapshotSpec = newSnapshotSpec(parentImageSpec)
 
-  const cloneSpec = newCloneSpec(newPoolSpec(snapshotParentName), volumeName)
+  const cloneSpec = newCloneSpec(newPoolSpec(parentVolume), volumeName)
   await createClone(snapshotSpec, cloneSpec)
 
   return {
