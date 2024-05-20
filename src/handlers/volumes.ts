@@ -278,7 +278,12 @@ async function authorizeClient({
   clientName: plainClientName,
   imageSpec,
 }: AuthorizeClientAction): Promise<PlainMessage<ReportVolumeUpdatesRequest>> {
-  const osdProfile = newOsdProfile(volumeName)
+  let namespace = volumeName
+  if (imageSpec && imageSpec.includes('/')) {
+    namespace = imageSpec.split('/')[1]
+  }
+
+  const osdProfile = newOsdProfile(namespace)
   const clientName = newClientName(plainClientName)
   await authCaps(osdProfile, clientName)
 
