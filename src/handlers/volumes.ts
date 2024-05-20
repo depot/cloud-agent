@@ -94,6 +94,7 @@ async function handleAction(
     case 'deleteClient':
       return await deleteClient(action.value)
     default:
+      console.log('Unknown action', action)
       return null
   }
 }
@@ -132,6 +133,7 @@ async function copyVolume({
     case CopyVolumeAction_Kind.CLONE:
       return await cloneVolume(volumeName, parentImageSpec)
     default:
+      console.log('Unknown copy volume kind', kind)
       return null
   }
 }
@@ -143,6 +145,7 @@ async function snapshotVolume(
   const parentImageSpec = newImageSpec(parentImage)
   const snapshotSpec = snapshotFromImageSpec(parentImageSpec, volumeName)
   await createSnapshot(snapshotSpec)
+  console.log('Created snapshot', snapshotSpec)
 
   return {
     update: {
