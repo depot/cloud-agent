@@ -31,9 +31,9 @@ export function newClientName(name: string): ClientName {
   return name as ClientName
 }
 
-export function newOsdProfile(volumeName: string): OsdProfile {
+export function newOsdProfile(namespace: string): OsdProfile {
   // Gives a user read-write access to the Ceph Block Devices in namespace.
-  return `profile rbd pool=${POOL} namespace=${volumeName}` as OsdProfile
+  return `profile rbd pool=${POOL} namespace=${namespace}` as OsdProfile
 }
 
 export function newSnapshotSpec(snapshotName: string): SnapshotSpec {
