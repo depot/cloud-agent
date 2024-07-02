@@ -1,13 +1,13 @@
-FROM ubuntu:20.04 AS base
+FROM ubuntu:22.04 AS base
 
 RUN \
   apt-get update && \
   apt-get install -y ca-certificates curl openssl && \
-  curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
   apt-get install -y nodejs && \
-  curl --silent --remote-name --location https://github.com/ceph/ceph/raw/quincy/src/cephadm/cephadm && \
+  curl --silent --remote-name --location https://download.ceph.com/rpm-18.2.2/el9/noarch/cephadm && \
   chmod +x cephadm && \
-  ./cephadm add-repo --release quincy && \
+  ./cephadm add-repo --release reef && \
   ./cephadm install ceph-common && \
   rm -rf /var/lib/apt/lists/*
 
