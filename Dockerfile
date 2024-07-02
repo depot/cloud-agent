@@ -5,9 +5,9 @@ RUN \
   apt-get install -y ca-certificates curl openssl && \
   curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
   apt-get install -y nodejs && \
-  curl --silent --remote-name --location https://github.com/ceph/ceph/raw/quincy/src/cephadm/cephadm && \
+  curl --silent --remote-name --location https://github.com/ceph/ceph/raw/reef/src/cephadm/cephadm && \
   chmod +x cephadm && \
-  ./cephadm add-repo --release quincy && \
+  ./cephadm add-repo --release reef && \
   ./cephadm install ceph-common && \
   rm -rf /var/lib/apt/lists/*
 
