@@ -2,7 +2,6 @@ import {
   AttachVolumeCommand,
   VolumeState as AwsVolumeState,
   BlockDeviceMapping,
-  CreateTagsCommand,
   CreateVolumeCommand,
   DeleteVolumeCommand,
   DescribeInstancesCommand,
@@ -299,7 +298,7 @@ systemctl start machine-agent.service
   }
 
   console.log(`Creating new instance for machine ID ${machine.id}`)
-  const result = await client.send(
+  await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
@@ -330,20 +329,6 @@ systemctl start machine-agent.service
       MaxCount: 1,
       MinCount: 1,
       UserData: Buffer.from(userData).toString('base64'),
-    }),
-  )
-
-  const instance = result.Instances?.[0]
-  if (!instance || !instance.InstanceId) return
-
-  await client.send(
-    new CreateTagsCommand({
-      Resources: [instance.InstanceId],
-      Tags: [
-        {Key: 'Name', Value: `depot-connection-${CLOUD_AGENT_CONNECTION_ID}-${machine.id}`},
-        {Key: 'depot-connection', Value: CLOUD_AGENT_CONNECTION_ID},
-        {Key: 'depot-machine-id', Value: machine.id},
-      ],
     }),
   )
 }
