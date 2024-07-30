@@ -10,6 +10,7 @@ import {
 } from '../../proto/depot/cloud/v2/cloud_pb'
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
+import {errorMessage} from '../errors'
 import {toPlainObject} from '../plain'
 import {createBuildkitVolume, launchBuildkitMachine} from './buildkit'
 import {
@@ -93,7 +94,8 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   }
 
   console.log(`Launching new machine ${machine.id}`)
-  const flyMachine = await launchBuildkitMachine({
+
+  let req = {
     depotID: machine.id,
     region: machine.zone ?? FLY_REGION,
     volumeID: volume.id,
@@ -104,9 +106,34 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
       DEPOT_CLOUD_MACHINE_ID: machine.id,
     },
     files: flyOptions.files,
-  })
+  }
 
-  if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
+  try {
+    const flyMachine = await launchBuildkitMachine(req)
+    if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
+  } catch (err) {
+    // If we get a capacity error, delete the volume and try again.
+    // We do this because the volume is tied to the machine and we can't detach it.
+    if (isCapacityError(err)) {
+      console.error(`Capacity error, deleting volume and trying again ${err}`)
+
+      await deleteVolume(volume.id)
+
+      const newVolume = await createBuildkitVolume({
+        depotID: volume.name,
+        region: volume.region ?? FLY_REGION,
+        sizeGB: volume.size_gb,
+      })
+
+      req.volumeID = newVolume.id
+      const flyMachine = await launchBuildkitMachine(req)
+      if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
+
+      return
+    }
+
+    throw new Error(`Unable to launch machine ${machine.id} with new volume ${volume.id}`)
+  }
 }
 
 function currentMachineState(machine: V1Machine): GetDesiredStateResponse_MachineState {
@@ -166,4 +193,11 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
     console.log('Deleting machine', current.id)
     await deleteMachine(current.id)
   }
+}
+
+function isCapacityError(err: unknown): boolean {
+  const message = errorMessage(err).toLowerCase()
+  return (
+    message.includes('412') && message.includes('insufficient resources to create new machine with existing volume')
+  )
 }

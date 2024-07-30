@@ -6,7 +6,7 @@ import {logger} from './logger'
 export async function reportError(err: any) {
   try {
     if (isAbortError(err)) return
-    const message: string = err.stack || err.message || `${err}`
+    const message = errorMessage(err)
 
     // Ignore stream termination errors
     if (message.includes('deadline_exceeded')) return
@@ -23,4 +23,9 @@ export async function reportError(err: any) {
   } catch (err: any) {
     logger.error(`Failed to report error: ${err.stack || err.message || err}`)
   }
+}
+
+export function errorMessage(err: any): string {
+  const message: string = err.stack || err.message || `${err}`
+  return message
 }
