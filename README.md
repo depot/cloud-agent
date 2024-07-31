@@ -14,6 +14,5 @@ Agent process that manages cloud infrastructure for self-hosted Depot connection
 Update fly with:
 
 ```sh
-MACHINE_ID=$(flyctl machines list --app depot-cloud-agent -j|jq -r  '.[0].id')
-flyctl machine update $MACHINE_ID --app depot-cloud-agent --image ghcr.io/depot/cloud-agent:2.30.2 --yes
+flyctl deploy --ha=false
 ```
