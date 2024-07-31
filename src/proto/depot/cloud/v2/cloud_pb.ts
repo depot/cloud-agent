@@ -737,6 +737,85 @@ export class GetDesiredStateResponse_RootVolume extends Message<GetDesiredStateR
 }
 
 /**
+ * @generated from message depot.cloud.v2.ReplaceVolumeRequest
+ */
+export class ReplaceVolumeRequest extends Message<ReplaceVolumeRequest> {
+  /**
+   * @generated from field: string connection_id = 1;
+   */
+  connectionId = ''
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id = ''
+
+  constructor(data?: PartialMessage<ReplaceVolumeRequest>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ReplaceVolumeRequest'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReplaceVolumeRequest {
+    return new ReplaceVolumeRequest().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReplaceVolumeRequest {
+    return new ReplaceVolumeRequest().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReplaceVolumeRequest {
+    return new ReplaceVolumeRequest().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ReplaceVolumeRequest | PlainMessage<ReplaceVolumeRequest> | undefined,
+    b: ReplaceVolumeRequest | PlainMessage<ReplaceVolumeRequest> | undefined,
+  ): boolean {
+    return proto3.util.equals(ReplaceVolumeRequest, a, b)
+  }
+}
+
+/**
+ * @generated from message depot.cloud.v2.ReplaceVolumeResponse
+ */
+export class ReplaceVolumeResponse extends Message<ReplaceVolumeResponse> {
+  constructor(data?: PartialMessage<ReplaceVolumeResponse>) {
+    super()
+    proto3.util.initPartial(data, this)
+  }
+
+  static readonly runtime: typeof proto3 = proto3
+  static readonly typeName = 'depot.cloud.v2.ReplaceVolumeResponse'
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReplaceVolumeResponse {
+    return new ReplaceVolumeResponse().fromBinary(bytes, options)
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReplaceVolumeResponse {
+    return new ReplaceVolumeResponse().fromJson(jsonValue, options)
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReplaceVolumeResponse {
+    return new ReplaceVolumeResponse().fromJsonString(jsonString, options)
+  }
+
+  static equals(
+    a: ReplaceVolumeResponse | PlainMessage<ReplaceVolumeResponse> | undefined,
+    b: ReplaceVolumeResponse | PlainMessage<ReplaceVolumeResponse> | undefined,
+  ): boolean {
+    return proto3.util.equals(ReplaceVolumeResponse, a, b)
+  }
+}
+
+/**
  * @generated from message depot.cloud.v2.ReportCurrentStateRequest
  */
 export class ReportCurrentStateRequest extends Message<ReportCurrentStateRequest> {
