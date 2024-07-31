@@ -11,6 +11,7 @@ import {
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
+import {client} from '../grpc'
 import {toPlainObject} from '../plain'
 import {createBuildkitVolume, launchBuildkitMachine} from './buildkit'
 import {
@@ -74,8 +75,14 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
   const toDelete = state.find((v) => v.name === volume.id)
   if (!toDelete) return
 
-  if (toDelete.state !== 'destroyed' && toDelete.state !== 'destroying') {
-    console.log('Deleting volume', volume.id, toDelete.id)
+  // In testing we saw that `waiting_for_detach` are volumes that may have already been deleted.
+  if (
+    toDelete.state !== 'destroyed' &&
+    toDelete.state !== 'destroying' &&
+    toDelete.state !== 'pending_destroy' &&
+    toDelete.state !== 'waiting_for_detach'
+  ) {
+    console.log(`Deleting volume ${volume.id} ${toDelete.id} in state ${toDelete.state}`)
     await deleteVolume(toDelete.id)
   }
 }
@@ -111,28 +118,18 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   try {
     const flyMachine = await launchBuildkitMachine(req)
     if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
+
+    console.log(`Launched new machine ${machine.id}`)
   } catch (err) {
     // If we get a capacity error, delete the volume and try again.
     // We do this because the volume is tied to the machine and we can't detach it.
     if (isCapacityError(err)) {
-      console.error(`Capacity error, deleting volume and trying again ${err}`)
-
-      await deleteVolume(volume.id)
-
-      const newVolume = await createBuildkitVolume({
-        depotID: volume.name,
-        region: volume.region ?? FLY_REGION,
-        sizeGB: volume.size_gb,
-      })
-
-      req.volumeID = newVolume.id
-      const flyMachine = await launchBuildkitMachine(req)
-      if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
-
+      console.error(`Capacity error, requesting replacement volume and trying again ${err}`)
+      await client.replaceVolume({connectionId: CLOUD_AGENT_CONNECTION_ID, id: volume.name})
       return
     }
 
-    throw new Error(`Unable to launch machine ${machine.id} with new volume ${volume.id}`)
+    throw new Error(`Unable to launch machine ${machine.id} with new volume ${volume.name}: ${err}`)
   }
 }
 

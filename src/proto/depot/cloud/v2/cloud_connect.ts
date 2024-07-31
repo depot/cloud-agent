@@ -13,6 +13,8 @@ import {
   GetDesiredStateUnaryResponse,
   ReconcileVolumesRequest,
   ReconcileVolumesResponse,
+  ReplaceVolumeRequest,
+  ReplaceVolumeResponse,
   ReportCurrentStateRequest,
   ReportCurrentStateResponse,
   ReportErrorsRequest,
@@ -99,6 +101,15 @@ export const CloudService = {
       name: 'GetDesiredStateUnary',
       I: GetDesiredStateUnaryRequest,
       O: GetDesiredStateUnaryResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc depot.cloud.v2.CloudService.ReplaceVolume
+     */
+    replaceVolume: {
+      name: 'ReplaceVolume',
+      I: ReplaceVolumeRequest,
+      O: ReplaceVolumeResponse,
       kind: MethodKind.Unary,
     },
   },

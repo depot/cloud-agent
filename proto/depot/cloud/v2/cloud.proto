@@ -12,6 +12,8 @@ service CloudService {
   rpc ReportVolumeUpdates(ReportVolumeUpdatesRequest) returns (ReportVolumeUpdatesResponse) {}
 
   rpc GetDesiredStateUnary(GetDesiredStateUnaryRequest) returns (GetDesiredStateUnaryResponse) {}
+
+  rpc ReplaceVolume(ReplaceVolumeRequest) returns (ReplaceVolumeResponse) {}
 }
 
 // Messages
@@ -117,6 +119,13 @@ message GetDesiredStateResponse {
     int32 size = 2;
   }
 }
+
+message ReplaceVolumeRequest {
+  string connection_id = 1;
+  string id = 2;
+}
+
+message ReplaceVolumeResponse {}
 
 message ReportCurrentStateRequest {
   string connection_id = 1;
