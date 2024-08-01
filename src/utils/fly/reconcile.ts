@@ -119,7 +119,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
     const flyMachine = await launchBuildkitMachine(req)
     if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
 
-    console.log(`Launched new machine ${machine.id}`)
+    console.log(`Launched new machine ${machine.id} ${flyMachine.id}`)
   } catch (err) {
     // If we get a capacity error, delete the volume and try again.
     // We do this because the volume is tied to the machine and we can't detach it.
