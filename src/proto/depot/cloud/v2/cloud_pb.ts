@@ -230,11 +230,17 @@ export enum GetDesiredStateResponse_Kind {
    * @generated from enum value: KIND_BUILDKIT = 1;
    */
   BUILDKIT = 1,
+
+  /**
+   * @generated from enum value: KIND_BUILDKIT_GPU = 2;
+   */
+  BUILDKIT_GPU = 2,
 }
 // Retrieve enum metadata with: proto3.getEnumType(GetDesiredStateResponse_Kind)
 proto3.util.setEnumType(GetDesiredStateResponse_Kind, 'depot.cloud.v2.GetDesiredStateResponse.Kind', [
   {no: 0, name: 'KIND_UNSPECIFIED'},
   {no: 1, name: 'KIND_BUILDKIT'},
+  {no: 2, name: 'KIND_BUILDKIT_GPU'},
 ])
 
 /**

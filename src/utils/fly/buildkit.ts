@@ -44,6 +44,47 @@ export async function launchBuildkitMachine(buildkit: BuildkitMachineRequest): P
   return machine
 }
 
+export async function launchBuildkitGPUMachine(buildkit: BuildkitMachineRequest): Promise<V1Machine> {
+  const {depotID, region, volumeID, image, env, files} = buildkit
+  if (region !== 'ord') {
+    throw new Error('GPU machines are only available in the ord region')
+  }
+
+  const machine = await launchMachine({
+    name: depotID,
+    region,
+    config: {
+      guest: {
+        cpu_kind: 'performance',
+        cpus: 16,
+        memory_mb: 1024 * 32,
+        gpus: 1,
+        gpu_kind: 'a10',
+      },
+      files: Object.entries(files).map(([guest_path, raw_value]) => ({
+        guest_path,
+        raw_value: Buffer.from(raw_value).toString('base64'),
+      })),
+      init: {
+        entryPoint: ['/usr/bin/machine-agent'],
+      },
+      env,
+      image,
+      mounts: [
+        {
+          encrypted: false,
+          path: '/var/lib/buildkit',
+          volume: volumeID,
+        },
+      ],
+      auto_destroy: false,
+      restart: {policy: 'no'},
+      dns: {},
+    },
+  })
+  return machine
+}
+
 export interface BuildkitVolumeRequest {
   depotID: string
   region: string

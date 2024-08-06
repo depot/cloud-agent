@@ -86,6 +86,7 @@ message GetDesiredStateResponse {
   enum Kind {
     KIND_UNSPECIFIED = 0;
     KIND_BUILDKIT = 1;
+    KIND_BUILDKIT_GPU = 2;
   }
 
   enum MachineState {

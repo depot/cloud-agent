@@ -1,6 +1,7 @@
 import {
   GetDesiredStateResponse,
   GetDesiredStateResponse_Architecture,
+  GetDesiredStateResponse_Kind,
   GetDesiredStateResponse_MachineChange,
   GetDesiredStateResponse_MachineState,
   GetDesiredStateResponse_NewMachine,
@@ -13,7 +14,7 @@ import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
 import {client} from '../grpc'
 import {toPlainObject} from '../plain'
-import {createBuildkitVolume, launchBuildkitMachine} from './buildkit'
+import {createBuildkitVolume, launchBuildkitGPUMachine, launchBuildkitMachine} from './buildkit'
 import {
   V1Machine,
   Volume,
@@ -116,7 +117,11 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   }
 
   try {
-    const flyMachine = await launchBuildkitMachine(req)
+    const flyMachine =
+      machine.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU
+        ? await launchBuildkitGPUMachine(req)
+        : await launchBuildkitMachine(req)
+
     if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
 
     console.log(`Launched new machine ${machine.id} ${flyMachine.id}`)
