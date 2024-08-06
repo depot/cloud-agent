@@ -68,7 +68,7 @@ export async function launchBuildkitGPUMachine(buildkit: BuildkitMachineRequest)
         raw_value: Buffer.from(raw_value).toString('base64'),
       })),
       init: {
-        entryPoint: ['/usr/bin/machine-agent'],
+        entryPoint: ['/usr/bin/entrypoint.sh'],
       },
       env,
       image,
