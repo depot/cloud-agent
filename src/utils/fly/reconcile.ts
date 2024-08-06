@@ -1,6 +1,7 @@
 import {
   GetDesiredStateResponse,
   GetDesiredStateResponse_Architecture,
+  GetDesiredStateResponse_Kind,
   GetDesiredStateResponse_MachineChange,
   GetDesiredStateResponse_MachineState,
   GetDesiredStateResponse_NewMachine,
@@ -13,7 +14,12 @@ import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
 import {client} from '../grpc'
 import {toPlainObject} from '../plain'
-import {createBuildkitVolume, launchBuildkitMachine} from './buildkit'
+import {
+  createBuildkitGPUVolume,
+  createBuildkitVolume,
+  launchBuildkitGPUMachine,
+  launchBuildkitMachine,
+} from './buildkit'
 import {
   V1Machine,
   Volume,
@@ -62,8 +68,13 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
-  console.log(`Creating new volume ${volume.id}`)
-  await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU) {
+    console.log(`Creating new gpu volume ${volume.id}`)
+    await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+  } else {
+    console.log(`Creating new volume ${volume.id}`)
+    await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+  }
 }
 
 // fly volumes are not attached/detatched.  The only modification is deleting the volume.
@@ -115,10 +126,16 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
     files: flyOptions.files,
   }
 
+  if (machine.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU) {
+    const flyMachine = await launchBuildkitGPUMachine(req)
+    if (!flyMachine) throw new Error(`Unable to launch gpu machine ${machine.id}`)
+    console.log(`Launched new gpu machine ${machine.id} ${flyMachine.id}`)
+    return
+  }
+
   try {
     const flyMachine = await launchBuildkitMachine(req)
     if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
-
     console.log(`Launched new machine ${machine.id} ${flyMachine.id}`)
   } catch (err) {
     // If we get a capacity error, delete the volume and try again.
