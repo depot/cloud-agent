@@ -14,7 +14,12 @@ import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
 import {client} from '../grpc'
 import {toPlainObject} from '../plain'
-import {createBuildkitVolume, launchBuildkitGPUMachine, launchBuildkitMachine} from './buildkit'
+import {
+  createBuildkitGPUVolume,
+  createBuildkitVolume,
+  launchBuildkitGPUMachine,
+  launchBuildkitMachine,
+} from './buildkit'
 import {
   V1Machine,
   Volume,
@@ -63,8 +68,13 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
-  console.log(`Creating new volume ${volume.id}`)
-  await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU) {
+    console.log(`Creating new gpu volume ${volume.id}`)
+    await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+  } else {
+    console.log(`Creating new volume ${volume.id}`)
+    await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+  }
 }
 
 // fly volumes are not attached/detatched.  The only modification is deleting the volume.

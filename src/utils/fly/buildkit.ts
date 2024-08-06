@@ -1,5 +1,7 @@
 import {V1Machine, Volume, createVolume, launchMachine} from './client'
 
+const GPU_KIND = 'a10'
+
 export interface BuildkitMachineRequest {
   depotID: string
   region: string
@@ -59,7 +61,7 @@ export async function launchBuildkitGPUMachine(buildkit: BuildkitMachineRequest)
         cpus: 16,
         memory_mb: 1024 * 32,
         gpus: 1,
-        gpu_kind: 'a10',
+        gpu_kind: GPU_KIND,
       },
       files: Object.entries(files).map(([guest_path, raw_value]) => ({
         guest_path,
@@ -100,6 +102,26 @@ export async function createBuildkitVolume(req: BuildkitVolumeRequest): Promise<
     snapshot_retention: 5, // 5 is fly's minimum value.
     encrypted: false,
     fstype: 'ext4',
+  })
+  return volume
+}
+
+export async function createBuildkitGPUVolume(req: BuildkitVolumeRequest): Promise<Volume> {
+  const {depotID, region, sizeGB} = req
+  const volume = await createVolume({
+    name: depotID,
+    region,
+    size_gb: sizeGB,
+    snapshot_retention: 5, // 5 is fly's minimum value.
+    encrypted: false,
+    fstype: 'ext4',
+    compute: {
+      cpu_kind: 'performance',
+      cpus: 16,
+      memory_mb: 1024 * 32,
+      gpus: 1,
+      gpu_kind: GPU_KIND,
+    },
   })
   return volume
 }
