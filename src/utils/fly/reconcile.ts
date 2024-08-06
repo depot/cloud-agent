@@ -116,14 +116,16 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
     files: flyOptions.files,
   }
 
+  if (machine.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU) {
+    const flyMachine = await launchBuildkitGPUMachine(req)
+    if (!flyMachine) throw new Error(`Unable to launch gpu machine ${machine.id}`)
+    console.log(`Launched new gpu machine ${machine.id} ${flyMachine.id}`)
+    return
+  }
+
   try {
-    const flyMachine =
-      machine.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU
-        ? await launchBuildkitGPUMachine(req)
-        : await launchBuildkitMachine(req)
-
+    const flyMachine = await launchBuildkitMachine(req)
     if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
-
     console.log(`Launched new machine ${machine.id} ${flyMachine.id}`)
   } catch (err) {
     // If we get a capacity error, delete the volume and try again.
