@@ -1,5 +1,5 @@
-import {createPromiseClient, Interceptor} from '@bufbuild/connect'
-import {createConnectTransport, Http2SessionManager} from '@bufbuild/connect-node'
+import {createPromiseClient, Interceptor} from '@connectrpc/connect'
+import {createConnectTransport, Http2SessionManager} from '@connectrpc/connect-node'
 import {CloudService} from '../proto/depot/cloud/v2/cloud_connect'
 import {CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_TOKEN, CLOUD_AGENT_VERSION} from './env'
 
