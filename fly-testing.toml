@@ -1,0 +1,18 @@
+app = "depot-testing-cloud-agent"
+primary_region = "iad"
+
+[env]
+CLOUD_AGENT_AWS_SG_BUILDKIT = "1"
+CLOUD_AGENT_AWS_SUBNETS = "1"
+CLOUD_AGENT_AWS_SUBNET_ID = "1"
+CLOUD_AGENT_CONNECTION_ID = "depot-fly-dev-iad"
+CLOUD_AGENT_PROVIDER = "fly"
+CLOUD_AGENT_VERSION = "v1.0.0"
+FLY_APP_ID = "depot-testing-machines"
+
+[processes]
+app = "node /app/dist/index.js"
+
+[[vm]]
+size = "shared-cpu-2x"
+memory = "512MB"

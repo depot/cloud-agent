@@ -54,7 +54,7 @@ export async function getCurrentState() {
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<string[]> {
   const results = await Promise.allSettled([
     ...response.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
-    ...response.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume)),
+    ...response.volumeChanges.map((volume) => reconcileVolume(state, volume)),
     ...response.newMachines.map((machine) => reconcileNewMachine(state.machines, machine, state.volumes)),
     ...response.machineChanges.map((machine) => reconcileMachine(state.machines, machine)),
   ])
@@ -78,12 +78,13 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
 }
 
 // fly volumes are not attached/detatched.  The only modification is deleting the volume.
-async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_VolumeChange) {
+// If the volume is attached to a machine, we delete the machine first.
+async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDesiredStateResponse_VolumeChange) {
   if (volume.desiredState !== GetDesiredStateResponse_VolumeState.DELETED) {
     return
   }
 
-  const toDelete = state.find((v) => v.name === volume.id)
+  const toDelete = volumes.find((v) => v.name === volume.id)
   if (!toDelete) return
 
   // In testing we saw that `waiting_for_detach` are volumes that may have already been deleted.
@@ -94,6 +95,18 @@ async function reconcileVolume(state: Volume[], volume: GetDesiredStateResponse_
     toDelete.state !== 'waiting_for_detach'
   ) {
     console.log(`Deleting volume ${volume.id} ${toDelete.id} in state ${toDelete.state}`)
+    if (toDelete.attached_machine_id) {
+      const machine = machines.find((m) => m.id === toDelete.attached_machine_id)
+      if (machine) {
+        const deleteMachine = new GetDesiredStateResponse_MachineChange({
+          id: machine.name,
+          desiredState: GetDesiredStateResponse_MachineState.DELETED,
+        })
+
+        await reconcileMachine(machines, deleteMachine)
+      }
+    }
+
     await deleteVolume(toDelete.id)
   }
 }
@@ -182,31 +195,32 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
     console.log('Stopping machine', current.id)
-    await stopMachine({id: current.id, timeout: timeoutSeconds})
-    await waitMachine({
-      id: current.id,
-      instance_id: current.instance_id,
-      state: 'stopped',
-      timeout: timeoutSeconds,
-    })
+    await stopAndWait(current)
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.RUNNING) {
       try {
-        await stopMachine({id: current.id, timeout: timeoutSeconds})
-        await waitMachine({
-          id: current.id,
-          instance_id: current.instance_id,
-          state: 'stopped',
-          timeout: timeoutSeconds,
-        })
+        await stopAndWait(current)
       } catch {} // stop can sometime fail, ignore.
     }
     console.log('Deleting machine', current.id)
     await deleteMachine(current.id)
   }
+}
+
+type StopAndWaitParams = Pick<V1Machine, 'id' | 'instance_id'>
+
+// Stop the machine and wait for it to stop.
+async function stopAndWait({id, instance_id}: StopAndWaitParams) {
+  await stopMachine({id, timeout: timeoutSeconds})
+  await waitMachine({
+    id,
+    instance_id,
+    state: 'stopped',
+    timeout: timeoutSeconds,
+  })
 }
 
 function isCapacityError(err: unknown): boolean {
