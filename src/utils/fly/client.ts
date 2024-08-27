@@ -309,6 +309,7 @@ export type MachineState =
   | 'replaced' // this specific version is no longer current
   | 'destroying' // user initiated the machine to be completely removed
   | 'destroyed' // machine no longer exists
+  | 'failed'
 
 // Volumes
 
