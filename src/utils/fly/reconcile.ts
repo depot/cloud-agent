@@ -170,6 +170,7 @@ function currentMachineState(machine: V1Machine): GetDesiredStateResponse_Machin
   if (instanceState === 'stopped') return GetDesiredStateResponse_MachineState.STOPPED
   if (instanceState === 'destroying') return GetDesiredStateResponse_MachineState.DELETING
   if (instanceState === 'destroyed') return GetDesiredStateResponse_MachineState.DELETED
+  if (instanceState === 'failed') return GetDesiredStateResponse_MachineState.ERROR
   return GetDesiredStateResponse_MachineState.PENDING
 }
 
@@ -205,8 +206,9 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
         await stopAndWait(current)
       } catch {} // stop can sometime fail, ignore.
     }
-    console.log('Deleting machine', current.id)
-    await deleteMachine(current.id)
+    const force = currentState === GetDesiredStateResponse_MachineState.ERROR
+    force ? console.log('Forcing delete of machine', current.id) : console.log('Deleting machine', current.id)
+    await deleteMachine(current.id, force)
   }
 }
 
