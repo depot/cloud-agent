@@ -232,15 +232,39 @@ export enum GetDesiredStateResponse_Kind {
   BUILDKIT = 1,
 
   /**
-   * @generated from enum value: KIND_BUILDKIT_GPU = 2;
+   * @generated from enum value: KIND_BUILDKIT_16X32_GPU = 2;
    */
-  BUILDKIT_GPU = 2,
+  BUILDKIT_16X32_GPU = 2,
+
+  /**
+   * @generated from enum value: KIND_BUILDKIT_16X32 = 3;
+   */
+  BUILDKIT_16X32 = 3,
+
+  /**
+   * @generated from enum value: KIND_BUILDKIT_8X16 = 4;
+   */
+  BUILDKIT_8X16 = 4,
+
+  /**
+   * @generated from enum value: KIND_BUILDKIT_4X8 = 5;
+   */
+  BUILDKIT_4X8 = 5,
+
+  /**
+   * @generated from enum value: KIND_BUILDKIT_4X4 = 6;
+   */
+  BUILDKIT_4X4 = 6,
 }
 // Retrieve enum metadata with: proto3.getEnumType(GetDesiredStateResponse_Kind)
 proto3.util.setEnumType(GetDesiredStateResponse_Kind, 'depot.cloud.v2.GetDesiredStateResponse.Kind', [
   {no: 0, name: 'KIND_UNSPECIFIED'},
   {no: 1, name: 'KIND_BUILDKIT'},
-  {no: 2, name: 'KIND_BUILDKIT_GPU'},
+  {no: 2, name: 'KIND_BUILDKIT_16X32_GPU'},
+  {no: 3, name: 'KIND_BUILDKIT_16X32'},
+  {no: 4, name: 'KIND_BUILDKIT_8X16'},
+  {no: 5, name: 'KIND_BUILDKIT_4X8'},
+  {no: 6, name: 'KIND_BUILDKIT_4X4'},
 ])
 
 /**

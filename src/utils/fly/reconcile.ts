@@ -68,7 +68,7 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
-  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU) {
+  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
     console.log(`Creating new gpu volume ${volume.id}`)
     await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
   } else {
@@ -126,7 +126,11 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
 
   console.log(`Launching new machine ${machine.id}`)
 
+  const {cpuKind: cpu_kind, cpus, memGBs, needsGPU} = machineKind(machine.kind)
   let req = {
+    cpu_kind,
+    cpus,
+    memGBs,
     depotID: machine.id,
     region: machine.zone ?? FLY_REGION,
     volumeID: volume.id,
@@ -139,7 +143,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
     files: flyOptions.files,
   }
 
-  if (machine.kind === GetDesiredStateResponse_Kind.BUILDKIT_GPU) {
+  if (needsGPU) {
     const flyMachine = await launchBuildkitGPUMachine(req)
     if (!flyMachine) throw new Error(`Unable to launch gpu machine ${machine.id}`)
     console.log(`Launched new gpu machine ${machine.id} ${flyMachine.id}`)
@@ -230,4 +234,28 @@ function isCapacityError(err: unknown): boolean {
   return (
     message.includes('412') && message.includes('insufficient resources to create new machine with existing volume')
   )
+}
+
+interface MachineKind {
+  cpuKind: 'shared' | 'dedicated' | 'performance'
+  cpus: number
+  memGBs: number
+  needsGPU: boolean
+}
+
+function machineKind(kind: GetDesiredStateResponse_Kind): MachineKind {
+  switch (kind) {
+    case GetDesiredStateResponse_Kind.BUILDKIT_4X4:
+      return {cpuKind: 'shared', cpus: 4, memGBs: 4, needsGPU: false}
+    case GetDesiredStateResponse_Kind.BUILDKIT_4X8:
+      return {cpuKind: 'performance', cpus: 4, memGBs: 8, needsGPU: false}
+    case GetDesiredStateResponse_Kind.BUILDKIT_8X16:
+      return {cpuKind: 'performance', cpus: 8, memGBs: 16, needsGPU: false}
+    case GetDesiredStateResponse_Kind.BUILDKIT_16X32:
+      return {cpuKind: 'performance', cpus: 16, memGBs: 32, needsGPU: false}
+    case GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU:
+      return {cpuKind: 'performance', cpus: 16, memGBs: 32, needsGPU: true}
+    default:
+      return {cpuKind: 'performance', cpus: 16, memGBs: 32, needsGPU: false}
+  }
 }

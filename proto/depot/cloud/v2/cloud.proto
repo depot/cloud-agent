@@ -86,7 +86,11 @@ message GetDesiredStateResponse {
   enum Kind {
     KIND_UNSPECIFIED = 0;
     KIND_BUILDKIT = 1;
-    KIND_BUILDKIT_GPU = 2;
+    KIND_BUILDKIT_16X32_GPU = 2;
+    KIND_BUILDKIT_16X32 = 3;
+    KIND_BUILDKIT_8X16 = 4;
+    KIND_BUILDKIT_4X8 = 5;
+    KIND_BUILDKIT_4X4 = 6;
   }
 
   enum MachineState {
