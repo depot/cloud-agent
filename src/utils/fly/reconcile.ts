@@ -256,6 +256,6 @@ function machineKind(kind: GetDesiredStateResponse_Kind): MachineKind {
     case GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU:
       return {cpuKind: 'performance', cpus: 16, memGBs: 32, needsGPU: true}
     default:
-      return {cpuKind: 'performance', cpus: 16, memGBs: 32, needsGPU: false}
+      return {cpuKind: 'shared', cpus: 4, memGBs: 4, needsGPU: false}
   }
 }
