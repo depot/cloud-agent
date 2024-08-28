@@ -1,8 +1,9 @@
 import {V1Machine, Volume, createVolume, launchMachine} from './client'
 
-const GPU_KIND = 'a10'
-
-export interface BuildkitMachineRequest {
+export interface FlyBuildkitMachineRequest {
+  cpu_kind: 'shared' | 'dedicated' | 'performance'
+  cpus: number
+  memGBs: number
   depotID: string
   region: string
   volumeID: string
@@ -11,16 +12,16 @@ export interface BuildkitMachineRequest {
   files: Record<string, string>
 }
 
-export async function launchBuildkitMachine(buildkit: BuildkitMachineRequest): Promise<V1Machine> {
-  const {depotID, region, volumeID, image, env, files} = buildkit
+export async function launchBuildkitMachine(req: FlyBuildkitMachineRequest): Promise<V1Machine> {
+  const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files} = req
   const machine = await launchMachine({
     name: depotID,
     region,
     config: {
       guest: {
-        cpu_kind: 'performance',
-        cpus: 16,
-        memory_mb: 1024 * 32,
+        cpu_kind,
+        cpus,
+        memory_mb: 1024 * memGBs,
       },
       files: Object.entries(files).map(([guest_path, raw_value]) => ({
         guest_path,
@@ -46,8 +47,10 @@ export async function launchBuildkitMachine(buildkit: BuildkitMachineRequest): P
   return machine
 }
 
-export async function launchBuildkitGPUMachine(buildkit: BuildkitMachineRequest): Promise<V1Machine> {
-  const {depotID, region, volumeID, image, env, files} = buildkit
+const GPU_KIND = 'a10'
+
+export async function launchBuildkitGPUMachine(buildkit: FlyBuildkitMachineRequest): Promise<V1Machine> {
+  const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files} = buildkit
   if (region !== 'ord') {
     throw new Error('GPU machines are only available in the ord region')
   }
@@ -57,9 +60,9 @@ export async function launchBuildkitGPUMachine(buildkit: BuildkitMachineRequest)
     region,
     config: {
       guest: {
-        cpu_kind: 'performance',
-        cpus: 16,
-        memory_mb: 1024 * 32,
+        cpu_kind,
+        cpus,
+        memory_mb: 1024 * memGBs,
         gpus: 1,
         gpu_kind: GPU_KIND,
       },
