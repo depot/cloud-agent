@@ -1,8 +1,8 @@
-import {startHealthStream} from './handlers/health'
 import {AwsProvider, FlyProvider, startStateStream} from './handlers/state'
 import {startUpdater} from './handlers/updater'
 import {startVolumeStream} from './handlers/volumes'
 import {writeCephConf} from './utils/ceph'
+import {clientID} from './utils/clientID'
 import {sleep} from './utils/common'
 import {
   CLOUD_AGENT_CEPH_CONFIG,
@@ -17,7 +17,7 @@ import {logger} from './utils/logger'
 const controller = new AbortController()
 
 async function main() {
-  logger.info(`cloud-agent ${CLOUD_AGENT_VERSION} started`)
+  logger.info(`cloud-agent ${CLOUD_AGENT_VERSION} started: ${clientID}`)
   const signal = controller.signal
 
   function trapShutdown(signal: 'SIGINT' | 'SIGTERM') {
@@ -47,8 +47,6 @@ async function main() {
     await sleep(5 * 60 * 1000)
     process.exit(1)
   }
-
-  startHealthStream(signal)
 
   switch (CLOUD_AGENT_PROVIDER) {
     case 'fly':

@@ -1,4 +1,5 @@
 import {PlainMessage} from '@bufbuild/protobuf'
+import {Code, ConnectError} from '@connectrpc/connect'
 import {
   AuthorizeClientAction,
   CopyVolumeAction,
@@ -36,6 +37,8 @@ import {
   snapshotRm,
   sparsify,
 } from '../utils/ceph'
+import {clientID} from '../utils/clientID'
+import {sleep} from '../utils/common'
 import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
@@ -45,7 +48,7 @@ export async function startVolumeStream(signal: AbortSignal) {
       const inProgressUpdates: Record<string, boolean> = {}
       const completedUpdates: Record<string, boolean> = {}
 
-      const stream = client.reconcileVolumes({}, {signal})
+      const stream = client.reconcileVolumes({clientId: clientID}, {signal})
 
       for await (const response of stream) {
         if (signal.aborted) return
@@ -68,7 +71,13 @@ export async function startVolumeStream(signal: AbortSignal) {
         })()
       }
     } catch (err: any) {
-      await reportError(err)
+      if (err instanceof ConnectError && err.code === Code.FailedPrecondition) {
+        // Connection lock was not acquired, sleep and retry
+        console.log('Connection lock was not acquired for volume stream, sleeping and retrying...')
+        await sleep(5 * 1000)
+      } else {
+        await reportError(err)
+      }
     }
   }
 }

@@ -7,8 +7,6 @@ import {MethodKind} from '@bufbuild/protobuf'
 import {
   GetActiveAgentVersionRequest,
   GetActiveAgentVersionResponse,
-  GetDesiredStateRequest,
-  GetDesiredStateResponse,
   GetDesiredStateUnaryRequest,
   GetDesiredStateUnaryResponse,
   ReconcileVolumesRequest,
@@ -19,8 +17,6 @@ import {
   ReportCurrentStateResponse,
   ReportErrorsRequest,
   ReportErrorsResponse,
-  ReportHealthRequest,
-  ReportHealthResponse,
   ReportVolumeUpdatesRequest,
   ReportVolumeUpdatesResponse,
 } from './cloud_pb'
@@ -32,13 +28,13 @@ export const CloudService = {
   typeName: 'depot.cloud.v2.CloudService',
   methods: {
     /**
-     * @generated from rpc depot.cloud.v2.CloudService.GetDesiredState
+     * @generated from rpc depot.cloud.v2.CloudService.GetDesiredStateUnary
      */
-    getDesiredState: {
-      name: 'GetDesiredState',
-      I: GetDesiredStateRequest,
-      O: GetDesiredStateResponse,
-      kind: MethodKind.ServerStreaming,
+    getDesiredStateUnary: {
+      name: 'GetDesiredStateUnary',
+      I: GetDesiredStateUnaryRequest,
+      O: GetDesiredStateUnaryResponse,
+      kind: MethodKind.Unary,
     },
     /**
      * @generated from rpc depot.cloud.v2.CloudService.ReportCurrentState
@@ -57,15 +53,6 @@ export const CloudService = {
       I: ReportErrorsRequest,
       O: ReportErrorsResponse,
       kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc depot.cloud.v2.CloudService.ReportHealth
-     */
-    reportHealth: {
-      name: 'ReportHealth',
-      I: ReportHealthRequest,
-      O: ReportHealthResponse,
-      kind: MethodKind.ClientStreaming,
     },
     /**
      * @generated from rpc depot.cloud.v2.CloudService.GetActiveAgentVersion
@@ -92,15 +79,6 @@ export const CloudService = {
       name: 'ReportVolumeUpdates',
       I: ReportVolumeUpdatesRequest,
       O: ReportVolumeUpdatesResponse,
-      kind: MethodKind.Unary,
-    },
-    /**
-     * @generated from rpc depot.cloud.v2.CloudService.GetDesiredStateUnary
-     */
-    getDesiredStateUnary: {
-      name: 'GetDesiredStateUnary',
-      I: GetDesiredStateUnaryRequest,
-      O: GetDesiredStateUnaryResponse,
       kind: MethodKind.Unary,
     },
     /**

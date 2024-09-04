@@ -102,6 +102,11 @@ export class GetDesiredStateRequest extends Message<GetDesiredStateRequest> {
    */
   connectionId = ''
 
+  /**
+   * @generated from field: string client_id = 2;
+   */
+  clientId = ''
+
   constructor(data?: PartialMessage<GetDesiredStateRequest>) {
     super()
     proto3.util.initPartial(data, this)
@@ -111,6 +116,7 @@ export class GetDesiredStateRequest extends Message<GetDesiredStateRequest> {
   static readonly typeName = 'depot.cloud.v2.GetDesiredStateRequest'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 2, name: 'client_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateRequest {
@@ -865,14 +871,12 @@ export class ReportCurrentStateRequest extends Message<ReportCurrentStateRequest
         value: CloudState
         case: 'replace'
       }
-    | {
-        /**
-         * @generated from field: depot.cloud.v2.CloudStatePatch patch = 3;
-         */
-        value: CloudStatePatch
-        case: 'patch'
-      }
     | {case: undefined; value?: undefined} = {case: undefined}
+
+  /**
+   * @generated from field: string client_id = 4;
+   */
+  clientId = ''
 
   constructor(data?: PartialMessage<ReportCurrentStateRequest>) {
     super()
@@ -884,7 +888,7 @@ export class ReportCurrentStateRequest extends Message<ReportCurrentStateRequest
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 2, name: 'replace', kind: 'message', T: CloudState, oneof: 'state'},
-    {no: 3, name: 'patch', kind: 'message', T: CloudStatePatch, oneof: 'state'},
+    {no: 4, name: 'client_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportCurrentStateRequest {
@@ -911,11 +915,6 @@ export class ReportCurrentStateRequest extends Message<ReportCurrentStateRequest
  * @generated from message depot.cloud.v2.ReportCurrentStateResponse
  */
 export class ReportCurrentStateResponse extends Message<ReportCurrentStateResponse> {
-  /**
-   * @generated from field: int32 generation = 1;
-   */
-  generation = 0
-
   constructor(data?: PartialMessage<ReportCurrentStateResponse>) {
     super()
     proto3.util.initPartial(data, this)
@@ -923,9 +922,7 @@ export class ReportCurrentStateResponse extends Message<ReportCurrentStateRespon
 
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.ReportCurrentStateResponse'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'generation', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
-  ])
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportCurrentStateResponse {
     return new ReportCurrentStateResponse().fromBinary(bytes, options)
@@ -1023,79 +1020,6 @@ export class ReportErrorsResponse extends Message<ReportErrorsResponse> {
     b: ReportErrorsResponse | PlainMessage<ReportErrorsResponse> | undefined,
   ): boolean {
     return proto3.util.equals(ReportErrorsResponse, a, b)
-  }
-}
-
-/**
- * @generated from message depot.cloud.v2.ReportHealthRequest
- */
-export class ReportHealthRequest extends Message<ReportHealthRequest> {
-  /**
-   * @generated from field: string connection_id = 1;
-   */
-  connectionId = ''
-
-  constructor(data?: PartialMessage<ReportHealthRequest>) {
-    super()
-    proto3.util.initPartial(data, this)
-  }
-
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'depot.cloud.v2.ReportHealthRequest'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'connection_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-  ])
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportHealthRequest {
-    return new ReportHealthRequest().fromBinary(bytes, options)
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReportHealthRequest {
-    return new ReportHealthRequest().fromJson(jsonValue, options)
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReportHealthRequest {
-    return new ReportHealthRequest().fromJsonString(jsonString, options)
-  }
-
-  static equals(
-    a: ReportHealthRequest | PlainMessage<ReportHealthRequest> | undefined,
-    b: ReportHealthRequest | PlainMessage<ReportHealthRequest> | undefined,
-  ): boolean {
-    return proto3.util.equals(ReportHealthRequest, a, b)
-  }
-}
-
-/**
- * @generated from message depot.cloud.v2.ReportHealthResponse
- */
-export class ReportHealthResponse extends Message<ReportHealthResponse> {
-  constructor(data?: PartialMessage<ReportHealthResponse>) {
-    super()
-    proto3.util.initPartial(data, this)
-  }
-
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'depot.cloud.v2.ReportHealthResponse'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReportHealthResponse {
-    return new ReportHealthResponse().fromBinary(bytes, options)
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ReportHealthResponse {
-    return new ReportHealthResponse().fromJson(jsonValue, options)
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ReportHealthResponse {
-    return new ReportHealthResponse().fromJsonString(jsonString, options)
-  }
-
-  static equals(
-    a: ReportHealthResponse | PlainMessage<ReportHealthResponse> | undefined,
-    b: ReportHealthResponse | PlainMessage<ReportHealthResponse> | undefined,
-  ): boolean {
-    return proto3.util.equals(ReportHealthResponse, a, b)
   }
 }
 
@@ -1334,103 +1258,14 @@ export class CloudState_Fly extends Message<CloudState_Fly> {
 }
 
 /**
- * @generated from message depot.cloud.v2.CloudStatePatch
- */
-export class CloudStatePatch extends Message<CloudStatePatch> {
-  /**
-   * @generated from field: int32 generation = 1;
-   */
-  generation = 0
-
-  /**
-   * @generated from oneof depot.cloud.v2.CloudStatePatch.patch
-   */
-  patch:
-    | {
-        /**
-         * @generated from field: depot.cloud.v2.CloudStatePatch.Aws aws = 2;
-         */
-        value: CloudStatePatch_Aws
-        case: 'aws'
-      }
-    | {case: undefined; value?: undefined} = {case: undefined}
-
-  constructor(data?: PartialMessage<CloudStatePatch>) {
-    super()
-    proto3.util.initPartial(data, this)
-  }
-
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'depot.cloud.v2.CloudStatePatch'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'generation', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
-    {no: 2, name: 'aws', kind: 'message', T: CloudStatePatch_Aws, oneof: 'patch'},
-  ])
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudStatePatch {
-    return new CloudStatePatch().fromBinary(bytes, options)
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CloudStatePatch {
-    return new CloudStatePatch().fromJson(jsonValue, options)
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CloudStatePatch {
-    return new CloudStatePatch().fromJsonString(jsonString, options)
-  }
-
-  static equals(
-    a: CloudStatePatch | PlainMessage<CloudStatePatch> | undefined,
-    b: CloudStatePatch | PlainMessage<CloudStatePatch> | undefined,
-  ): boolean {
-    return proto3.util.equals(CloudStatePatch, a, b)
-  }
-}
-
-/**
- * @generated from message depot.cloud.v2.CloudStatePatch.Aws
- */
-export class CloudStatePatch_Aws extends Message<CloudStatePatch_Aws> {
-  /**
-   * @generated from field: string patch = 1;
-   */
-  patch = ''
-
-  constructor(data?: PartialMessage<CloudStatePatch_Aws>) {
-    super()
-    proto3.util.initPartial(data, this)
-  }
-
-  static readonly runtime: typeof proto3 = proto3
-  static readonly typeName = 'depot.cloud.v2.CloudStatePatch.Aws'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'patch', kind: 'scalar', T: 9 /* ScalarType.STRING */},
-  ])
-
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CloudStatePatch_Aws {
-    return new CloudStatePatch_Aws().fromBinary(bytes, options)
-  }
-
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CloudStatePatch_Aws {
-    return new CloudStatePatch_Aws().fromJson(jsonValue, options)
-  }
-
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CloudStatePatch_Aws {
-    return new CloudStatePatch_Aws().fromJsonString(jsonString, options)
-  }
-
-  static equals(
-    a: CloudStatePatch_Aws | PlainMessage<CloudStatePatch_Aws> | undefined,
-    b: CloudStatePatch_Aws | PlainMessage<CloudStatePatch_Aws> | undefined,
-  ): boolean {
-    return proto3.util.equals(CloudStatePatch_Aws, a, b)
-  }
-}
-
-/**
  * @generated from message depot.cloud.v2.ReconcileVolumesRequest
  */
 export class ReconcileVolumesRequest extends Message<ReconcileVolumesRequest> {
+  /**
+   * @generated from field: string client_id = 1;
+   */
+  clientId = ''
+
   constructor(data?: PartialMessage<ReconcileVolumesRequest>) {
     super()
     proto3.util.initPartial(data, this)
@@ -1438,7 +1273,9 @@ export class ReconcileVolumesRequest extends Message<ReconcileVolumesRequest> {
 
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v2.ReconcileVolumesRequest'
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [])
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    {no: 1, name: 'client_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+  ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ReconcileVolumesRequest {
     return new ReconcileVolumesRequest().fromBinary(bytes, options)
