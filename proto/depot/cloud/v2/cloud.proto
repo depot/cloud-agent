@@ -3,16 +3,12 @@ syntax = "proto3";
 package depot.cloud.v2;
 
 service CloudService {
-  rpc GetDesiredState(GetDesiredStateRequest) returns (stream GetDesiredStateResponse) {}
+  rpc GetDesiredStateUnary(GetDesiredStateUnaryRequest) returns (GetDesiredStateUnaryResponse) {}
   rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
-  rpc ReportHealth(stream ReportHealthRequest) returns (ReportHealthResponse);
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
   rpc ReconcileVolumes(ReconcileVolumesRequest) returns (stream ReconcileVolumesResponse) {}
   rpc ReportVolumeUpdates(ReportVolumeUpdatesRequest) returns (ReportVolumeUpdatesResponse) {}
-
-  rpc GetDesiredStateUnary(GetDesiredStateUnaryRequest) returns (GetDesiredStateUnaryResponse) {}
-
   rpc ReplaceVolume(ReplaceVolumeRequest) returns (ReplaceVolumeResponse) {}
 }
 
@@ -28,6 +24,7 @@ message GetDesiredStateUnaryResponse {
 
 message GetDesiredStateRequest {
   string connection_id = 1;
+  string client_id = 2;
 }
 
 message GetDesiredStateResponse {
@@ -136,13 +133,12 @@ message ReportCurrentStateRequest {
   string connection_id = 1;
   oneof state {
     CloudState replace = 2;
-    CloudStatePatch patch = 3;
   }
+  reserved 3;
+  string client_id = 4;
 }
 
-message ReportCurrentStateResponse {
-  int32 generation = 1;
-}
+message ReportCurrentStateResponse {}
 
 message ReportErrorsRequest {
   string connection_id = 1;
@@ -150,12 +146,6 @@ message ReportErrorsRequest {
 }
 
 message ReportErrorsResponse {}
-
-message ReportHealthRequest {
-  string connection_id = 1;
-}
-
-message ReportHealthResponse {}
 
 message GetActiveAgentVersionRequest {
   string connection_id = 1;
@@ -185,18 +175,9 @@ message CloudState {
   }
 }
 
-message CloudStatePatch {
-  int32 generation = 1;
-  oneof patch {
-    Aws aws = 2;
-  }
-
-  message Aws {
-    string patch = 1;
-  }
+message ReconcileVolumesRequest {
+  string client_id = 1;
 }
-
-message ReconcileVolumesRequest {}
 
 message ReconcileVolumesResponse {
   oneof action {

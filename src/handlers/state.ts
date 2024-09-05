@@ -1,8 +1,10 @@
 import {PlainMessage} from '@bufbuild/protobuf'
+import {Code, ConnectError} from '@connectrpc/connect'
 import {compare} from 'fast-json-patch'
 import {GetDesiredStateResponse, ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
 import {CurrentState as AwsCurrentState} from '../types'
 import {getCurrentState as getCurrentAwsState, reconcile as reconcileAws} from '../utils/aws'
+import {clientID} from '../utils/clientID'
 import {sleep} from '../utils/common'
 import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
@@ -39,7 +41,7 @@ export async function startStateStream<T>(signal: AbortSignal, provider: CloudPr
       await provider.reportCurrentState(currentState)
 
       const {response} = await client.getDesiredStateUnary(
-        {request: {connectionId: CLOUD_AGENT_CONNECTION_ID}},
+        {request: {connectionId: CLOUD_AGENT_CONNECTION_ID, clientId: clientID}},
         {signal},
       )
       if (!response || isEmptyResponse(response)) continue
@@ -51,7 +53,13 @@ export async function startStateStream<T>(signal: AbortSignal, provider: CloudPr
         await reportError(error)
       }
     } catch (err: any) {
-      await reportError(err)
+      if (err instanceof ConnectError && err.code === Code.FailedPrecondition) {
+        // Connection lock was not acquired, sleep and retry
+        console.log('Connection lock was not acquired for state stream, sleeping and retrying...')
+        await sleep(5 * 1000)
+      } else {
+        await reportError(err)
+      }
     } finally {
       await sleep(1000)
     }
@@ -59,7 +67,6 @@ export async function startStateStream<T>(signal: AbortSignal, provider: CloudPr
 }
 
 interface StateCache<T> {
-  generation: number
   state: T
 }
 
@@ -68,6 +75,7 @@ function reportAwsState(): (state: AwsCurrentState) => Promise<void> {
   return async function reportCurrentState(currentState: AwsCurrentState) {
     const request: PlainMessage<ReportCurrentStateRequest> = {
       connectionId: CLOUD_AGENT_CONNECTION_ID,
+      clientId: clientID,
       state: {
         case: 'replace',
         value: {
@@ -89,15 +97,17 @@ function reportAwsState(): (state: AwsCurrentState) => Promise<void> {
       if (diff.length === 0) return
     }
 
-    const res = await client.reportCurrentState(request)
-    stateCache = {state: currentState, generation: res.generation}
+    await client.reportCurrentState(request)
+    stateCache = {state: currentState}
   }
 }
+
 function reportFlyState(): (state: FlyCurrentState) => Promise<void> {
   let stateCache: StateCache<FlyCurrentState> | null = null
   return async function reportCurrentState(currentState: FlyCurrentState) {
     const request: PlainMessage<ReportCurrentStateRequest> = {
       connectionId: CLOUD_AGENT_CONNECTION_ID,
+      clientId: clientID,
       state: {
         case: 'replace',
         value: {
@@ -119,8 +129,8 @@ function reportFlyState(): (state: FlyCurrentState) => Promise<void> {
       if (diff.length === 0) return
     }
 
-    const res = await client.reportCurrentState(request)
-    stateCache = {state: currentState, generation: res.generation}
+    await client.reportCurrentState(request)
+    stateCache = {state: currentState}
   }
 }
 
