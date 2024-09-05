@@ -39,8 +39,8 @@ dependencies:
     specifier: ^3.1.1
     version: 3.1.1
   undici:
-    specifier: ^6.14.1
-    version: 6.14.1
+    specifier: ^6.19.2
+    version: 6.19.2
 
 devDependencies:
   '@bufbuild/protoc-gen-es':
@@ -1665,8 +1665,8 @@ packages:
       '@fastify/busboy': 2.1.1
     dev: false
 
-  /undici@6.14.1:
-    resolution: {integrity: sha512-mAel3i4BsYhkeVPXeIPXVGPJKeBzqCieZYoFsbWfUzd68JmHByhc1Plit5WlylxXFaGpgkZB8mExlxnt+Q1p7A==}
+  /undici@6.19.2:
+    resolution: {integrity: sha512-JfjKqIauur3Q6biAtHJ564e3bWa8VvT+7cSiOJHFbX4Erv6CLGDpg8z+Fmg/1OI/47RA+GI2QZaF48SSaLvyBA==}
     engines: {node: '>=18.17'}
     dev: false
 
