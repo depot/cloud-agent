@@ -15,4 +15,5 @@ Update fly with:
 
 ```sh
 flyctl deploy --ha=false
+flyctl deploy --ha=false --config fly-testing.toml
 ```
