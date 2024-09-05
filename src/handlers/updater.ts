@@ -1,4 +1,10 @@
-import {DescribeTasksCommand, ECSClient, ListTasksCommand, StopTaskCommand} from '@aws-sdk/client-ecs'
+import {
+  DescribeTasksCommand,
+  ECSClient,
+  ListTasksCommand,
+  StopTaskCommand,
+  UpdateServiceCommand,
+} from '@aws-sdk/client-ecs'
 import {parseISO} from 'date-fns'
 import {sleep} from '../utils/common'
 import {CLOUD_AGENT_CONNECTION_ID, CLOUD_AGENT_PROVIDER} from '../utils/env'
@@ -30,6 +36,12 @@ async function checkForUpdates() {
   }
 
   const newerThan = parseISO(req.newerThan)
+
+  try {
+    await ecs.send(new UpdateServiceCommand({cluster, service: serviceName, forceNewDeployment: true}))
+  } catch (err) {
+    console.error('Error updating service, ignoring', err)
+  }
 
   const {taskArns} = await ecs.send(new ListTasksCommand({cluster, serviceName}))
   if (!taskArns || taskArns.length === 0) return
