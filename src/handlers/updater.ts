@@ -37,12 +37,6 @@ async function checkForUpdates() {
 
   const newerThan = parseISO(req.newerThan)
 
-  try {
-    await ecs.send(new UpdateServiceCommand({cluster, service: serviceName, forceNewDeployment: true}))
-  } catch (err) {
-    console.error('Error updating service, ignoring', err)
-  }
-
   const {taskArns} = await ecs.send(new ListTasksCommand({cluster, serviceName}))
   if (!taskArns || taskArns.length === 0) return
   const {tasks} = await ecs.send(new DescribeTasksCommand({cluster, tasks: taskArns}))
@@ -55,6 +49,12 @@ async function checkForUpdates() {
     if (desiredStatus !== 'RUNNING') continue
     console.log('Found old task to upgrade', task.taskArn)
     await ecs.send(new StopTaskCommand({cluster, task: task.taskArn, reason: 'Upgrading'}))
+
+    try {
+      await ecs.send(new UpdateServiceCommand({cluster, service: serviceName, forceNewDeployment: true}))
+    } catch (err) {
+      console.error('Error updating service, ignoring', err)
+    }
   }
 }
 
