@@ -1,5 +1,4 @@
 import {isAbortError} from 'abort-controller-x'
-import {CLOUD_AGENT_CONNECTION_ID} from './env'
 import {client, recreateClient} from './grpc'
 import {logger} from './logger'
 
@@ -19,7 +18,7 @@ export async function reportError(err: any) {
       recreateClient()
     }
 
-    await client.reportErrors({connectionId: CLOUD_AGENT_CONNECTION_ID, errors: [message]})
+    await client.reportErrors({errors: [message]})
   } catch (err: any) {
     logger.error(`Failed to report error: ${err.stack || err.message || err}`)
   }

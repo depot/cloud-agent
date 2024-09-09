@@ -1,12 +1,11 @@
 import {PlainMessage} from '@bufbuild/protobuf'
 import {Code, ConnectError} from '@connectrpc/connect'
 import {compare} from 'fast-json-patch'
-import {GetDesiredStateResponse, ReportCurrentStateRequest} from '../proto/depot/cloud/v2/cloud_pb'
+import {GetDesiredStateResponse, ReportCurrentStateRequest} from '../proto/depot/cloud/v4/cloud_pb'
 import {CurrentState as AwsCurrentState} from '../types'
 import {getCurrentState as getCurrentAwsState, reconcile as reconcileAws} from '../utils/aws'
 import {clientID} from '../utils/clientID'
 import {sleep} from '../utils/common'
-import {CLOUD_AGENT_CONNECTION_ID} from '../utils/env'
 import {reportError} from '../utils/errors'
 import {
   CurrentState as FlyCurrentState,
@@ -40,11 +39,8 @@ export async function startStateStream<T>(signal: AbortSignal, provider: CloudPr
 
       await provider.reportCurrentState(currentState)
 
-      const {response} = await client.getDesiredStateUnary(
-        {request: {connectionId: CLOUD_AGENT_CONNECTION_ID, clientId: clientID}},
-        {signal},
-      )
-      if (!response || isEmptyResponse(response)) continue
+      const response = await client.getDesiredState({clientId: clientID}, {signal})
+      if (isEmptyResponse(response)) continue
 
       currentState = await provider.getCurrentState()
 
@@ -74,17 +70,13 @@ function reportAwsState(): (state: AwsCurrentState) => Promise<void> {
   let stateCache: StateCache<AwsCurrentState> | null = null
   return async function reportCurrentState(currentState: AwsCurrentState) {
     const request: PlainMessage<ReportCurrentStateRequest> = {
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       clientId: clientID,
       state: {
-        case: 'replace',
-        value: {
-          state: {
-            case: 'aws',
-            value: {
-              availabilityZone: currentState.availabilityZone,
-              state: JSON.stringify(currentState),
-            },
+        state: {
+          case: 'aws',
+          value: {
+            availabilityZone: currentState.availabilityZone,
+            state: JSON.stringify(currentState),
           },
         },
       },
@@ -106,17 +98,13 @@ function reportFlyState(): (state: FlyCurrentState) => Promise<void> {
   let stateCache: StateCache<FlyCurrentState> | null = null
   return async function reportCurrentState(currentState: FlyCurrentState) {
     const request: PlainMessage<ReportCurrentStateRequest> = {
-      connectionId: CLOUD_AGENT_CONNECTION_ID,
       clientId: clientID,
       state: {
-        case: 'replace',
-        value: {
-          state: {
-            case: currentState.cloud,
-            value: {
-              region: currentState.region,
-              state: JSON.stringify(currentState),
-            },
+        state: {
+          case: currentState.cloud,
+          value: {
+            region: currentState.region,
+            state: JSON.stringify(currentState),
           },
         },
       },
