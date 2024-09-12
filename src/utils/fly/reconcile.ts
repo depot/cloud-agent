@@ -248,9 +248,11 @@ function machineKind(kind: GetDesiredStateResponse_Kind): MachineKind {
     case GetDesiredStateResponse_Kind.BUILDKIT_4X4:
       return {cpuKind: 'shared', cpus: 4, memGBs: 4, needsGPU: false}
     case GetDesiredStateResponse_Kind.BUILDKIT_4X8:
-      return {cpuKind: 'performance', cpus: 4, memGBs: 8, needsGPU: false}
+      return {cpuKind: 'shared', cpus: 4, memGBs: 8, needsGPU: false}
+    case GetDesiredStateResponse_Kind.BUILDKIT_8X8:
+      return {cpuKind: 'shared', cpus: 8, memGBs: 8, needsGPU: false}
     case GetDesiredStateResponse_Kind.BUILDKIT_8X16:
-      return {cpuKind: 'performance', cpus: 8, memGBs: 16, needsGPU: false}
+      return {cpuKind: 'shared', cpus: 8, memGBs: 16, needsGPU: false}
     case GetDesiredStateResponse_Kind.BUILDKIT_16X32:
       return {cpuKind: 'performance', cpus: 16, memGBs: 32, needsGPU: false}
     case GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU:
