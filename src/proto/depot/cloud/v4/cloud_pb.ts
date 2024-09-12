@@ -175,6 +175,11 @@ export enum GetDesiredStateResponse_Kind {
    * @generated from enum value: KIND_BUILDKIT_4X4 = 6;
    */
   BUILDKIT_4X4 = 6,
+
+  /**
+   * @generated from enum value: KIND_BUILDKIT_8X8 = 7;
+   */
+  BUILDKIT_8X8 = 7,
 }
 // Retrieve enum metadata with: proto3.getEnumType(GetDesiredStateResponse_Kind)
 proto3.util.setEnumType(GetDesiredStateResponse_Kind, 'depot.cloud.v4.GetDesiredStateResponse.Kind', [
@@ -185,6 +190,7 @@ proto3.util.setEnumType(GetDesiredStateResponse_Kind, 'depot.cloud.v4.GetDesired
   {no: 4, name: 'KIND_BUILDKIT_8X16'},
   {no: 5, name: 'KIND_BUILDKIT_4X8'},
   {no: 6, name: 'KIND_BUILDKIT_4X4'},
+  {no: 7, name: 'KIND_BUILDKIT_8X8'},
 ])
 
 /**

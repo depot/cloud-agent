@@ -77,6 +77,7 @@ message GetDesiredStateResponse {
     KIND_BUILDKIT_8X16 = 4;
     KIND_BUILDKIT_4X8 = 5;
     KIND_BUILDKIT_4X4 = 6;
+    KIND_BUILDKIT_8X8 = 7;
   }
 
   enum MachineState {
