@@ -13,7 +13,7 @@ import {
   ReportVolumeUpdatesRequest,
   ResizeVolumeAction,
   TrimVolumeAction,
-} from '../proto/depot/cloud/v2/cloud_pb'
+} from '../proto/depot/cloud/v4/cloud_pb'
 import {
   authCaps,
   authGetKey,

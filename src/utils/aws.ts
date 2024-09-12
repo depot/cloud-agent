@@ -26,7 +26,7 @@ import {
   GetDesiredStateResponse_NewVolume,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
-} from '../proto/depot/cloud/v2/cloud_pb'
+} from '../proto/depot/cloud/v4/cloud_pb'
 import {CurrentState} from '../types'
 import {promises} from './common'
 import {

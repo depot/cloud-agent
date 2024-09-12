@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package depot.cloud.v2;
+package depot.cloud.v4;
 
 service CloudService {
-  rpc GetDesiredStateUnary(GetDesiredStateUnaryRequest) returns (GetDesiredStateUnaryResponse) {}
+  rpc GetDesiredState(GetDesiredStateRequest) returns (GetDesiredStateResponse) {}
   rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
@@ -14,17 +14,8 @@ service CloudService {
 
 // Messages
 
-message GetDesiredStateUnaryRequest {
-  GetDesiredStateRequest request = 1;
-}
-
-message GetDesiredStateUnaryResponse {
-  GetDesiredStateResponse response = 1;
-}
-
 message GetDesiredStateRequest {
-  string connection_id = 1;
-  string client_id = 2;
+  string client_id = 1;
 }
 
 message GetDesiredStateResponse {
@@ -34,16 +25,15 @@ message GetDesiredStateResponse {
   repeated VolumeChange volume_changes = 4;
 
   message NewMachine {
-    reserved 2;
     string id = 1;
-    Kind kind = 3;
-    Architecture architecture = 4;
-    string image = 5;
-    SecurityGroup security_group = 6;
-    RootVolume root_volume = 7;
-    optional string user_data = 8;
-    optional FlyMachineOptions fly_options = 9;
-    optional string zone = 10;
+    Kind kind = 2;
+    Architecture architecture = 3;
+    string image = 4;
+    SecurityGroup security_group = 5;
+    RootVolume root_volume = 6;
+    optional string user_data = 7;
+    optional FlyMachineOptions fly_options = 8;
+    optional string zone = 9;
 
     message FlyMachineOptions {
       // Volume to attach to the machine.
@@ -54,12 +44,11 @@ message GetDesiredStateResponse {
   }
 
   message NewVolume {
-    reserved 2;
     string id = 1;
-    Kind kind = 3;
-    Architecture architecture = 4;
-    int32 size = 5;
-    optional string zone = 6;
+    Kind kind = 2;
+    Architecture architecture = 3;
+    int32 size = 4;
+    optional string zone = 5;
   }
 
   message MachineChange {
@@ -123,33 +112,25 @@ message GetDesiredStateResponse {
 }
 
 message ReplaceVolumeRequest {
-  string connection_id = 1;
-  string id = 2;
+  string id = 1;
 }
 
 message ReplaceVolumeResponse {}
 
 message ReportCurrentStateRequest {
-  string connection_id = 1;
-  oneof state {
-    CloudState replace = 2;
-  }
-  reserved 3;
-  string client_id = 4;
+  CloudState state = 1;
+  string client_id = 2;
 }
 
 message ReportCurrentStateResponse {}
 
 message ReportErrorsRequest {
-  string connection_id = 1;
-  repeated string errors = 2;
+  repeated string errors = 1;
 }
 
 message ReportErrorsResponse {}
 
-message GetActiveAgentVersionRequest {
-  string connection_id = 1;
-}
+message GetActiveAgentVersionRequest {}
 
 message GetActiveAgentVersionResponse {
   string newer_than = 1;

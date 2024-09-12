@@ -8,7 +8,7 @@ import {
   GetDesiredStateResponse_NewVolume,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
-} from '../../proto/depot/cloud/v2/cloud_pb'
+} from '../../proto/depot/cloud/v4/cloud_pb'
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
@@ -159,7 +159,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
     // We do this because the volume is tied to the machine and we can't detach it.
     if (isCapacityError(err)) {
       console.error(`Capacity error, requesting replacement volume and trying again ${err}`)
-      await client.replaceVolume({connectionId: CLOUD_AGENT_CONNECTION_ID, id: volume.name})
+      await client.replaceVolume({id: volume.name})
       return
     }
 
