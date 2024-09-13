@@ -36,6 +36,7 @@ import {
   additionalSubnetIDs,
 } from './env'
 import {toPlainObject} from './plain'
+import {scheduleTask} from './scheduler'
 
 const client = new EC2Client({})
 
@@ -50,17 +51,22 @@ export async function getCurrentState() {
   return toPlainObject(state)
 }
 
-export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<string[]> {
-  const results = await Promise.allSettled([
-    ...response.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
-    ...response.volumeChanges.map((volume) => reconcileVolume(state.volumes, volume, state.instances)),
-    ...response.newMachines.map((instance) => reconcileNewMachine(state.instances, instance)),
-    ...response.machineChanges.map((instance) => reconcileMachine(state.instances, instance)),
-  ])
+export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
+  for (const volume of response.newVolumes) {
+    void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
+  }
 
-  return results
-    .map((r) => (r.status === 'rejected' ? `${r.reason}` : undefined))
-    .filter((r): r is string => r !== undefined)
+  for (const volume of response.volumeChanges) {
+    void scheduleTask(`volume/change/${volume.id}`, () => reconcileVolume(state.volumes, volume, state.instances))
+  }
+
+  for (const instance of response.newMachines) {
+    void scheduleTask(`machine/new/${instance.id}`, () => reconcileNewMachine(state.instances, instance))
+  }
+
+  for (const instance of response.machineChanges) {
+    void scheduleTask(`machine/change/${instance.id}`, () => reconcileMachine(state.instances, instance))
+  }
 }
 
 /** Filter to select only Depot-managed resources */

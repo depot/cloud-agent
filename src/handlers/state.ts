@@ -17,7 +17,7 @@ import {client} from '../utils/grpc'
 interface CloudProvider<T> {
   getCurrentState(): Promise<T>
   reportCurrentState(currentState: T): Promise<void>
-  reconcile(response: GetDesiredStateResponse, state: T): Promise<string[]>
+  reconcile(response: GetDesiredStateResponse, state: T): Promise<void>
 }
 
 export const AwsProvider: CloudProvider<AwsCurrentState> = {
@@ -35,19 +35,14 @@ export const FlyProvider: CloudProvider<FlyCurrentState> = {
 export async function startStateStream<T>(signal: AbortSignal, provider: CloudProvider<T>) {
   while (!signal.aborted) {
     try {
-      let currentState = await provider.getCurrentState()
+      const currentState = await provider.getCurrentState()
 
       await provider.reportCurrentState(currentState)
 
       const response = await client.getDesiredState({clientId: clientID}, {signal})
       if (isEmptyResponse(response)) continue
 
-      currentState = await provider.getCurrentState()
-
-      const errors = await provider.reconcile(response, currentState)
-      for (const error of errors) {
-        await reportError(error)
-      }
+      await provider.reconcile(response, currentState)
     } catch (err: any) {
       if (err instanceof ConnectError && err.code === Code.FailedPrecondition) {
         // Connection lock was not acquired, sleep and retry
