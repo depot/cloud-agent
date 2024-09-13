@@ -35,7 +35,7 @@ export const FlyProvider: CloudProvider<FlyCurrentState> = {
 export async function startStateStream<T>(signal: AbortSignal, provider: CloudProvider<T>) {
   while (!signal.aborted) {
     try {
-      let currentState = await provider.getCurrentState()
+      const currentState = await provider.getCurrentState()
 
       await provider.reportCurrentState(currentState)
 
