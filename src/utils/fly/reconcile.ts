@@ -14,6 +14,7 @@ import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
 import {client} from '../grpc'
 import {toPlainObject} from '../plain'
+import {scheduleTask} from '../scheduler'
 import {
   createBuildkitGPUVolume,
   createBuildkitVolume,
@@ -51,17 +52,22 @@ export async function getCurrentState() {
   return toPlainObject(state)
 }
 
-export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<string[]> {
-  const results = await Promise.allSettled([
-    ...response.newVolumes.map((volume) => reconcileNewVolume(state.volumes, volume)),
-    ...response.volumeChanges.map((volume) => reconcileVolume(state, volume)),
-    ...response.newMachines.map((machine) => reconcileNewMachine(state.machines, machine, state.volumes)),
-    ...response.machineChanges.map((machine) => reconcileMachine(state.machines, machine)),
-  ])
+export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
+  for (const volume of response.newVolumes) {
+    void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
+  }
 
-  return results
-    .map((r) => (r.status === 'rejected' ? `${r.reason}` : undefined))
-    .filter((r): r is string => r !== undefined)
+  for (const volume of response.volumeChanges) {
+    void scheduleTask(`volume/change/${volume.id}`, () => reconcileVolume(state, volume))
+  }
+
+  for (const machine of response.newMachines) {
+    void scheduleTask(`machine/new/${machine.id}`, () => reconcileNewMachine(state.machines, machine, state.volumes))
+  }
+
+  for (const machine of response.machineChanges) {
+    void scheduleTask(`machine/change/${machine.id}`, () => reconcileMachine(state.machines, machine))
+  }
 }
 
 async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
