@@ -1,4 +1,5 @@
 import {V1Machine, Volume, createVolume, launchMachine} from './client'
+import {shard} from './shard'
 
 export interface FlyBuildkitMachineRequest {
   cpu_kind: 'shared' | 'dedicated' | 'performance'
@@ -15,6 +16,7 @@ export interface FlyBuildkitMachineRequest {
 export async function launchBuildkitMachine(req: FlyBuildkitMachineRequest): Promise<V1Machine> {
   const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files} = req
   const machine = await launchMachine({
+    shard: shard(depotID),
     name: depotID,
     region,
     config: {
@@ -56,6 +58,7 @@ export async function launchBuildkitGPUMachine(buildkit: FlyBuildkitMachineReque
   }
 
   const machine = await launchMachine({
+    shard: shard(depotID),
     name: depotID,
     region,
     config: {

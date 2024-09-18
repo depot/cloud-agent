@@ -26,12 +26,12 @@ import {
   Volume,
   deleteMachine,
   deleteVolume,
-  listMachines,
   listVolumes,
   startMachine,
   stopMachine,
   waitMachine,
 } from './client'
+import {shardedListMachines} from './shard'
 
 export interface CurrentState {
   cloud: 'fly'
@@ -44,7 +44,7 @@ export async function getCurrentState() {
   const state: CurrentState = await promises({
     cloud: 'fly',
     region: FLY_REGION,
-    machines: listMachines(),
+    machines: shardedListMachines(),
     volumes: listVolumes(),
     errors: [],
   })

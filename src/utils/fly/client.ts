@@ -9,6 +9,11 @@ export async function listMachines(): Promise<V1Machine[]> {
   return res
 }
 
+export async function listFilteredMachines(key: string, value: string): Promise<V1Machine[]> {
+  const res = await rest<V1Machine[]>('GET', `/machines?include_deleted=true&metadata.${key}=${value}`)
+  return res
+}
+
 export async function listVolumes(): Promise<Volume[]> {
   const res = await fetch(`${FLY_API_HOST}/v1/apps/${FLY_APP_ID}/volumes?summary=true`, {
     method: 'GET',
@@ -23,8 +28,21 @@ export async function listVolumes(): Promise<Volume[]> {
   return volumes
 }
 
+export async function setMachineMetadata(machineID: string, key: string, value: string) {
+  const url = `${FLY_API_HOST}/v1/apps/${FLY_APP_ID}/machines/${machineID}/metadata/${key}`
+  const body: BodyInit = JSON.stringify({value})
+  const method = 'POST'
+  const res = await fetch(url, {
+    method,
+    body,
+    headers: {'Content-Type': 'application/json', Authorization: authorizationHeader},
+  })
+  if (!res.ok) throw new Error(`Fly API Error: ${res.status} ${res.statusText} ${await res.text()}`)
+}
+
 export async function launchMachine(input: LaunchMachineInput) {
   const res = await rest<V1Machine>('POST', '/machines', JSON.stringify(input))
+  await setMachineMetadata(res.id, 'shard', input.shard)
   return res
 }
 
@@ -91,6 +109,7 @@ async function rest<T>(method: string, endpoint: string, body?: BodyInit): Promi
 // Types
 
 export interface LaunchMachineInput {
+  shard: string
   config: MachineConfig
   lease_ttl?: number
   lvsd?: boolean

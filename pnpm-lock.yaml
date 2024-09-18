@@ -26,6 +26,9 @@ dependencies:
   abort-controller-x:
     specifier: ^0.4.3
     version: 0.4.3
+  crc:
+    specifier: ^4.3.2
+    version: 4.3.2
   date-fns:
     specifier: ^2.30.0
     version: 2.30.0
@@ -38,6 +41,9 @@ dependencies:
   fast-json-patch:
     specifier: ^3.1.1
     version: 3.1.1
+  p-queue:
+    specifier: ^8.0.1
+    version: 8.0.1
   undici:
     specifier: ^6.19.2
     version: 6.19.2
@@ -1252,6 +1258,16 @@ packages:
     resolution: {integrity: sha512-AlcaJBi/pqqJBIQ8U9Mcpc9i8Aqxn88Skv5d+xBX006BY5u8N3mGLHa5Lgppa7L/HfwgwLgZ6NYs+Ag6uUmJRA==}
     dev: false
 
+  /crc@4.3.2:
+    resolution: {integrity: sha512-uGDHf4KLLh2zsHa8D8hIQ1H/HtFQhyHrc0uhHBcoKGol/Xnb+MPYfUMw7cvON6ze/GUESTudKayDcJC5HnJv1A==}
+    engines: {node: '>=12'}
+    peerDependencies:
+      buffer: '>=6.0.3'
+    peerDependenciesMeta:
+      buffer:
+        optional: true
+    dev: false
+
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
     engines: {node: '>= 8'}
@@ -1350,6 +1366,10 @@ packages:
       '@esbuild/win32-ia32': 0.18.19
       '@esbuild/win32-x64': 0.18.19
     dev: true
+
+  /eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+    dev: false
 
   /execa@7.2.0:
     resolution: {integrity: sha512-UduyVP7TLB5IcAQl+OzLyLcS/l32W/GLg+AhHJ+ow40FOk2U3SAllPwR44v4vmdFwIWqpdwxxpQbF1n5ta9seA==}
@@ -1532,6 +1552,19 @@ packages:
     dependencies:
       p-limit: 3.1.0
     dev: true
+
+  /p-queue@8.0.1:
+    resolution: {integrity: sha512-NXzu9aQJTAzbBqOt2hwsR63ea7yvxJc0PwN/zobNAudYfb1B7R08SzB4TsLeSbUCuG467NhnoT0oO6w1qRO+BA==}
+    engines: {node: '>=18'}
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 6.1.2
+    dev: false
+
+  /p-timeout@6.1.2:
+    resolution: {integrity: sha512-UbD77BuZ9Bc9aABo74gfXhNvzC9Tx7SxtHSh1fxvx3jTLLYvmVhiQZZrJzqqU0jKbN32kb5VOKiLEQI/3bIjgQ==}
+    engines: {node: '>=14.16'}
+    dev: false
 
   /path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
