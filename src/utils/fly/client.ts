@@ -10,13 +10,17 @@ export async function listMachines(): Promise<V1Machine[]> {
 }
 
 export async function listVolumes(): Promise<Volume[]> {
-  const res = await fetch(`${FLY_API_HOST}/v1/apps/${FLY_APP_ID}/volumes`, {
+  const res = await fetch(`${FLY_API_HOST}/v1/apps/${FLY_APP_ID}/volumes?summary=true`, {
     method: 'GET',
     headers: {'Content-Type': 'application/json', Authorization: authorizationHeader},
   })
   if (!res.ok) throw new Error(`Fly API Error: ${res.status} ${res.statusText} ${await res.text()}`)
 
-  return (await res.json()) as Volume[]
+  const volumes = (await res.json()) as Volume[]
+
+  // console.log(JSON.stringify(volumes))
+
+  return volumes
 }
 
 export async function launchMachine(input: LaunchMachineInput) {
