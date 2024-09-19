@@ -5,7 +5,7 @@ import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from '../env'
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 
 export async function listMachines(): Promise<V1Machine[]> {
-  const res = await rest<MachineSummary[]>('GET', '/machines?include_deleted=true&summary=true')
+  const res = await rest<MachineSummary[]>('GET', '/machines?summary=true')
   return res.map((m) => {
     return {
       config: m.incomplete_config,
