@@ -1,10 +1,9 @@
 syntax = "proto3";
 
-package depot.cloud.v4;
+package depot.cloud.v5;
 
 service CloudService {
   rpc GetDesiredState(GetDesiredStateRequest) returns (GetDesiredStateResponse) {}
-  rpc ReportCurrentState(ReportCurrentStateRequest) returns (ReportCurrentStateResponse) {}
   rpc ReportErrors(ReportErrorsRequest) returns (ReportErrorsResponse);
   rpc GetActiveAgentVersion(GetActiveAgentVersionRequest) returns (GetActiveAgentVersionResponse);
   rpc ReconcileVolumes(ReconcileVolumesRequest) returns (stream ReconcileVolumesResponse) {}
@@ -16,6 +15,7 @@ service CloudService {
 
 message GetDesiredStateRequest {
   string client_id = 1;
+  CloudState current_state = 2;
 }
 
 message GetDesiredStateResponse {
@@ -52,12 +52,12 @@ message GetDesiredStateResponse {
   }
 
   message MachineChange {
-    string id = 1;
+    string resource_id = 1;
     MachineState desired_state = 2;
   }
 
   message VolumeChange {
-    string id = 1;
+    string resource_id = 1;
     VolumeState desired_state = 2;
     optional string attached_to = 3;
     optional string device = 4;
@@ -117,13 +117,6 @@ message ReplaceVolumeRequest {
 }
 
 message ReplaceVolumeResponse {}
-
-message ReportCurrentStateRequest {
-  CloudState state = 1;
-  string client_id = 2;
-}
-
-message ReportCurrentStateResponse {}
 
 message ReportErrorsRequest {
   repeated string errors = 1;

@@ -8,7 +8,7 @@ import {
   GetDesiredStateResponse_NewVolume,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
-} from '../../proto/depot/cloud/v4/cloud_pb'
+} from '../../proto/depot/cloud/v5/cloud_pb'
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
@@ -58,7 +58,7 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
   }
 
   for (const volume of response.volumeChanges) {
-    void scheduleTask(`volume/change/${volume.id}`, () => reconcileVolume(state, volume))
+    void scheduleTask(`volume/change/${volume.resourceId}`, () => reconcileVolume(state, volume))
   }
 
   for (const machine of response.newMachines) {
@@ -66,7 +66,7 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
   }
 
   for (const machine of response.machineChanges) {
-    void scheduleTask(`machine/change/${machine.id}`, () => reconcileMachine(state.machines, machine))
+    void scheduleTask(`machine/change/${machine.resourceId}`, () => reconcileMachine(state.machines, machine))
   }
 }
 
@@ -90,7 +90,7 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
     return
   }
 
-  const toDelete = volumes.find((v) => v.name === volume.id)
+  const toDelete = volumes.find((v) => v.id === volume.resourceId)
   if (!toDelete) return
 
   // In testing we saw that `waiting_for_detach` are volumes that may have already been deleted.
@@ -100,12 +100,12 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
     toDelete.state !== 'pending_destroy' &&
     toDelete.state !== 'waiting_for_detach'
   ) {
-    console.log(`Deleting volume ${volume.id} ${toDelete.id} in state ${toDelete.state}`)
+    console.log(`Deleting volume ${volume.resourceId} ${toDelete.id} in state ${toDelete.state}`)
     if (toDelete.attached_machine_id) {
       const machine = machines.find((m) => m.id === toDelete.attached_machine_id)
       if (machine) {
         const deleteMachine = new GetDesiredStateResponse_MachineChange({
-          id: machine.name,
+          resourceId: machine.id,
           desiredState: GetDesiredStateResponse_MachineState.DELETED,
         })
 
@@ -187,7 +187,7 @@ function currentMachineState(machine: V1Machine): GetDesiredStateResponse_Machin
 const timeoutSeconds = 30
 
 async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResponse_MachineChange) {
-  const current = state.find((m) => m.name === machine.id)
+  const current = state.find((m) => m.id === machine.resourceId)
   const currentState = current ? currentMachineState(current) : 'unknown'
 
   // Skip if already at the desired state

@@ -1,6 +1,6 @@
 import {createPromiseClient, Interceptor} from '@connectrpc/connect'
 import {createConnectTransport, Http2SessionManager} from '@connectrpc/connect-node'
-import {CloudService} from '../proto/depot/cloud/v4/cloud_connect'
+import {CloudService} from '../proto/depot/cloud/v5/cloud_connect'
 import {CLOUD_AGENT_API_URL, CLOUD_AGENT_CONNECTION_TOKEN, CLOUD_AGENT_VERSION} from './env'
 
 const headerInterceptor: Interceptor = (next) => async (req) => {
