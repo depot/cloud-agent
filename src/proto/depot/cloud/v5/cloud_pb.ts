@@ -553,9 +553,9 @@ export class GetDesiredStateResponse_NewVolume extends Message<GetDesiredStateRe
  */
 export class GetDesiredStateResponse_MachineChange extends Message<GetDesiredStateResponse_MachineChange> {
   /**
-   * @generated from field: string id = 1;
+   * @generated from field: string resource_id = 1;
    */
-  id = ''
+  resourceId = ''
 
   /**
    * @generated from field: depot.cloud.v5.GetDesiredStateResponse.MachineState desired_state = 2;
@@ -570,7 +570,7 @@ export class GetDesiredStateResponse_MachineChange extends Message<GetDesiredSta
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v5.GetDesiredStateResponse.MachineChange'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 1, name: 'resource_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 2, name: 'desired_state', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_MachineState)},
   ])
 
@@ -599,9 +599,9 @@ export class GetDesiredStateResponse_MachineChange extends Message<GetDesiredSta
  */
 export class GetDesiredStateResponse_VolumeChange extends Message<GetDesiredStateResponse_VolumeChange> {
   /**
-   * @generated from field: string id = 1;
+   * @generated from field: string resource_id = 1;
    */
-  id = ''
+  resourceId = ''
 
   /**
    * @generated from field: depot.cloud.v5.GetDesiredStateResponse.VolumeState desired_state = 2;
@@ -626,7 +626,7 @@ export class GetDesiredStateResponse_VolumeChange extends Message<GetDesiredStat
   static readonly runtime: typeof proto3 = proto3
   static readonly typeName = 'depot.cloud.v5.GetDesiredStateResponse.VolumeChange'
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    {no: 1, name: 'id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
+    {no: 1, name: 'resource_id', kind: 'scalar', T: 9 /* ScalarType.STRING */},
     {no: 2, name: 'desired_state', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_VolumeState)},
     {no: 3, name: 'attached_to', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
     {no: 4, name: 'device', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},

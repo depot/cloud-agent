@@ -52,12 +52,12 @@ message GetDesiredStateResponse {
   }
 
   message MachineChange {
-    string id = 1;
+    string resource_id = 1;
     MachineState desired_state = 2;
   }
 
   message VolumeChange {
-    string id = 1;
+    string resource_id = 1;
     VolumeState desired_state = 2;
     optional string attached_to = 3;
     optional string device = 4;

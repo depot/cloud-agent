@@ -6,12 +6,7 @@ const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 
 export async function listMachines(): Promise<V1Machine[]> {
   const res = await rest<MachineSummary[]>('GET', '/machines?summary=true')
-  return res.map((m) => {
-    return {
-      config: m.incomplete_config,
-      ...m,
-    }
-  })
+  return res.map((m) => ({...m, config: m.incomplete_config}))
 }
 
 export async function listVolumes(): Promise<Volume[]> {
@@ -22,8 +17,6 @@ export async function listVolumes(): Promise<Volume[]> {
   if (!res.ok) throw new Error(`Fly API Error: ${res.status} ${res.statusText} ${await res.text()}`)
 
   const volumes = (await res.json()) as Volume[]
-
-  // console.log(JSON.stringify(volumes))
 
   return volumes
 }

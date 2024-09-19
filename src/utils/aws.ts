@@ -57,7 +57,9 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
   }
 
   for (const volume of response.volumeChanges) {
-    void scheduleTask(`volume/change/${volume.id}`, () => reconcileVolume(state.volumes, volume, state.instances))
+    void scheduleTask(`volume/change/${volume.resourceId}`, () =>
+      reconcileVolume(state.volumes, volume, state.instances),
+    )
   }
 
   for (const instance of response.newMachines) {
@@ -65,7 +67,7 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
   }
 
   for (const instance of response.machineChanges) {
-    void scheduleTask(`machine/change/${instance.id}`, () => reconcileMachine(state.instances, instance))
+    void scheduleTask(`machine/change/${instance.resourceId}`, () => reconcileMachine(state.instances, instance))
   }
 }
 
@@ -149,7 +151,7 @@ async function reconcileVolume(
   machineState: Record<string, Instance>,
 ) {
   const current = Object.values(state).find(
-    (i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+    (i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.resourceId),
   )
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
@@ -351,7 +353,7 @@ function currentMachineState(instance: Instance): GetDesiredStateResponse_Machin
 
 async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
   const matches = Object.values(state).filter(
-    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.resourceId),
   )
 
   for (const current of matches) {
@@ -365,7 +367,7 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
     if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
-      console.log(`Starting instance ${machine.id} (${current.InstanceId})`)
+      console.log(`Starting instance ${machine.resourceId} (${current.InstanceId})`)
       await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
@@ -373,14 +375,14 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
       if (currentState === GetDesiredStateResponse_MachineState.STOPPING) return
-      console.log(`Stopping instance ${machine.id} (${current.InstanceId})`)
+      console.log(`Stopping instance ${machine.resourceId} (${current.InstanceId})`)
       await client.send(new StopInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
       // if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETING) return
-      console.log(`Terminating instance ${machine.id} (${current.InstanceId})`)
+      console.log(`Terminating instance ${machine.resourceId} (${current.InstanceId})`)
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
   }
