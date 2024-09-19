@@ -5,8 +5,13 @@ import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from '../env'
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 
 export async function listMachines(): Promise<V1Machine[]> {
-  const res = await rest<V1Machine[]>('GET', '/machines?include_deleted=true')
-  return res
+  const res = await rest<MachineSummary[]>('GET', '/machines?include_deleted=true&summary=true')
+  return res.map((m) => {
+    return {
+      config: m.incomplete_config,
+      ...m,
+    }
+  })
 }
 
 export async function listVolumes(): Promise<Volume[]> {
@@ -233,6 +238,29 @@ export interface V1Machine {
   created_at: string
   updated_at: string
   config: MachineConfig
+  checks?: CheckStatus[]
+  events?: Event[]
+  nonce?: string
+  worker_status?: string
+}
+
+// This type was added by fly to give us a faster version of list machines.
+export interface MachineSummary {
+  id: string
+  name: string
+  state: MachineState
+  region: string
+  image_ref: {
+    registry: string
+    repository: string
+    tag: string
+    digest: string
+  }
+  instance_id: string
+  private_ip: string
+  created_at: string
+  updated_at: string
+  incomplete_config: MachineConfig
   checks?: CheckStatus[]
   events?: Event[]
   nonce?: string
