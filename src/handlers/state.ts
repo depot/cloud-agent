@@ -1,7 +1,5 @@
-import {PlainMessage} from '@bufbuild/protobuf'
 import {Code, ConnectError} from '@connectrpc/connect'
-import {compare} from 'fast-json-patch'
-import {GetDesiredStateResponse, ReportCurrentStateRequest} from '../proto/depot/cloud/v4/cloud_pb'
+import {GetDesiredStateResponse} from '../proto/depot/cloud/v5/cloud_pb'
 import {CurrentState as AwsCurrentState} from '../types'
 import {getCurrentState as getCurrentAwsState, reconcile as reconcileAws} from '../utils/aws'
 import {clientID} from '../utils/clientID'
@@ -14,32 +12,53 @@ import {
 } from '../utils/fly/reconcile'
 import {client} from '../utils/grpc'
 
-interface CloudProvider<T> {
+interface CloudProvider<T extends AwsCurrentState | FlyCurrentState> {
   getCurrentState(): Promise<T>
-  reportCurrentState(currentState: T): Promise<void>
   reconcile(response: GetDesiredStateResponse, state: T): Promise<void>
 }
 
 export const AwsProvider: CloudProvider<AwsCurrentState> = {
   getCurrentState: () => getCurrentAwsState(),
-  reportCurrentState: reportAwsState(),
   reconcile: (response, currentState) => reconcileAws(response, currentState),
 }
 
 export const FlyProvider: CloudProvider<FlyCurrentState> = {
   getCurrentState: () => getCurrentFlyState(),
-  reportCurrentState: reportFlyState(),
   reconcile: (response, currentState) => reconcileFly(response, currentState),
 }
 
-export async function startStateStream<T>(signal: AbortSignal, provider: CloudProvider<T>) {
+export async function startStateStream<T extends AwsCurrentState | FlyCurrentState>(
+  signal: AbortSignal,
+  provider: CloudProvider<T>,
+) {
   while (!signal.aborted) {
     try {
       const currentState = await provider.getCurrentState()
 
-      await provider.reportCurrentState(currentState)
-
-      const response = await client.getDesiredState({clientId: clientID}, {signal})
+      const response = await client.getDesiredState(
+        {
+          clientId: clientID,
+          currentState: {
+            state:
+              currentState.cloud === 'aws'
+                ? {
+                    case: 'aws',
+                    value: {
+                      availabilityZone: currentState.availabilityZone,
+                      state: JSON.stringify(currentState),
+                    },
+                  }
+                : {
+                    case: 'fly',
+                    value: {
+                      region: currentState.region,
+                      state: JSON.stringify(currentState),
+                    },
+                  },
+          },
+        },
+        {signal},
+      )
       if (isEmptyResponse(response)) continue
 
       await provider.reconcile(response, currentState)
@@ -54,66 +73,6 @@ export async function startStateStream<T>(signal: AbortSignal, provider: CloudPr
     } finally {
       await sleep(1000)
     }
-  }
-}
-
-interface StateCache<T> {
-  state: T
-}
-
-function reportAwsState(): (state: AwsCurrentState) => Promise<void> {
-  let stateCache: StateCache<AwsCurrentState> | null = null
-  return async function reportCurrentState(currentState: AwsCurrentState) {
-    const request: PlainMessage<ReportCurrentStateRequest> = {
-      clientId: clientID,
-      state: {
-        state: {
-          case: 'aws',
-          value: {
-            availabilityZone: currentState.availabilityZone,
-            state: JSON.stringify(currentState),
-          },
-        },
-      },
-    }
-
-    if (stateCache) {
-      const diff = compare(stateCache.state, currentState)
-
-      // If there is no difference, don't send a request
-      if (diff.length === 0) return
-    }
-
-    await client.reportCurrentState(request)
-    stateCache = {state: currentState}
-  }
-}
-
-function reportFlyState(): (state: FlyCurrentState) => Promise<void> {
-  let stateCache: StateCache<FlyCurrentState> | null = null
-  return async function reportCurrentState(currentState: FlyCurrentState) {
-    const request: PlainMessage<ReportCurrentStateRequest> = {
-      clientId: clientID,
-      state: {
-        state: {
-          case: currentState.cloud,
-          value: {
-            region: currentState.region,
-            state: JSON.stringify(currentState),
-          },
-        },
-      },
-    }
-
-    if (stateCache) {
-      const diff = compare(stateCache.state, currentState)
-
-      // If there is no difference, don't send a request
-      if (diff.length === 0) return
-    }
-
-    await client.reportCurrentState(request)
-    stateCache = {state: currentState}
   }
 }
 

@@ -8,7 +8,7 @@ import {
   GetDesiredStateResponse_NewVolume,
   GetDesiredStateResponse_VolumeChange,
   GetDesiredStateResponse_VolumeState,
-} from '../../proto/depot/cloud/v4/cloud_pb'
+} from '../../proto/depot/cloud/v5/cloud_pb'
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
