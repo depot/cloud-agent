@@ -15,3 +15,6 @@ app = "node /app/dist/index.js"
 [[vm]]
 size = "shared-cpu-2x"
 memory = "512MB"
+
+[[restart]]
+policy = "always"
