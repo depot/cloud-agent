@@ -100,14 +100,17 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
   const toDelete = volumes.find((v) => v.id === volume.resourceId)
   if (!toDelete) return
 
-  // In testing we saw that `waiting_for_detach` are volumes that may have already been deleted.
   if (
     toDelete.state !== 'destroyed' &&
     toDelete.state !== 'destroying' &&
     toDelete.state !== 'pending_destroy' &&
     toDelete.state !== 'waiting_for_detach'
   ) {
-    console.log(`Deleting volume ${volume.resourceId} ${toDelete.id} in state ${toDelete.state}`)
+    console.log(
+      `Deleting volume ${volume.resourceId} ${toDelete.name} in state ${toDelete.state} ${
+        toDelete.attached_machine_id ?? ''
+      }`,
+    )
     if (toDelete.attached_machine_id) {
       const machine = machines.find((m) => m.id === toDelete.attached_machine_id)
       if (machine) {
@@ -116,6 +119,7 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
           desiredState: GetDesiredStateResponse_MachineState.DELETED,
         })
 
+        console.log(`Deleting machine ${machine.id} ${machine.name} attached to volume ${toDelete.id} ${toDelete.name}`)
         await reconcileMachine(machines, deleteMachine)
       }
     }
