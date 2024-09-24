@@ -130,8 +130,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   if (!machine.flyOptions) return
   const flyOptions = machine.flyOptions
 
-  const volume =
-    volumes.find((v) => v.id === flyOptions.volumeId) ?? volumes.find((v) => v.name === flyOptions.volumeId)
+  const volume = volumes.find((v) => v.id === flyOptions.volumeId)
   if (!volume) return
 
   if (machine.architecture !== GetDesiredStateResponse_Architecture.X86) {
