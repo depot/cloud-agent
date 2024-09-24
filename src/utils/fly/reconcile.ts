@@ -13,6 +13,7 @@ import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
 import {client} from '../grpc'
+import {logger} from '../logger'
 import {toPlainObject} from '../plain'
 import {scheduleTask} from '../scheduler'
 import {
@@ -53,19 +54,25 @@ export async function getCurrentState() {
 }
 
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
+  logger.info('Reconciling state')
+
   for (const volume of response.newVolumes) {
+    logger.info(`new volume requested: ${JSON.stringify(volume)}`)
     void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
   }
 
   for (const volume of response.volumeChanges) {
+    logger.info(`volume change requested: ${JSON.stringify(volume)}`)
     void scheduleTask(`volume/change/${volume.resourceId}`, () => reconcileVolume(state, volume))
   }
 
   for (const machine of response.newMachines) {
+    logger.info(`new machine requested: ${JSON.stringify(machine)}`)
     void scheduleTask(`machine/new/${machine.id}`, () => reconcileNewMachine(state.machines, machine, state.volumes))
   }
 
   for (const machine of response.machineChanges) {
+    logger.info(`machine change requested: ${JSON.stringify(machine)}`)
     void scheduleTask(`machine/change/${machine.resourceId}`, () => reconcileMachine(state.machines, machine))
   }
 }
@@ -123,7 +130,8 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   if (!machine.flyOptions) return
   const flyOptions = machine.flyOptions
 
-  const volume = volumes.find((v) => v.name === flyOptions.volumeId)
+  const volume =
+    volumes.find((v) => v.id === flyOptions.volumeId) ?? volumes.find((v) => v.name === flyOptions.volumeId)
   if (!volume) return
 
   if (machine.architecture !== GetDesiredStateResponse_Architecture.X86) {

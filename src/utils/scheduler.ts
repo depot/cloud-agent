@@ -11,6 +11,8 @@ export async function scheduleTask(key: string, task: () => Promise<void>) {
     return
   }
 
+  const start = new Date()
+
   try {
     inProgressTasks.add(key)
     console.log(`Accepted ${key}, starting task`)
@@ -19,6 +21,7 @@ export async function scheduleTask(key: string, task: () => Promise<void>) {
     await reportError(err)
   } finally {
     inProgressTasks.delete(key)
-    console.log(`Task ${key} completed`)
+    const duration = new Date().getTime() - start.getTime()
+    console.log(`Task ${key} completed (${duration}ms)`)
   }
 }
