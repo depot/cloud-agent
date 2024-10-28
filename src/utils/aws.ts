@@ -53,21 +53,23 @@ export async function getCurrentState() {
 
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
   for (const volume of response.newVolumes) {
-    void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
+    void scheduleTask(`volume/new/${volume.id}`, (key: string) => reconcileNewVolume(state.volumes, volume))
   }
 
   for (const volume of response.volumeChanges) {
-    void scheduleTask(`volume/change/${volume.resourceId}`, () =>
+    void scheduleTask(`volume/change/${volume.resourceId}`, (key: string) =>
       reconcileVolume(state.volumes, volume, state.instances),
     )
   }
 
   for (const instance of response.newMachines) {
-    void scheduleTask(`machine/new/${instance.id}`, () => reconcileNewMachine(state.instances, instance))
+    void scheduleTask(`machine/new/${instance.id}`, (key: string) => reconcileNewMachine(state.instances, instance))
   }
 
   for (const instance of response.machineChanges) {
-    void scheduleTask(`machine/change/${instance.resourceId}`, () => reconcileMachine(state.instances, instance))
+    void scheduleTask(`machine/change/${instance.resourceId}`, (key: string) =>
+      reconcileMachine(state.instances, instance),
+    )
   }
 }
 
