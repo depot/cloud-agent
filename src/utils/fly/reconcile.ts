@@ -211,8 +211,11 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
     const begin = Date.now()
     console.log('Starting machine', current.id)
-    await startMachine(current.id)
+    const res = await startMachine(current.id)
     const duration_ms = Date.now() - begin
+    if (duration_ms > 5000) {
+      console.log('WARNING: Slow machine start', current.id, 'in ', duration_ms, 'ms', 'result', res)
+    }
     console.log('Started machine', current.id, 'in ', duration_ms, 'ms')
   }
 
