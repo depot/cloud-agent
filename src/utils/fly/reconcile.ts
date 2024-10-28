@@ -209,15 +209,21 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
   if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
+    const begin = Date.now()
     console.log('Starting machine', current.id)
     await startMachine(current.id)
+    const duration_ms = Date.now() - begin
+    console.log('Started machine', current.id, 'in ', duration_ms, 'ms')
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
+    const begin = Date.now()
     console.log('Stopping machine', current.id)
     await stopAndWait(current)
+    const duration_ms = Date.now() - begin
+    console.log('Stopped machine', current.id, current.id, 'in ', duration_ms, 'ms')
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
