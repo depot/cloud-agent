@@ -13,7 +13,6 @@ import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
 import {errorMessage} from '../errors'
 import {client} from '../grpc'
-import {logger} from '../logger'
 import {toPlainObject} from '../plain'
 import {scheduleTask} from '../scheduler'
 import {
@@ -54,45 +53,49 @@ export async function getCurrentState() {
 }
 
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
-  logger.info('Reconciling state')
-
   for (const volume of response.newVolumes) {
-    logger.info(`new volume requested: ${JSON.stringify(volume)}`)
-    void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
+    void scheduleTask(`volume/new/${volume.id}`, (key: string) => reconcileNewVolume(key, state.volumes, volume))
   }
 
   for (const volume of response.volumeChanges) {
-    logger.info(`volume change requested: ${JSON.stringify(volume)}`)
-    void scheduleTask(`volume/change/${volume.resourceId}`, () => reconcileVolume(state, volume))
+    void scheduleTask(`volume/change/${volume.resourceId}`, (key: string) => reconcileVolume(key, state, volume))
   }
 
   for (const machine of response.newMachines) {
-    logger.info(`new machine requested: ${JSON.stringify(machine)}`)
-    void scheduleTask(`machine/new/${machine.id}`, () => reconcileNewMachine(state.machines, machine, state.volumes))
+    void scheduleTask(`machine/new/${machine.id}`, (key: string) =>
+      reconcileNewMachine(key, state.machines, machine, state.volumes),
+    )
   }
 
   for (const machine of response.machineChanges) {
-    logger.info(`machine change requested: ${JSON.stringify(machine)}`)
-    void scheduleTask(`machine/change/${machine.resourceId}`, () => reconcileMachine(state.machines, machine))
+    void scheduleTask(`machine/change/${machine.resourceId}`, (key: string) =>
+      reconcileMachine(key, state.machines, machine),
+    )
   }
 }
 
-async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
+async function reconcileNewVolume(key: string, state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
+  console.log(`Launch new volume ${key}: ${volume.id}`)
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
   if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
-    console.log(`Creating new gpu volume ${volume.id}`)
+    console.log(`Launch new volume ${key}: ${volume.id} as gpu volume`)
     await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
   } else {
-    console.log(`Creating new volume ${volume.id}`)
+    console.log(`Launch new volume ${key}: ${volume.id} as regular volume`)
     await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
   }
 }
 
 // fly volumes are not attached/detatched.  The only modification is deleting the volume.
 // If the volume is attached to a machine, we delete the machine first.
-async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDesiredStateResponse_VolumeChange) {
+async function reconcileVolume(
+  key: string,
+  {volumes, machines}: CurrentState,
+  volume: GetDesiredStateResponse_VolumeChange,
+) {
+  console.log(`Delete volume ${key}: ${volume.resourceId}`)
   if (volume.desiredState !== GetDesiredStateResponse_VolumeState.DELETED) {
     return
   }
@@ -120,7 +123,7 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
         })
 
         console.log(`Deleting machine ${machine.id} ${machine.name} attached to volume ${toDelete.id} ${toDelete.name}`)
-        await reconcileMachine(machines, deleteMachine)
+        await reconcileMachine(key, machines, deleteMachine)
       }
     }
 
@@ -128,7 +131,13 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
   }
 }
 
-async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateResponse_NewMachine, volumes: Volume[]) {
+async function reconcileNewMachine(
+  key: string,
+  state: V1Machine[],
+  machine: GetDesiredStateResponse_NewMachine,
+  volumes: Volume[],
+) {
+  console.log(`Launch new machine ${key}: ${machine.id}`)
   const existing = state.find((m) => m.name === machine.id)
   if (existing) return
   if (!machine.flyOptions) return
@@ -140,8 +149,6 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   if (machine.architecture !== GetDesiredStateResponse_Architecture.X86) {
     throw new Error('Unsupported architecture, Fly only supports x86 (amd64) machines')
   }
-
-  console.log(`Launching new machine ${machine.id}`)
 
   const {cpuKind: cpu_kind, cpus, memGBs, needsGPU} = machineKind(machine.kind)
   let req = {
@@ -170,12 +177,12 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   try {
     const flyMachine = await launchBuildkitMachine(req)
     if (!flyMachine) throw new Error(`Unable to launch machine ${machine.id}`)
-    console.log(`Launched new machine ${machine.id} ${flyMachine.id}`)
+    console.log(`Launched new machine ${key}: ${machine.id} ${flyMachine.id}`)
   } catch (err) {
     // If we get a capacity error, delete the volume and try again.
     // We do this because the volume is tied to the machine and we can't detach it.
     if (isCapacityError(err)) {
-      console.error(`Capacity error, requesting replacement volume and trying again ${err}`)
+      console.log(`Capacity error, requesting replacement volume and trying again ${err}`)
       await client.replaceVolume({id: volume.name})
       return
     }
@@ -197,36 +204,42 @@ function currentMachineState(machine: V1Machine): GetDesiredStateResponse_Machin
 
 const timeoutSeconds = 30
 
-async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResponse_MachineChange) {
+async function reconcileMachine(key: string, state: V1Machine[], machine: GetDesiredStateResponse_MachineChange) {
   const current = state.find((m) => m.id === machine.resourceId)
-  const currentState = current ? currentMachineState(current) : 'unknown'
+  if (!current) {
+    console.log(`Change machine ${key}: ${machine.resourceId} not found`)
+    return
+  }
 
+  const currentState = currentMachineState(current)
   // Skip if already at the desired state
-  if (currentState === machine.desiredState) return
+  if (currentState === machine.desiredState) {
+    console.log(`Change machine ${key}: ${machine.resourceId} ${current.id} at desired state`)
+    return
+  }
 
-  if (!current) return
+  console.log(
+    `Change machine ${key}: ${machine.resourceId} ${current.id} from ${currentState} to ${machine.desiredState}`,
+  )
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
     const begin = Date.now()
-    console.log('Starting machine', current.id)
+    console.log(`Change machine ${key}: ${machine.resourceId} starting`)
     const res = await startMachine(current.id)
     const duration_ms = Date.now() - begin
-    if (duration_ms > 5000) {
-      console.log('WARNING: Slow machine start', current.id, 'in ', duration_ms, 'ms', 'result', res)
-    }
-    console.log('Started machine', current.id, 'in ', duration_ms, 'ms')
+    console.log(`Change machine ${key}: ${machine.resourceId} started in ${duration_ms}ms`)
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
     const begin = Date.now()
-    console.log('Stopping machine', current.id)
+    console.log(`Change machine ${key}: ${machine.resourceId} stopping`)
     await stopAndWait(current)
     const duration_ms = Date.now() - begin
-    console.log('Stopped machine', current.id, current.id, 'in ', duration_ms, 'ms')
+    console.log(`Change machine ${key}: ${machine.resourceId} stopped in ${duration_ms}ms`)
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
