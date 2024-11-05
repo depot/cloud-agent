@@ -306,7 +306,7 @@ systemctl start machine-agent.service
   }
 
   console.log(`Creating new instance for machine ID ${machine.id}`)
-  await client.send(
+  const instance = await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
@@ -339,6 +339,25 @@ systemctl start machine-agent.service
       UserData: Buffer.from(userData).toString('base64'),
     }),
   )
+
+  if (!instance.Instances || instance.Instances.length === 0 || !instance.Instances[0].InstanceId) {
+    // TODO: Will this happen?
+    // If this does happen you'll need to run a different kind of description
+    // with a filter on the tag machine id.
+    console.log(`No instances created for machine ID ${machine.id}`)
+    return
+  }
+
+  const instanceID = instance.Instances[0].InstanceId
+  let instanceCreated = false
+
+  // We are waiting for the instance to exist because we are blocking scheduleTask
+  // from starting another task with the same machine ID until this one completes.
+  while (!instanceCreated) {
+    const res = await client.send(new DescribeInstancesCommand({InstanceIds: [instanceID]}))
+    const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
+    instanceCreated = instances.length > 0
+  }
 }
 
 function currentMachineState(instance: Instance): GetDesiredStateResponse_MachineState {
