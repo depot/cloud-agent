@@ -16,6 +16,7 @@ import {
   TerminateInstancesCommand,
   Volume,
   paginateDescribeInstances,
+  waitUntilInstanceExists,
 } from '@aws-sdk/client-ec2'
 import {
   GetDesiredStateResponse,
@@ -349,14 +350,16 @@ systemctl start machine-agent.service
   }
 
   const instanceID = instance.Instances[0].InstanceId
-  let instanceCreated = false
 
-  // We are waiting for the instance to exist because we are blocking scheduleTask
-  // from starting another task with the same machine ID until this one completes.
-  while (!instanceCreated) {
-    const res = await client.send(new DescribeInstancesCommand({InstanceIds: [instanceID]}))
-    const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
-    instanceCreated = instances.length > 0
+  const MAX_WAIT = 30
+  try {
+    await waitUntilInstanceExists({client, maxWaitTime: MAX_WAIT}, {InstanceIds: [instanceID]})
+  } catch (caught) {
+    if (caught instanceof Error && caught.name === 'TimeoutError') {
+      console.log(`instance ${instanceID} did not exist after ${MAX_WAIT} seconds`)
+    } else {
+      console.log(`Error waiting for instance ${instanceID} to exist`, caught)
+    }
   }
 }
 
