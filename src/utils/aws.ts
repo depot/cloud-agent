@@ -16,6 +16,7 @@ import {
   TerminateInstancesCommand,
   Volume,
   paginateDescribeInstances,
+  waitUntilInstanceExists,
 } from '@aws-sdk/client-ec2'
 import {
   GetDesiredStateResponse,
@@ -306,7 +307,7 @@ systemctl start machine-agent.service
   }
 
   console.log(`Creating new instance for machine ID ${machine.id}`)
-  await client.send(
+  const instance = await client.send(
     new RunInstancesCommand({
       LaunchTemplate: {
         LaunchTemplateId:
@@ -339,6 +340,27 @@ systemctl start machine-agent.service
       UserData: Buffer.from(userData).toString('base64'),
     }),
   )
+
+  if (!instance.Instances || instance.Instances.length === 0 || !instance.Instances[0].InstanceId) {
+    // TODO: Will this happen?
+    // If this does happen you'll need to run a different kind of description
+    // with a filter on the tag machine id.
+    console.log(`No instances created for machine ID ${machine.id}`)
+    return
+  }
+
+  const instanceID = instance.Instances[0].InstanceId
+
+  const MAX_WAIT = 30
+  try {
+    await waitUntilInstanceExists({client, maxWaitTime: MAX_WAIT}, {InstanceIds: [instanceID]})
+  } catch (caught) {
+    if (caught instanceof Error && caught.name === 'TimeoutError') {
+      console.log(`instance ${instanceID} did not exist after ${MAX_WAIT} seconds`)
+    } else {
+      console.log(`Error waiting for instance ${instanceID} to exist`, caught)
+    }
+  }
 }
 
 function currentMachineState(instance: Instance): GetDesiredStateResponse_MachineState {
