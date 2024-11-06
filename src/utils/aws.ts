@@ -378,13 +378,23 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
     (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.resourceId),
   )
 
+  if (matches.length == 0) {
+    console.log(`No matching machine instance with resource ID: ${machine.resourceId}`)
+  }
+
   for (const current of matches) {
     const currentState = current ? currentMachineState(current) : 'unknown'
 
     // Skip if already at the desired state
-    if (currentState === machine.desiredState) return
+    if (currentState === machine.desiredState) {
+      console.log(`Machine instance with resource ID ${machine.resourceId} is in desired state ${machine.desiredState}`)
+      return
+    }
 
-    if (!current || !current.InstanceId) return
+    if (!current || !current.InstanceId) {
+      console.log(`No machine instance with resource ID: ${machine.resourceId}`)
+      return
+    }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.RUNNING) {
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
