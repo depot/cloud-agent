@@ -237,6 +237,9 @@ async function runInstance(machine: GetDesiredStateResponse_NewMachine, subnetID
     }),
   )
   const instances = res.Reservations?.flatMap((r) => r.Instances || []) || []
+  if (instances.length > 1) {
+    console.log(`Multiple instances with the same machine-id! ${machine.id}`)
+  }
   if (instances.length > 0) {
     console.log(`Found existing ${instances.length} instances for machine ID ${machine.id}, skipping`)
     return
