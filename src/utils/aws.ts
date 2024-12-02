@@ -111,8 +111,8 @@ async function getVolumesState() {
 }
 
 async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_NewVolume) {
-  const existing = Object.values(state).find((v) =>
-    v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+  const existing = Object.values(state).find(
+    (v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
   )
   if (existing) return
 
@@ -151,8 +151,8 @@ async function reconcileVolume(
   volume: GetDesiredStateResponse_VolumeChange,
   machineState: Record<string, Instance>,
 ) {
-  const current = Object.values(state).find((i) =>
-    i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.resourceId),
+  const current = Object.values(state).find(
+    (i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.resourceId),
   )
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
@@ -197,8 +197,8 @@ async function reconcileVolume(
 }
 
 async function reconcileNewMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_NewMachine) {
-  const existing = Object.values(state).find((i) =>
-    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+  const existing = Object.values(state).find(
+    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
   )
   if (existing) return
 
@@ -374,8 +374,8 @@ function currentMachineState(instance: Instance): GetDesiredStateResponse_Machin
 }
 
 async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
-  const matches = Object.values(state).filter((i) =>
-    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.resourceId),
+  const matches = Object.values(state).filter(
+    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.resourceId),
   )
 
   if (matches.length == 0) {
