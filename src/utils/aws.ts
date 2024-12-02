@@ -111,8 +111,8 @@ async function getVolumesState() {
 }
 
 async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_NewVolume) {
-  const existing = Object.values(state).find(
-    (v) => v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
+  const existing = Object.values(state).find((v) =>
+    v.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.id),
   )
   if (existing) return
 
@@ -151,8 +151,8 @@ async function reconcileVolume(
   volume: GetDesiredStateResponse_VolumeChange,
   machineState: Record<string, Instance>,
 ) {
-  const current = Object.values(state).find(
-    (i) => i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.resourceId),
+  const current = Object.values(state).find((i) =>
+    i.Tags?.some((t) => t.Key === 'depot-volume-id' && t.Value === volume.resourceId),
   )
   const currentState = current ? currentVolumeState(current) : 'unknown'
   const currentAttachment = current?.Attachments?.[0]?.InstanceId
@@ -197,8 +197,8 @@ async function reconcileVolume(
 }
 
 async function reconcileNewMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_NewMachine) {
-  const existing = Object.values(state).find(
-    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
+  const existing = Object.values(state).find((i) =>
+    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.id),
   )
   if (existing) return
 
@@ -374,8 +374,8 @@ function currentMachineState(instance: Instance): GetDesiredStateResponse_Machin
 }
 
 async function reconcileMachine(state: Record<string, Instance>, machine: GetDesiredStateResponse_MachineChange) {
-  const matches = Object.values(state).filter(
-    (i) => i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.resourceId),
+  const matches = Object.values(state).filter((i) =>
+    i.Tags?.some((t) => t.Key === 'depot-machine-id' && t.Value === machine.resourceId),
   )
 
   if (matches.length == 0) {
@@ -400,7 +400,7 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
       console.log(`Starting instance ${machine.resourceId} (${current.InstanceId})`)
-      await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
+      await startInstance(current.InstanceId)
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
@@ -417,5 +417,65 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       console.log(`Terminating instance ${machine.resourceId} (${current.InstanceId})`)
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
     }
+  }
+}
+
+interface InstanceStartRequest {
+  instanceID: string
+  result: Promise<void>
+  resolve: () => void
+  reject: (err: Error) => void
+}
+
+const pendingRequests = new Set<InstanceStartRequest>()
+
+async function startInstance(instanceID: string) {
+  let futureResolve: () => void
+  let futureReject: (err: Error) => void
+  const request: InstanceStartRequest = {
+    instanceID,
+    result: new Promise((resolve, reject) => {
+      futureResolve = resolve
+      futureReject = reject
+    }),
+    resolve: () => futureResolve(),
+    reject: (err) => futureReject(err),
+  }
+  pendingRequests.add(request)
+
+  await processPendingRequests()
+
+  return request.result
+}
+
+let nextCheck: NodeJS.Timeout | undefined = undefined
+
+async function processPendingRequests() {
+  if (nextCheck !== undefined && pendingRequests.size < 100) return
+
+  if (nextCheck === undefined && pendingRequests.size < 100) {
+    nextCheck = setTimeout(processPendingRequests, 250)
+    return
+  }
+
+  const requests = Array.from(pendingRequests)
+  try {
+    const res = await client.send(new StartInstancesCommand({InstanceIds: requests.map((r) => r.instanceID)}))
+
+    for (const request of requests) {
+      if (!res.StartingInstances?.some((i) => i.InstanceId === request.instanceID)) {
+        request.reject(new Error(`Instance ${request.instanceID} not found in response`))
+      } else {
+        request.resolve()
+      }
+    }
+  } catch (err: any) {
+    for (const request of requests) {
+      request.reject(err)
+    }
+  } finally {
+    pendingRequests.clear()
+    clearTimeout(nextCheck)
+    nextCheck = undefined
   }
 }
