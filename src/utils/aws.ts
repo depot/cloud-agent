@@ -400,7 +400,7 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
       if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
       console.log(`Starting instance ${machine.resourceId} (${current.InstanceId})`)
-      await client.send(new StartInstancesCommand({InstanceIds: [current.InstanceId]}))
+      await startInstance(current.InstanceId)
     }
 
     if (machine.desiredState === GetDesiredStateResponse_MachineState.STOPPED) {
@@ -416,6 +416,70 @@ async function reconcileMachine(state: Record<string, Instance>, machine: GetDes
       if (currentState === GetDesiredStateResponse_MachineState.DELETING) return
       console.log(`Terminating instance ${machine.resourceId} (${current.InstanceId})`)
       await client.send(new TerminateInstancesCommand({InstanceIds: [current.InstanceId]}))
+    }
+  }
+}
+
+interface InstanceStartRequest {
+  instanceID: string
+  result: Promise<void>
+  resolve: () => void
+  reject: (err: Error) => void
+}
+
+const pendingRequests = new Set<InstanceStartRequest>()
+
+async function startInstance(instanceID: string) {
+  let futureResolve: () => void
+  let futureReject: (err: Error) => void
+  const request: InstanceStartRequest = {
+    instanceID,
+    result: new Promise((resolve, reject) => {
+      futureResolve = resolve
+      futureReject = reject
+    }),
+    resolve: () => futureResolve(),
+    reject: (err) => futureReject(err),
+  }
+  pendingRequests.add(request)
+
+  await processPendingRequests()
+
+  return request.result
+}
+
+let nextCheck: NodeJS.Timeout | undefined = undefined
+
+async function processPendingRequests(flush = false) {
+  if (!flush && pendingRequests.size < 100) {
+    if (nextCheck === undefined) {
+      nextCheck = setTimeout(() => processPendingRequests(true), 250)
+    }
+    return
+  }
+
+  const requests = Array.from(pendingRequests)
+  pendingRequests.clear()
+  clearTimeout(nextCheck)
+  nextCheck = undefined
+
+  if (requests.length === 0) return
+
+  try {
+    const instanceIDs = requests.map((r) => r.instanceID)
+    console.log(`Starting instances: ${instanceIDs.join(', ')}`)
+    const res = await client.send(new StartInstancesCommand({InstanceIds: instanceIDs}))
+
+    for (const request of requests) {
+      if (!res.StartingInstances?.some((i) => i.InstanceId === request.instanceID)) {
+        request.reject(new Error(`Instance ${request.instanceID} not found in response`))
+      } else {
+        request.resolve()
+      }
+    }
+  } catch (err: any) {
+    for (const request of requests) {
+      request.reject(err)
     }
   }
 }
