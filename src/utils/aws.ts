@@ -466,7 +466,9 @@ async function processPendingRequests(flush = false) {
   if (requests.length === 0) return
 
   try {
-    const res = await client.send(new StartInstancesCommand({InstanceIds: requests.map((r) => r.instanceID)}))
+    const instanceIDs = requests.map((r) => r.instanceID)
+    console.log(`Starting instances: ${instanceIDs.join(', ')}`)
+    const res = await client.send(new StartInstancesCommand({InstanceIds: instanceIDs}))
 
     for (const request of requests) {
       if (!res.StartingInstances?.some((i) => i.InstanceId === request.instanceID)) {
