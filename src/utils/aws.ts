@@ -450,15 +450,21 @@ async function startInstance(instanceID: string) {
 
 let nextCheck: NodeJS.Timeout | undefined = undefined
 
-async function processPendingRequests() {
-  if (nextCheck !== undefined && pendingRequests.size < 100) return
-
-  if (nextCheck === undefined && pendingRequests.size < 100) {
-    nextCheck = setTimeout(processPendingRequests, 250)
+async function processPendingRequests(flush = false) {
+  if (!flush && pendingRequests.size < 100) {
+    if (nextCheck === undefined) {
+      nextCheck = setTimeout(() => processPendingRequests(true), 250)
+    }
     return
   }
 
   const requests = Array.from(pendingRequests)
+  pendingRequests.clear()
+  clearTimeout(nextCheck)
+  nextCheck = undefined
+
+  if (requests.length === 0) return
+
   try {
     const res = await client.send(new StartInstancesCommand({InstanceIds: requests.map((r) => r.instanceID)}))
 
@@ -473,9 +479,5 @@ async function processPendingRequests() {
     for (const request of requests) {
       request.reject(err)
     }
-  } finally {
-    pendingRequests.clear()
-    clearTimeout(nextCheck)
-    nextCheck = undefined
   }
 }
