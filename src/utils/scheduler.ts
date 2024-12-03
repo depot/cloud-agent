@@ -5,9 +5,8 @@ const inProgressTasks = new Set<string>()
 /**
  * Schedule an update to run, ensuring that only one update is running at a time.
  */
-export async function scheduleTask(key: string, task: () => Promise<void>) {
+export async function scheduleTask(key: string, task: (key: string) => Promise<void>) {
   if (inProgressTasks.has(key)) {
-    console.log(`Skipping ${key} because it is already in progress`)
     return
   }
 
@@ -15,10 +14,11 @@ export async function scheduleTask(key: string, task: () => Promise<void>) {
 
   try {
     inProgressTasks.add(key)
-    console.log(`Accepted ${key}, starting task`)
-    return await task()
+    return await task(key)
   } catch (err) {
     await reportError(err)
+    const duration = new Date().getTime() - start.getTime()
+    console.log(`Task ${key} failed (${duration}ms)`)
   } finally {
     inProgressTasks.delete(key)
     const duration = new Date().getTime() - start.getTime()
