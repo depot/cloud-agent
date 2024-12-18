@@ -10,6 +10,7 @@ import {
   CLOUD_AGENT_CONNECTION_ID,
   CLOUD_AGENT_PROVIDER,
   CLOUD_AGENT_VERSION,
+  CLOUD_AGENT_VOLUME_ONLY,
 } from './utils/env'
 import {client} from './utils/grpc'
 import {logger} from './utils/logger'
@@ -48,15 +49,18 @@ async function main() {
     process.exit(1)
   }
 
-  switch (CLOUD_AGENT_PROVIDER) {
-    case 'fly':
-      startStateStream(signal, FlyProvider)
-      break
-    case 'aws':
-      startStateStream(signal, AwsProvider)
-      break
-    default:
-      startStateStream(signal, AwsProvider)
+  // Volume only mode only handles ceph volume requests.
+  if (!CLOUD_AGENT_VOLUME_ONLY) {
+    switch (CLOUD_AGENT_PROVIDER) {
+      case 'fly':
+        startStateStream(signal, FlyProvider)
+        break
+      case 'aws':
+        startStateStream(signal, AwsProvider)
+        break
+      default:
+        startStateStream(signal, AwsProvider)
+    }
   }
 
   startUpdater(signal)

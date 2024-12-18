@@ -4,6 +4,7 @@ config()
 
 // CLOUD_AGENT_PROVIDER defines the cloud provider. It defaults to 'aws' but can be 'fly'.
 export const CLOUD_AGENT_PROVIDER = process.env.CLOUD_AGENT_PROVIDER ?? 'aws'
+export const CLOUD_AGENT_VOLUME_ONLY = process.env.CLOUD_AGENT_VOLUME_ONLY
 
 export const CLOUD_AGENT_API_URL = process.env.CLOUD_AGENT_API_URL ?? 'https://api.depot.dev'
 
