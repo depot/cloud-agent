@@ -227,7 +227,8 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
         await stopAndWait(current)
       } catch {} // stop can sometime fail, ignore.
     }
-    const force = currentState === GetDesiredStateResponse_MachineState.ERROR
+    // Always force delete to handle the situations when machines cannot be deleted for some reason in the Fly API.
+    const force = true
     force ? console.log('Forcing delete of machine', current.id) : console.log('Deleting machine', current.id)
     await deleteMachine(current.id, force)
   }
