@@ -8,7 +8,7 @@ on:
 jobs:
   restart-apps:
     name: Weekly fly cloud-agent restart
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
