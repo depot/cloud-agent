@@ -1,4 +1,4 @@
-import {V1Machine, Volume, createVolume, launchMachine} from './client'
+import {MachineGuest, V1Machine, Volume, createVolume, launchMachine} from './client'
 
 export interface FlyBuildkitMachineRequest {
   cpu_kind: 'shared' | 'dedicated' | 'performance'
@@ -94,10 +94,11 @@ export interface BuildkitVolumeRequest {
   depotID: string
   region: string
   sizeGB: number
+  compute?: MachineGuest
 }
 
 export async function createBuildkitVolume(req: BuildkitVolumeRequest): Promise<Volume> {
-  const {depotID, region, sizeGB} = req
+  const {depotID, region, sizeGB, compute} = req
   const volume = await createVolume({
     name: depotID,
     region,
@@ -105,6 +106,7 @@ export async function createBuildkitVolume(req: BuildkitVolumeRequest): Promise<
     snapshot_retention: 5, // 5 is fly's minimum value.
     encrypted: false,
     fstype: 'ext4',
+    compute,
   })
   return volume
 }
