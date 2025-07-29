@@ -86,7 +86,17 @@ async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateRespon
     await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
   } else {
     console.log(`Creating new volume ${volume.id}`)
-    await createBuildkitVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+    const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
+    await createBuildkitVolume({
+      depotID: volume.id,
+      region: volume.zone ?? FLY_REGION,
+      sizeGB: volume.size,
+      compute: {
+        cpu_kind: cpuKind,
+        cpus,
+        memory_mb: memGBs * 1024,
+      },
+    })
   }
 }
 
