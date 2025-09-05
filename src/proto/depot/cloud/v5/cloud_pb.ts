@@ -513,6 +513,16 @@ export class GetDesiredStateResponse_NewVolume extends Message<GetDesiredStateRe
    */
   zone?: string
 
+  /**
+   * @generated from field: optional int32 iops = 6;
+   */
+  iops?: number
+
+  /**
+   * @generated from field: optional int32 throughput = 7;
+   */
+  throughput?: number
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewVolume>) {
     super()
     proto3.util.initPartial(data, this)
@@ -526,6 +536,8 @@ export class GetDesiredStateResponse_NewVolume extends Message<GetDesiredStateRe
     {no: 3, name: 'architecture', kind: 'enum', T: proto3.getEnumType(GetDesiredStateResponse_Architecture)},
     {no: 4, name: 'size', kind: 'scalar', T: 5 /* ScalarType.INT32 */},
     {no: 5, name: 'zone', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
+    {no: 6, name: 'iops', kind: 'scalar', T: 5 /* ScalarType.INT32 */, opt: true},
+    {no: 7, name: 'throughput', kind: 'scalar', T: 5 /* ScalarType.INT32 */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewVolume {

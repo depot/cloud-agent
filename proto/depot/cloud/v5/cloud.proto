@@ -49,6 +49,8 @@ message GetDesiredStateResponse {
     Architecture architecture = 3;
     int32 size = 4;
     optional string zone = 5;
+    optional int32 iops = 6;
+    optional int32 throughput = 7;
   }
 
   message MachineChange {

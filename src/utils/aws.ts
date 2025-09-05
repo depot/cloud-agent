@@ -133,6 +133,8 @@ async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesi
         },
       ],
       VolumeType: 'gp3',
+      Iops: volume.iops,
+      Throughput: volume.throughput,
     }),
   )
 }
