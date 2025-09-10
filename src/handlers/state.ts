@@ -11,6 +11,7 @@ import {
   reconcile as reconcileFly,
 } from '../utils/fly/reconcile'
 import {client} from '../utils/grpc'
+import {clearCompletedTasks} from '../utils/scheduler'
 
 interface CloudProvider<T extends AwsCurrentState | FlyCurrentState> {
   getCurrentState(): Promise<T>
@@ -33,6 +34,9 @@ export async function startStateStream<T extends AwsCurrentState | FlyCurrentSta
 ) {
   while (!signal.aborted) {
     try {
+      // Allow any completed tasks to be scheduled again if needed
+      clearCompletedTasks()
+
       const currentState = await provider.getCurrentState()
 
       const response = await client.getDesiredState(
