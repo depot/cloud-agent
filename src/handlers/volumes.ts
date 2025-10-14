@@ -57,7 +57,7 @@ export async function startVolumeStream(signal: AbortSignal) {
         if (signal.aborted) return
 
         const actionKey = JSON.stringify(response.action)
-        if (inProgressUpdates[actionKey] || completedUpdates[actionKey]) break
+        if (inProgressUpdates[actionKey] || completedUpdates[actionKey]) continue
         inProgressUpdates[actionKey] = true
 
         void queue.add(async () => {
