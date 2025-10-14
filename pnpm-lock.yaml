@@ -38,6 +38,9 @@ dependencies:
   fast-json-patch:
     specifier: ^3.1.1
     version: 3.1.1
+  p-queue:
+    specifier: ^9.0.0
+    version: 9.0.0
   undici:
     specifier: ^6.19.2
     version: 6.19.2
@@ -1351,6 +1354,10 @@ packages:
       '@esbuild/win32-x64': 0.18.19
     dev: true
 
+  /eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+    dev: false
+
   /execa@7.2.0:
     resolution: {integrity: sha512-UduyVP7TLB5IcAQl+OzLyLcS/l32W/GLg+AhHJ+ow40FOk2U3SAllPwR44v4vmdFwIWqpdwxxpQbF1n5ta9seA==}
     engines: {node: ^14.18.0 || ^16.14.0 || >=18.0.0}
@@ -1532,6 +1539,19 @@ packages:
     dependencies:
       p-limit: 3.1.0
     dev: true
+
+  /p-queue@9.0.0:
+    resolution: {integrity: sha512-KO1RyxstL9g1mK76530TExamZC/S2Glm080Nx8PE5sTd7nlduDQsAfEl4uXX+qZjLiwvDauvzXavufy3+rJ9zQ==}
+    engines: {node: '>=20'}
+    dependencies:
+      eventemitter3: 5.0.1
+      p-timeout: 7.0.1
+    dev: false
+
+  /p-timeout@7.0.1:
+    resolution: {integrity: sha512-AxTM2wDGORHGEkPCt8yqxOTMgpfbEHqF51f/5fJCmwFC3C/zNcGT63SymH2ttOAaiIws2zVg4+izQCjrakcwHg==}
+    engines: {node: '>=20'}
+    dev: false
 
   /path-exists@4.0.0:
     resolution: {integrity: sha512-ak9Qy5Q7jYb2Wwcey5Fpvg2KoAc/ZIhLSLOSBmRmygPsGwkVVt0fZa0qrtMz+m6tJTAHfZQ8FnmB4MG4LWy7/w==}
