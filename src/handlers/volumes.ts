@@ -1,5 +1,6 @@
 import {PlainMessage} from '@bufbuild/protobuf'
 import {Code, ConnectError} from '@connectrpc/connect'
+import Queue from 'p-queue'
 import {
   AuthorizeClientAction,
   CopyVolumeAction,
@@ -43,6 +44,8 @@ import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
 export async function startVolumeStream(signal: AbortSignal) {
+  const queue = new Queue({concurrency: 25})
+
   while (!signal.aborted) {
     try {
       const inProgressUpdates: Record<string, boolean> = {}
@@ -52,11 +55,14 @@ export async function startVolumeStream(signal: AbortSignal) {
 
       for await (const response of stream) {
         if (signal.aborted) return
-        ;(async () => {
-          const actionKey = JSON.stringify(response.action)
-          if (inProgressUpdates[actionKey] || completedUpdates[actionKey]) return
+
+        const actionKey = JSON.stringify(response.action)
+        if (inProgressUpdates[actionKey] || completedUpdates[actionKey]) continue
+        inProgressUpdates[actionKey] = true
+
+        void queue.add(async () => {
           try {
-            inProgressUpdates[actionKey] = true
+            if (signal.aborted) return
             const update = await handleAction(response.action)
             if (update) await client.reportVolumeUpdates(update)
             completedUpdates[actionKey] = true
@@ -68,7 +74,7 @@ export async function startVolumeStream(signal: AbortSignal) {
           } finally {
             delete inProgressUpdates[actionKey]
           }
-        })()
+        })
       }
     } catch (err: any) {
       if (err instanceof ConnectError && err.code === Code.FailedPrecondition) {
