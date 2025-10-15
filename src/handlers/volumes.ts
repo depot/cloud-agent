@@ -44,7 +44,7 @@ import {reportError} from '../utils/errors'
 import {client} from '../utils/grpc'
 
 export async function startVolumeStream(signal: AbortSignal) {
-  const queue = new Queue({concurrency: 25})
+  const queue = new Queue({concurrency: 50})
 
   while (!signal.aborted) {
     try {
