@@ -16,37 +16,63 @@ import {client} from '../grpc'
 import {logger} from '../logger'
 import {toPlainObject} from '../plain'
 import {scheduleTask} from '../scheduler'
+import {APIFlyMachine, APIFlyVolume} from './api-types'
 import {
   createBuildkitGPUVolume,
   createBuildkitVolume,
   launchBuildkitGPUMachine,
   launchBuildkitMachine,
 } from './buildkit'
-import {
-  V1Machine,
-  Volume,
-  deleteMachine,
-  deleteVolume,
-  listMachines,
-  listVolumes,
-  startMachine,
-  stopMachine,
-  waitMachine,
-} from './client'
+import {deleteMachine, deleteVolume, listMachines, listVolumes, startMachine, stopMachine, waitMachine} from './client'
 
 export interface CurrentState {
   cloud: 'fly'
   region: string
-  machines: V1Machine[]
-  volumes: Volume[]
+  machines: APIFlyMachine[]
+  volumes: APIFlyVolume[]
 }
 
 export async function getCurrentState() {
+  const [machines, volumes] = await Promise.all([listMachines(), listVolumes()])
+
+  const apiMachines = machines.map(
+    (m): APIFlyMachine => ({
+      id: m.id,
+      name: m.name,
+      state: m.state,
+      region: m.region,
+      instance_id: m.instance_id,
+      private_ip: m.private_ip,
+      created_at: m.created_at,
+      config: {
+        image: m.config.image,
+        guest: m.config.guest
+          ? {
+              cpu_kind: m.config.guest.cpu_kind,
+              cpus: m.config.guest.cpus,
+              memory_mb: m.config.guest.memory_mb,
+            }
+          : undefined,
+      },
+    }),
+  )
+
+  const apiVolumes = volumes.map(
+    (v): APIFlyVolume => ({
+      id: v.id,
+      name: v.name,
+      state: v.state,
+      region: v.region,
+      attached_machine_id: v.attached_machine_id,
+      created_at: v.created_at,
+    }),
+  )
+
   const state: CurrentState = await promises({
     cloud: 'fly',
     region: FLY_REGION,
-    machines: listMachines(),
-    volumes: listVolumes(),
+    machines: apiMachines,
+    volumes: apiVolumes,
     errors: [],
   })
 
@@ -77,7 +103,7 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
   }
 }
 
-async function reconcileNewVolume(state: Volume[], volume: GetDesiredStateResponse_NewVolume) {
+async function reconcileNewVolume(state: APIFlyVolume[], volume: GetDesiredStateResponse_NewVolume) {
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
@@ -138,7 +164,11 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
   }
 }
 
-async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateResponse_NewMachine, volumes: Volume[]) {
+async function reconcileNewMachine(
+  state: APIFlyMachine[],
+  machine: GetDesiredStateResponse_NewMachine,
+  volumes: APIFlyVolume[],
+) {
   const existing = state.find((m) => m.name === machine.id)
   if (existing) return
   if (!machine.flyOptions) return
@@ -194,7 +224,7 @@ async function reconcileNewMachine(state: V1Machine[], machine: GetDesiredStateR
   }
 }
 
-function currentMachineState(machine: V1Machine): GetDesiredStateResponse_MachineState {
+function currentMachineState(machine: APIFlyMachine): GetDesiredStateResponse_MachineState {
   const instanceState = machine.state
   if (instanceState === 'started') return GetDesiredStateResponse_MachineState.RUNNING
   if (instanceState === 'stopping') return GetDesiredStateResponse_MachineState.STOPPING
@@ -207,7 +237,7 @@ function currentMachineState(machine: V1Machine): GetDesiredStateResponse_Machin
 
 const timeoutSeconds = 30
 
-async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResponse_MachineChange) {
+async function reconcileMachine(state: APIFlyMachine[], machine: GetDesiredStateResponse_MachineChange) {
   const current = state.find((m) => m.id === machine.resourceId)
   const currentState = current ? currentMachineState(current) : 'unknown'
 
@@ -244,7 +274,7 @@ async function reconcileMachine(state: V1Machine[], machine: GetDesiredStateResp
   }
 }
 
-type StopAndWaitParams = Pick<V1Machine, 'id' | 'instance_id'>
+type StopAndWaitParams = Pick<APIFlyMachine, 'id' | 'instance_id'>
 
 // Stop the machine and wait for it to stop.
 async function stopAndWait({id, instance_id}: StopAndWaitParams) {

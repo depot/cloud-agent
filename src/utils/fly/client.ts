@@ -356,7 +356,7 @@ export interface Volume {
   encrypted: boolean
   attached_machine_id?: string
   attached_alloc_id?: string
-  createdAt: string
+  created_at: string
   blocks: number
   block_size: number
   blocks_free: number
