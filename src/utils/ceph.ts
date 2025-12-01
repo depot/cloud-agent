@@ -1,5 +1,6 @@
 import {execa} from 'execa'
 import * as fsp from 'node:fs/promises'
+import {sleep} from './common'
 import {CLOUD_AGENT_CEPH_CONFIG} from './env'
 
 const POOL = 'rbd'
@@ -159,6 +160,9 @@ export async function imageRm(imageSpec: ImageSpec) {
   if (exitCode === 0 || exitCode === 2) {
     return
   }
+
+  // Sleep for 10 seconds to avoid excessive requests to ceph
+  await sleep(10 * 1000)
 
   throw new Error(stderr)
 }
