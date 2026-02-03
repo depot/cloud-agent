@@ -34,6 +34,8 @@ message GetDesiredStateResponse {
     optional string user_data = 7;
     optional FlyMachineOptions fly_options = 8;
     optional string zone = 9;
+    optional string project_id = 10;
+    optional string project_name = 11;
 
     message FlyMachineOptions {
       // Volume to attach to the machine.

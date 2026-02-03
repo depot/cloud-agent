@@ -10,10 +10,11 @@ export interface FlyBuildkitMachineRequest {
   image: string
   env: Record<string, string>
   files: Record<string, string>
+  metadata?: Record<string, string>
 }
 
 export async function launchBuildkitMachine(req: FlyBuildkitMachineRequest): Promise<V1Machine> {
-  const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files} = req
+  const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files, metadata} = req
   const machine = await launchMachine({
     name: depotID,
     region,
@@ -42,6 +43,7 @@ export async function launchBuildkitMachine(req: FlyBuildkitMachineRequest): Pro
       auto_destroy: false,
       restart: {policy: 'no'},
       dns: {},
+      metadata,
     },
   })
   return machine
@@ -50,7 +52,7 @@ export async function launchBuildkitMachine(req: FlyBuildkitMachineRequest): Pro
 const GPU_KIND = 'a10'
 
 export async function launchBuildkitGPUMachine(buildkit: FlyBuildkitMachineRequest): Promise<V1Machine> {
-  const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files} = buildkit
+  const {cpu_kind, cpus, memGBs, depotID, region, volumeID, image, env, files, metadata} = buildkit
   if (region !== 'ord') {
     throw new Error('GPU machines are only available in the ord region')
   }
@@ -85,6 +87,7 @@ export async function launchBuildkitGPUMachine(buildkit: FlyBuildkitMachineReque
       auto_destroy: false,
       restart: {policy: 'no'},
       dns: {},
+      metadata,
     },
   })
   return machine

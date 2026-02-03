@@ -374,6 +374,16 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
    */
   zone?: string
 
+  /**
+   * @generated from field: optional string project_id = 10;
+   */
+  projectId?: string
+
+  /**
+   * @generated from field: optional string project_name = 11;
+   */
+  projectName?: string
+
   constructor(data?: PartialMessage<GetDesiredStateResponse_NewMachine>) {
     super()
     proto3.util.initPartial(data, this)
@@ -391,6 +401,8 @@ export class GetDesiredStateResponse_NewMachine extends Message<GetDesiredStateR
     {no: 7, name: 'user_data', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
     {no: 8, name: 'fly_options', kind: 'message', T: GetDesiredStateResponse_NewMachine_FlyMachineOptions, opt: true},
     {no: 9, name: 'zone', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
+    {no: 10, name: 'project_id', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
+    {no: 11, name: 'project_name', kind: 'scalar', T: 9 /* ScalarType.STRING */, opt: true},
   ])
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetDesiredStateResponse_NewMachine {

@@ -184,6 +184,10 @@ async function reconcileNewMachine(
   console.log(`Launching new machine ${machine.id}`)
 
   const {cpuKind: cpu_kind, cpus, memGBs, needsGPU} = machineKind(machine.kind)
+  const metadata: Record<string, string> = {}
+  if (machine.projectId) metadata.depot_project_id = machine.projectId
+  if (machine.projectName) metadata.depot_project_name = machine.projectName
+
   let req = {
     cpu_kind,
     cpus,
@@ -198,6 +202,7 @@ async function reconcileNewMachine(
       DEPOT_CLOUD_MACHINE_ID: machine.id,
     },
     files: flyOptions.files,
+    metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
   }
 
   if (needsGPU) {
