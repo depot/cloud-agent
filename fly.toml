@@ -8,6 +8,7 @@ CLOUD_AGENT_AWS_SUBNET_ID = "1"
 CLOUD_AGENT_CONNECTION_ID = "depot-fly-iad"
 CLOUD_AGENT_PROVIDER = "fly"
 CLOUD_AGENT_VERSION = "fly"
+CLOUD_AGENT_API_URL = "https://api-fly.depot.dev"
 
 [processes]
 app = "node /app/dist/index.js"
