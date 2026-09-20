@@ -23,7 +23,19 @@ import {
   launchBuildkitGPUMachine,
   launchBuildkitMachine,
 } from './buildkit'
-import {deleteMachine, deleteVolume, listMachines, listVolumes, startMachine, stopMachine, waitMachine} from './client'
+import {
+  FlyApiError,
+  deleteMachine,
+  deleteVolume,
+  listMachines,
+  listVolumes,
+  startMachine,
+  stopMachine,
+  waitMachine,
+} from './client'
+
+// Unlike completed scheduler tasks, permanent failures survive reconciliation passes for the process lifetime.
+const permanentFailures = new Set<string>()
 
 export interface CurrentState {
   cloud: 'fly'
@@ -107,22 +119,38 @@ async function reconcileNewVolume(state: APIFlyVolume[], volume: GetDesiredState
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
-  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
-    console.log(`Creating new gpu volume ${volume.id}`)
-    await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
-  } else {
-    console.log(`Creating new volume ${volume.id}`)
-    const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
-    await createBuildkitVolume({
-      depotID: volume.id,
-      region: volume.zone ?? FLY_REGION,
-      sizeGB: volume.size,
-      compute: {
-        cpu_kind: cpuKind,
-        cpus,
-        memory_mb: memGBs * 1024,
-      },
-    })
+  const region = volume.zone ?? FLY_REGION
+  const failureKey = `volume/new/${volume.id}:${region}`
+  if (permanentFailures.has(failureKey)) return
+
+  try {
+    if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
+      console.log(`Creating new gpu volume ${volume.id}`)
+      await createBuildkitGPUVolume({depotID: volume.id, region, sizeGB: volume.size})
+    } else {
+      console.log(`Creating new volume ${volume.id}`)
+      const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
+      await createBuildkitVolume({
+        depotID: volume.id,
+        region,
+        sizeGB: volume.size,
+        compute: {
+          cpu_kind: cpuKind,
+          cpus,
+          memory_mb: memGBs * 1024,
+        },
+      })
+    }
+  } catch (err) {
+    if (isPermanentFlyApiError(err)) {
+      permanentFailures.add(failureKey)
+      console.error(
+        `Fly API permanently rejected creating volume ${
+          volume.id
+        } in region ${region}; not retrying until restart: ${errorMessage(err)}`,
+      )
+    }
+    throw err
   }
 }
 
@@ -160,7 +188,22 @@ async function reconcileVolume({volumes, machines}: CurrentState, volume: GetDes
       }
     }
 
-    await deleteVolume(toDelete.id)
+    const failureKey = `volume/change/${toDelete.id}`
+    if (permanentFailures.has(failureKey)) return
+
+    try {
+      await deleteVolume(toDelete.id)
+    } catch (err) {
+      if (isPermanentFlyApiError(err)) {
+        permanentFailures.add(failureKey)
+        console.error(
+          `Fly API permanently rejected deleting volume ${toDelete.id}; not retrying until restart: ${errorMessage(
+            err,
+          )}`,
+        )
+      }
+      throw err
+    }
   }
 }
 
@@ -275,7 +318,22 @@ async function reconcileMachine(state: APIFlyMachine[], machine: GetDesiredState
     // Always force delete to handle the situations when machines cannot be deleted for some reason in the Fly API.
     const force = true
     force ? console.log('Forcing delete of machine', current.id) : console.log('Deleting machine', current.id)
-    await deleteMachine(current.id, force)
+    const failureKey = `machine/change/${current.id}`
+    if (permanentFailures.has(failureKey)) return
+
+    try {
+      await deleteMachine(current.id, force)
+    } catch (err) {
+      if (isPermanentFlyApiError(err)) {
+        permanentFailures.add(failureKey)
+        console.error(
+          `Fly API permanently rejected deleting machine ${current.id}; not retrying until restart: ${errorMessage(
+            err,
+          )}`,
+        )
+      }
+      throw err
+    }
   }
 }
 
@@ -297,6 +355,11 @@ function isCapacityError(err: unknown): boolean {
   return (
     message.includes('412') && message.includes('insufficient resources to create new machine with existing volume')
   )
+}
+
+function isPermanentFlyApiError(err: unknown): boolean {
+  if (!(err instanceof FlyApiError)) return false
+  return err.status === 400 || err.status === 403 || err.status === 404 || err.status === 412 || err.status === 422
 }
 
 interface MachineKind {
