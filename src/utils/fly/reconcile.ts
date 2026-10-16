@@ -25,6 +25,9 @@ import {
 } from './buildkit'
 import {deleteMachine, deleteVolume, listMachines, listVolumes, startMachine, stopMachine, waitMachine} from './client'
 
+// IDs of volumes whose region the provider permanently rejects (e.g. a deprecated region).
+const deprecatedRegionVolumeIDs = new Set<string>()
+
 export interface CurrentState {
   cloud: 'fly'
   region: string
@@ -83,6 +86,7 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
   logger.info('Reconciling state')
 
   for (const volume of response.newVolumes) {
+    if (deprecatedRegionVolumeIDs.has(volume.id)) continue
     logger.info(`new volume requested: ${JSON.stringify(volume)}`)
     void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
   }
@@ -107,22 +111,30 @@ async function reconcileNewVolume(state: APIFlyVolume[], volume: GetDesiredState
   const existing = state.find((v) => v.name === volume.id)
   if (existing) return
 
-  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
-    console.log(`Creating new gpu volume ${volume.id}`)
-    await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
-  } else {
-    console.log(`Creating new volume ${volume.id}`)
-    const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
-    await createBuildkitVolume({
-      depotID: volume.id,
-      region: volume.zone ?? FLY_REGION,
-      sizeGB: volume.size,
-      compute: {
-        cpu_kind: cpuKind,
-        cpus,
-        memory_mb: memGBs * 1024,
-      },
-    })
+  try {
+    if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
+      console.log(`Creating new gpu volume ${volume.id}`)
+      await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
+    } else {
+      console.log(`Creating new volume ${volume.id}`)
+      const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
+      await createBuildkitVolume({
+        depotID: volume.id,
+        region: volume.zone ?? FLY_REGION,
+        sizeGB: volume.size,
+        compute: {
+          cpu_kind: cpuKind,
+          cpus,
+          memory_mb: memGBs * 1024,
+        },
+      })
+    }
+  } catch (err) {
+    if (isDeprecatedRegionError(err)) {
+      console.error(`Volume ${volume.id} is in a deprecated region ${volume.zone}, will not retry`)
+      deprecatedRegionVolumeIDs.add(volume.id)
+    }
+    throw err
   }
 }
 
@@ -297,6 +309,10 @@ function isCapacityError(err: unknown): boolean {
   return (
     message.includes('412') && message.includes('insufficient resources to create new machine with existing volume')
   )
+}
+
+function isDeprecatedRegionError(err: unknown): boolean {
+  return errorMessage(err).toLowerCase().includes('is deprecated and cannot have new resources provisioned')
 }
 
 interface MachineKind {
