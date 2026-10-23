@@ -11,7 +11,7 @@ import {
 } from '../../proto/depot/cloud/v5/cloud_pb'
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
-import {errorMessage} from '../errors'
+import {errorMessage, reportError} from '../errors'
 import {client} from '../grpc'
 import {logger} from '../logger'
 import {toPlainObject} from '../plain'
@@ -24,6 +24,12 @@ import {
   launchBuildkitMachine,
 } from './buildkit'
 import {deleteMachine, deleteVolume, listMachines, listVolumes, startMachine, stopMachine, waitMachine} from './client'
+
+const CAPACITY_RETRY_BASE_DELAY_MS = 30_000
+const CAPACITY_RETRY_MAX_DELAY_MS = 3_600_000
+
+// Per-machine backoff for launches rejected by Fly for lack of placement capacity.
+const capacityRetryByMachine = new Map<string, {attempts: number; nextRetryAt: number}>()
 
 export interface CurrentState {
   cloud: 'fly'
@@ -92,7 +98,15 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
     void scheduleTask(`volume/change/${volume.resourceId}`, () => reconcileVolume(state, volume))
   }
 
+  const requestedMachineIDs = new Set(response.newMachines.map((m) => m.id))
+  for (const id of capacityRetryByMachine.keys()) {
+    if (!requestedMachineIDs.has(id)) capacityRetryByMachine.delete(id)
+  }
+
   for (const machine of response.newMachines) {
+    const capacityRetry = capacityRetryByMachine.get(machine.id)
+    if (capacityRetry && Date.now() < capacityRetry.nextRetryAt) continue
+
     logger.info(`new machine requested: ${JSON.stringify(machine)}`)
     void scheduleTask(`machine/new/${machine.id}`, () => reconcileNewMachine(state.machines, machine, state.volumes))
   }
@@ -170,7 +184,10 @@ async function reconcileNewMachine(
   volumes: APIFlyVolume[],
 ) {
   const existing = state.find((m) => m.name === machine.id)
-  if (existing) return
+  if (existing) {
+    capacityRetryByMachine.delete(machine.id)
+    return
+  }
   if (!machine.flyOptions) return
   const flyOptions = machine.flyOptions
 
@@ -220,8 +237,22 @@ async function reconcileNewMachine(
     // If we get a capacity error, delete the volume and try again.
     // We do this because the volume is tied to the machine and we can't detach it.
     if (isCapacityError(err)) {
-      console.error(`Capacity error, requesting replacement volume and trying again ${err}`)
+      const attempts = (capacityRetryByMachine.get(machine.id)?.attempts ?? 0) + 1
+      const delayMs = Math.min(CAPACITY_RETRY_MAX_DELAY_MS, CAPACITY_RETRY_BASE_DELAY_MS * 2 ** (attempts - 1))
+      capacityRetryByMachine.set(machine.id, {attempts, nextRetryAt: Date.now() + delayMs})
+
+      console.error(
+        `Capacity error, requesting replacement volume and trying again (machine ${machine.id}, attempt ${attempts}, next retry in ${delayMs}ms) ${err}`,
+      )
       await client.replaceVolume({id: volume.name})
+
+      if (attempts === 1) {
+        await reportError(
+          `Unable to launch machine ${machine.id} with volume ${
+            volume.name
+          }: insufficient Fly placement capacity, retrying with backoff: ${errorMessage(err)}`,
+        )
+      }
       return
     }
 
