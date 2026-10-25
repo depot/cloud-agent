@@ -262,7 +262,12 @@ async function reconcileMachine(state: APIFlyMachine[], machine: GetDesiredState
     if (currentState === GetDesiredStateResponse_MachineState.PENDING) return
     if (currentState === GetDesiredStateResponse_MachineState.DELETED) return
     console.log('Stopping machine', current.id)
-    await stopAndWait(current)
+    try {
+      await stopAndWait(current)
+    } catch (err) {
+      if (!isMachineNotFoundError(err)) throw err
+      console.log('Machine already gone, nothing to stop', current.id)
+    }
   }
 
   if (machine.desiredState === GetDesiredStateResponse_MachineState.DELETED) {
@@ -275,7 +280,12 @@ async function reconcileMachine(state: APIFlyMachine[], machine: GetDesiredState
     // Always force delete to handle the situations when machines cannot be deleted for some reason in the Fly API.
     const force = true
     force ? console.log('Forcing delete of machine', current.id) : console.log('Deleting machine', current.id)
-    await deleteMachine(current.id, force)
+    try {
+      await deleteMachine(current.id, force)
+    } catch (err) {
+      if (!isMachineNotFoundError(err)) throw err
+      console.log('Machine already deleted', current.id)
+    }
   }
 }
 
@@ -297,6 +307,11 @@ function isCapacityError(err: unknown): boolean {
   return (
     message.includes('412') && message.includes('insufficient resources to create new machine with existing volume')
   )
+}
+
+function isMachineNotFoundError(err: unknown): boolean {
+  const message = errorMessage(err).toLowerCase()
+  return message.includes('fly api error: 404') && message.includes('machine not found')
 }
 
 interface MachineKind {
