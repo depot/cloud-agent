@@ -37,13 +37,16 @@ interface Subnet {
   id: string
 }
 
-export const additionalSubnetIDs = (() => {
+export const configuredSubnets = (() => {
   try {
     const data = process.env.CLOUD_AGENT_AWS_SUBNETS
     if (!data) return []
     const subnets: Subnet[] = JSON.parse(data)
-    return subnets.map((s) => s.id).filter((id) => id !== CLOUD_AGENT_AWS_SUBNET_ID)
+    if (!Array.isArray(subnets)) return []
+    return subnets.filter((subnet) => typeof subnet?.id === 'string' && typeof subnet.availability_zone === 'string')
   } catch {
     return []
   }
 })()
+
+export const additionalSubnetIDs = configuredSubnets.map((s) => s.id).filter((id) => id !== CLOUD_AGENT_AWS_SUBNET_ID)

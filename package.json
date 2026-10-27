@@ -12,6 +12,7 @@
     "fmt:check": "prettier --write .",
     "generate": "buf generate && prettier --write src/proto",
     "lint": "prettier --check .",
+    "test": "vitest run",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -40,7 +41,8 @@
     "prettier": "^3.0.1",
     "prettier-plugin-organize-imports": "^3.2.3",
     "prettier-plugin-pkg": "^0.18.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "4.1.4"
   },
   "pnpm": {
     "peerDependencyRules": {

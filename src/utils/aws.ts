@@ -5,7 +5,6 @@ import {
   CreateVolumeCommand,
   DeleteVolumeCommand,
   DescribeInstancesCommand,
-  DescribeVolumesCommand,
   DetachVolumeCommand,
   EC2Client,
   Instance,
@@ -16,6 +15,7 @@ import {
   TerminateInstancesCommand,
   Volume,
   paginateDescribeInstances,
+  paginateDescribeVolumes,
   waitUntilInstanceExists,
 } from '@aws-sdk/client-ec2'
 import {
@@ -35,6 +35,7 @@ import {
   CLOUD_AGENT_AWS_SUBNET_ID,
   CLOUD_AGENT_CONNECTION_ID,
   additionalSubnetIDs,
+  configuredSubnets,
 } from './env'
 import {toPlainObject} from './plain'
 import {scheduleTask} from './scheduler'
@@ -45,6 +46,12 @@ export async function getCurrentState() {
   const state: CurrentState = await promises({
     cloud: 'aws',
     availabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE ?? 'unknown',
+    availabilityZones: [
+      ...new Set([
+        process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE ?? 'unknown',
+        ...configuredSubnets.map((subnet) => subnet.availability_zone),
+      ]),
+    ],
     instances: getInstancesState(),
     volumes: getVolumesState(),
     errors: [],
@@ -94,20 +101,18 @@ async function getInstancesState() {
 
 /** Queries for all managed volumes */
 async function getVolumesState() {
-  const res = await client.send(
-    new DescribeVolumesCommand({
-      Filters: [tagFilter, {Name: 'tag:depot-volume-id', Values: ['*']}],
-    }),
+  const paginator = paginateDescribeVolumes(
+    {client, pageSize: 100},
+    {Filters: [tagFilter, {Name: 'tag:depot-volume-id', Values: ['*']}]},
   )
-  const volumes = res.Volumes || []
-  return volumes.reduce(
-    (acc, volume) => {
-      if (!volume.VolumeId) return acc
-      acc[volume.VolumeId] = volume
-      return acc
-    },
-    {} as Record<string, Volume>,
-  )
+  const volumes: Record<string, Volume> = {}
+  for await (const page of paginator) {
+    for (const volume of page.Volumes ?? []) {
+      if (!volume.VolumeId) continue
+      volumes[volume.VolumeId] = volume
+    }
+  }
+  return volumes
 }
 
 async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesiredStateResponse_NewVolume) {
@@ -117,9 +122,16 @@ async function reconcileNewVolume(state: Record<string, Volume>, volume: GetDesi
   if (existing) return
 
   console.log(`Creating new volume ${volume.id}`)
+  const availabilityZone = volume.zone ?? process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE
+  if (
+    availabilityZone !== process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE &&
+    !configuredSubnets.some((subnet) => subnet.availability_zone === availabilityZone)
+  ) {
+    throw new Error(`Volume ${volume.id} requested unconfigured availability zone ${availabilityZone}`)
+  }
   await client.send(
     new CreateVolumeCommand({
-      AvailabilityZone: process.env.CLOUD_AGENT_AWS_AVAILABILITY_ZONE,
+      AvailabilityZone: availabilityZone,
       Encrypted: true,
       Size: volume.size,
       TagSpecifications: [
@@ -175,6 +187,13 @@ async function reconcileVolume(
       await client.send(new DetachVolumeCommand({VolumeId: current.VolumeId, InstanceId: currentAttachment}))
     } else {
       const machine = machineState[volume.attachedTo!]
+      if (
+        current.AvailabilityZone &&
+        machine?.Placement?.AvailabilityZone &&
+        current.AvailabilityZone !== machine.Placement.AvailabilityZone
+      ) {
+        return
+      }
       const currentState = machine ? currentMachineState(machine) : 'unknown'
       if (currentState !== GetDesiredStateResponse_MachineState.RUNNING) return
       console.log(`Attaching volume ${current.VolumeId} to ${volume.attachedTo}`)
