@@ -11,7 +11,7 @@ import {
 } from '../../proto/depot/cloud/v5/cloud_pb'
 import {promises} from '../common'
 import {CLOUD_AGENT_CONNECTION_ID, FLY_REGION} from '../env'
-import {errorMessage} from '../errors'
+import {errorMessage, reportError} from '../errors'
 import {client} from '../grpc'
 import {logger} from '../logger'
 import {toPlainObject} from '../plain'
@@ -24,6 +24,10 @@ import {
   launchBuildkitMachine,
 } from './buildkit'
 import {deleteMachine, deleteVolume, listMachines, listVolumes, startMachine, stopMachine, waitMachine} from './client'
+
+const VOLUME_RETRY_BASE_DELAY_MS = 30_000
+const VOLUME_RETRY_MAX_DELAY_MS = 3_600_000
+const volumeRetryByVolume = new Map<string, {attempts: number; nextRetryAt: number}>()
 
 export interface CurrentState {
   cloud: 'fly'
@@ -82,7 +86,15 @@ export async function getCurrentState() {
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
   logger.info('Reconciling state')
 
+  const requestedVolumeIDs = new Set(response.newVolumes.map((v) => v.id))
+  for (const id of volumeRetryByVolume.keys()) {
+    if (!requestedVolumeIDs.has(id)) volumeRetryByVolume.delete(id)
+  }
+
   for (const volume of response.newVolumes) {
+    const retry = volumeRetryByVolume.get(volume.id)
+    if (retry && retry.nextRetryAt > Date.now()) continue
+
     logger.info(`new volume requested: ${JSON.stringify(volume)}`)
     void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
   }
@@ -105,24 +117,44 @@ export async function reconcile(response: GetDesiredStateResponse, state: Curren
 
 async function reconcileNewVolume(state: APIFlyVolume[], volume: GetDesiredStateResponse_NewVolume) {
   const existing = state.find((v) => v.name === volume.id)
-  if (existing) return
+  if (existing) {
+    volumeRetryByVolume.delete(volume.id)
+    return
+  }
 
-  if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
-    console.log(`Creating new gpu volume ${volume.id}`)
-    await createBuildkitGPUVolume({depotID: volume.id, region: volume.zone ?? FLY_REGION, sizeGB: volume.size})
-  } else {
-    console.log(`Creating new volume ${volume.id}`)
-    const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
-    await createBuildkitVolume({
-      depotID: volume.id,
-      region: volume.zone ?? FLY_REGION,
-      sizeGB: volume.size,
-      compute: {
-        cpu_kind: cpuKind,
-        cpus,
-        memory_mb: memGBs * 1024,
-      },
-    })
+  const region = volume.zone ?? FLY_REGION
+  try {
+    if (volume.kind === GetDesiredStateResponse_Kind.BUILDKIT_16X32_GPU) {
+      console.log(`Creating new gpu volume ${volume.id}`)
+      await createBuildkitGPUVolume({depotID: volume.id, region, sizeGB: volume.size})
+    } else {
+      console.log(`Creating new volume ${volume.id}`)
+      const {cpuKind, cpus, memGBs} = machineKind(volume.kind)
+      await createBuildkitVolume({
+        depotID: volume.id,
+        region,
+        sizeGB: volume.size,
+        compute: {
+          cpu_kind: cpuKind,
+          cpus,
+          memory_mb: memGBs * 1024,
+        },
+      })
+    }
+  } catch (err) {
+    if (!isDeprecatedRegionError(err)) throw err
+
+    // Fly permanently rejects new resources in deprecated regions; back off instead of retrying every pass.
+    const attempts = (volumeRetryByVolume.get(volume.id)?.attempts ?? 0) + 1
+    const delayMs = Math.min(VOLUME_RETRY_MAX_DELAY_MS, VOLUME_RETRY_BASE_DELAY_MS * 2 ** (attempts - 1))
+    volumeRetryByVolume.set(volume.id, {attempts, nextRetryAt: Date.now() + delayMs})
+    logger.error(
+      `Unable to create volume ${volume.id} in deprecated region ${region} (attempt ${attempts}), retrying in ${
+        delayMs / 1000
+      }s: ${errorMessage(err)}`,
+      {volumeID: volume.id, zone: region, attempt: attempts, retryDelayMs: delayMs},
+    )
+    if (attempts === 1) await reportError(err)
   }
 }
 
@@ -297,6 +329,10 @@ function isCapacityError(err: unknown): boolean {
   return (
     message.includes('412') && message.includes('insufficient resources to create new machine with existing volume')
   )
+}
+
+function isDeprecatedRegionError(err: unknown): boolean {
+  return errorMessage(err).includes('is deprecated and cannot have new resources provisioned')
 }
 
 interface MachineKind {
