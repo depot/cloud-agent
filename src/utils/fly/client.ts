@@ -4,6 +4,27 @@ import {FLY_API_HOST, FLY_API_TOKEN, FLY_APP_ID} from '../env'
 
 const authorizationHeader = `Bearer ${FLY_API_TOKEN}`
 
+/** The Fly API answered a request with a non-2xx status. */
+export class FlyApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly statusText: string,
+    readonly body: string,
+  ) {
+    super(`Fly API Error: ${status} ${statusText} ${body}`)
+    this.name = 'FlyApiError'
+  }
+
+  /**
+   * Whether Fly rejects every retry of the same request: a 400 or 422 names a fault in the
+   * request itself. Timeouts, rate limits and server errors stay retryable, and so does a 404,
+   * which can come from a Fly API route that is briefly unavailable.
+   */
+  get isPermanent(): boolean {
+    return this.status === 400 || this.status === 422
+  }
+}
+
 export async function listMachines(): Promise<V1Machine[]> {
   const res = await rest<MachineSummary[]>('GET', '/machines?summary=true')
   return res.map((m) => ({...m, config: m.incomplete_config}))
@@ -14,7 +35,7 @@ export async function listVolumes(): Promise<Volume[]> {
     method: 'GET',
     headers: {'Content-Type': 'application/json', Authorization: authorizationHeader},
   })
-  if (!res.ok) throw new Error(`Fly API Error: ${res.status} ${res.statusText} ${await res.text()}`)
+  if (!res.ok) throw new FlyApiError(res.status, res.statusText, await res.text())
 
   const volumes = (await res.json()) as Volume[]
 
@@ -46,7 +67,7 @@ export async function waitMachine(waitInput: MachineWait) {
   const res = await fetch(url, {
     headers: {'Content-Type': 'application/json', Authorization: authorizationHeader},
   })
-  if (!res.ok) throw new Error(`Fly API Error: ${res.status} ${res.statusText} ${await res.text()}`)
+  if (!res.ok) throw new FlyApiError(res.status, res.statusText, await res.text())
   return (await res.json()) as WaitResponse
 }
 
@@ -81,7 +102,7 @@ async function rest<T>(method: string, endpoint: string, body?: BodyInit): Promi
     body,
     headers: {'Content-Type': 'application/json', Authorization: authorizationHeader},
   })
-  if (!res.ok) throw new Error(`Fly API Error: ${res.status} ${res.statusText} ${await res.text()}`)
+  if (!res.ok) throw new FlyApiError(res.status, res.statusText, await res.text())
 
   return (await res.json()) as T
 }
