@@ -23,7 +23,16 @@ import {
   launchBuildkitGPUMachine,
   launchBuildkitMachine,
 } from './buildkit'
-import {deleteMachine, deleteVolume, listMachines, listVolumes, startMachine, stopMachine, waitMachine} from './client'
+import {
+  FlyApiError,
+  deleteMachine,
+  deleteVolume,
+  listMachines,
+  listVolumes,
+  startMachine,
+  stopMachine,
+  waitMachine,
+} from './client'
 
 export interface CurrentState {
   cloud: 'fly'
@@ -79,12 +88,37 @@ export async function getCurrentState() {
   return toPlainObject(state)
 }
 
+// A volume request that Fly permanently rejects cannot succeed on a retry, so each rejected
+// request is reported once and skipped until its desired state changes.
+const rejectedVolumes = new Map<string, string>()
+
+// Fields of a volume request that decide whether Fly accepts it. A change to any of them
+// clears an earlier rejection.
+function volumeRequestKey(volume: GetDesiredStateResponse_NewVolume): string {
+  return `${volume.id}:${volume.kind}:${volume.architecture}:${volume.size}:${volume.zone ?? ''}`
+}
+
 export async function reconcile(response: GetDesiredStateResponse, state: CurrentState): Promise<void> {
   logger.info('Reconciling state')
 
+  const requestedVolumeIDs = new Set(response.newVolumes.map((volume) => volume.id))
+  for (const volumeID of rejectedVolumes.keys()) {
+    if (!requestedVolumeIDs.has(volumeID)) rejectedVolumes.delete(volumeID)
+  }
+
   for (const volume of response.newVolumes) {
+    if (rejectedVolumes.get(volume.id) === volumeRequestKey(volume)) continue
+
     logger.info(`new volume requested: ${JSON.stringify(volume)}`)
-    void scheduleTask(`volume/new/${volume.id}`, () => reconcileNewVolume(state.volumes, volume))
+    void scheduleTask(`volume/new/${volume.id}`, async () => {
+      try {
+        await reconcileNewVolume(state.volumes, volume)
+        rejectedVolumes.delete(volume.id)
+      } catch (err) {
+        if (err instanceof FlyApiError && err.isPermanent) rejectedVolumes.set(volume.id, volumeRequestKey(volume))
+        throw err
+      }
+    })
   }
 
   for (const volume of response.volumeChanges) {
